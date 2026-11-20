@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust with the wasm target
         run: |
@@ -37,7 +37,7 @@ jobs:
 
       - name: Run tests
         run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
           cargo test
 
       - name: Build

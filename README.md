@@ -19,7 +19,7 @@ scrolls and clears on a timer. The real Cabinets are next.
 
 ## Play it
 
-- **In the browser:** https://joelowrance.github.io/scroller/ (rebuilt on every push to `main`)
+- **In the browser:** http://joelowrance.com/scroller/ (rebuilt on every push to `main`)
 - **On desktop:** `cargo run --release`
 
 ## Controls
