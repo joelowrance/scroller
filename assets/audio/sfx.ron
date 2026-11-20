@@ -1,4 +1,5 @@
-// Sound effects, rendered by src/audio/synth.rs at start-up.
+// Sound effects, rendered by src/audio/synth.rs at start-up. The names are the
+// `Sfx` enum in src/audio/mod.rs, which says when each one plays.
 //
 // Each sound is a list of tones. A tone's fields (all optional):
 //   at:      start time in seconds (for multi-note sounds)
@@ -10,27 +11,23 @@
 //   vibrato: (depth: semitones, rate: Hz)
 //   volume:  0–1
 {
-    Shot: [
-        (wave: Square(duty: 0.25), freq: 1400, gate: 0.07, slide: -14,
-         env: (decay: 0.07, sustain: 0.0, release: 0.01), volume: 0.30),
+    // ---------------------------------------------------------------- Everywhere
+    MenuMove: [
+        (wave: Square(duty: 0.5), freq: 1760, gate: 0.025,
+         env: (release: 0.015), volume: 0.20),
     ],
-    Explosion: [
-        (wave: Noise, freq: 3000, gate: 0.45, slide: -30,
-         env: (decay: 0.45, sustain: 0.0, release: 0.05), volume: 0.50),
-        (wave: Triangle, freq: 110, gate: 0.25, slide: -12,
-         env: (decay: 0.25, sustain: 0.0, release: 0.02), volume: 0.40),
+    MenuSelect: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 1175, gate: 0.04, volume: 0.25),   // D6
+        (at: 0.05, wave: Square(duty: 0.25), freq: 1760, gate: 0.07, volume: 0.25,
+         env: (release: 0.05)),                                                       // A6
     ],
-    Hit: [
-        (wave: Square(duty: 0.5), freq: 220, gate: 0.12, slide: -7,
-         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.40),
-        (wave: Noise, freq: 6000, gate: 0.06,
-         env: (decay: 0.06, sustain: 0.0, release: 0.01), volume: 0.30),
-    ],
-    Pickup: [
-        (at: 0.00, wave: Square(duty: 0.125), freq: 988, gate: 0.05, volume: 0.30),   // B5
-        (at: 0.05, wave: Square(duty: 0.125), freq: 1319, gate: 0.05, volume: 0.30),  // E6
-        (at: 0.10, wave: Square(duty: 0.125), freq: 1661, gate: 0.08, volume: 0.30,
-         env: (release: 0.08)),                                                       // G#6
+    // A long falling whine over a crunch.
+    LifeLost: [
+        (wave: Square(duty: 0.5), freq: 880, gate: 0.7, slide: -36,
+         vibrato: (depth: 0.6, rate: 14.0),
+         env: (decay: 0.7, sustain: 0.0, release: 0.05), volume: 0.30),
+        (wave: Noise, freq: 2400, gate: 0.5, slide: -24,
+         env: (decay: 0.5, sustain: 0.0, release: 0.05), volume: 0.40),
     ],
     ExtraLife: [
         (at: 0.00, wave: Square(duty: 0.25), freq: 523, gate: 0.08, volume: 0.30),    // C5
@@ -41,13 +38,122 @@
         (at: 0.27, wave: Triangle, freq: 262, gate: 0.30, volume: 0.35,
          env: (release: 0.15)),                                                       // C4
     ],
-    MenuMove: [
-        (wave: Square(duty: 0.5), freq: 1760, gate: 0.025,
-         env: (release: 0.015), volume: 0.20),
+
+    // ---------------------------------------------------------------- The Wren
+    // Plays up to 10 times a second: a short, quiet tick.
+    Shot: [
+        (wave: Square(duty: 0.125), freq: 1900, gate: 0.03, slide: -12,
+         env: (decay: 0.03, sustain: 0.0, release: 0.005), volume: 0.12),
     ],
-    MenuSelect: [
-        (at: 0.00, wave: Square(duty: 0.25), freq: 1175, gate: 0.04, volume: 0.25),   // D6
-        (at: 0.05, wave: Square(duty: 0.25), freq: 1760, gate: 0.07, volume: 0.25,
-         env: (release: 0.05)),                                                       // A6
+    // Gun level 4: lower and thicker than the tick.
+    Lance: [
+        (wave: Square(duty: 0.25), freq: 1100, gate: 0.045, slide: -14,
+         env: (decay: 0.045, sustain: 0.0, release: 0.005), volume: 0.14),
+        (wave: Noise, freq: 9000, gate: 0.02,
+         env: (decay: 0.02, sustain: 0.0, release: 0.005), volume: 0.06),
+    ],
+    // The Undertow: a deep thump, then a whoosh sweeping up as the ring grows.
+    Undertow: [
+        (wave: Triangle, freq: 70, gate: 0.35, slide: 12,
+         env: (decay: 0.35, sustain: 0.0, release: 0.05), volume: 0.50),
+        (wave: Noise, freq: 600, gate: 0.8, slide: 30,
+         env: (attack: 0.05, decay: 0.75, sustain: 0.0, release: 0.1), volume: 0.35),
+        (wave: Square(duty: 0.5), freq: 220, gate: 0.6, slide: 24,
+         vibrato: (depth: 0.3, rate: 20.0),
+         env: (decay: 0.6, sustain: 0.0, release: 0.05), volume: 0.12),
+    ],
+    // Power-ups: the same E5–B5 rise, each ending on its own top note.
+    PowerUpGun: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1319, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // E6
+    ],
+    PowerUpDrone: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1568, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // G6
+    ],
+    PowerUpTail: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1175, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // D6
+    ],
+    PowerUpSpeed: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1760, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // A6
+    ],
+    PowerUpWard: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1976, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // B6
+    ],
+    PowerUpBomb: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1047, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // C6
+        (at: 0.08, wave: Triangle, freq: 131, gate: 0.10, volume: 0.30,
+         env: (release: 0.08)),                                                       // C3
+    ],
+    // A Power-up already at its maximum: a bright two-note coin.
+    Medal: [
+        (at: 0.00, wave: Square(duty: 0.5), freq: 1976, gate: 0.05, volume: 0.22),   // B6
+        (at: 0.05, wave: Square(duty: 0.5), freq: 2637, gate: 0.25, volume: 0.22,
+         env: (decay: 0.25, sustain: 0.0, release: 0.05)),                           // E7
+    ],
+    // The Ward shatters: a glassy crack falling away.
+    WardBreak: [
+        (wave: Noise, freq: 12000, gate: 0.15, slide: -12,
+         env: (decay: 0.15, sustain: 0.0, release: 0.03), volume: 0.35),
+        (wave: Square(duty: 0.125), freq: 2400, gate: 0.25, slide: -24,
+         vibrato: (depth: 0.5, rate: 25.0),
+         env: (decay: 0.25, sustain: 0.0, release: 0.03), volume: 0.20),
+    ],
+
+    // ---------------------------------------------------------------- Enemies
+    // A shot lands but doesn't kill: a tiny spark.
+    EnemyHit: [
+        (wave: Noise, freq: 10000, gate: 0.025,
+         env: (decay: 0.025, sustain: 0.0, release: 0.005), volume: 0.12),
+    ],
+    ExplosionSmall: [
+        (wave: Noise, freq: 3000, gate: 0.25, slide: -24,
+         env: (decay: 0.25, sustain: 0.0, release: 0.03), volume: 0.35),
+    ],
+    ExplosionLarge: [
+        (wave: Noise, freq: 2000, gate: 0.8, slide: -30,
+         env: (decay: 0.8, sustain: 0.0, release: 0.1), volume: 0.45),
+        (wave: Triangle, freq: 90, gate: 0.5, slide: -12,
+         env: (decay: 0.5, sustain: 0.0, release: 0.05), volume: 0.45),
+        (at: 0.15, wave: Noise, freq: 1200, gate: 0.6, slide: -24,
+         env: (decay: 0.6, sustain: 0.0, release: 0.1), volume: 0.30),
+    ],
+    // Shots glancing off a closed Clam: a short metallic ping.
+    ShellPing: [
+        (wave: Square(duty: 0.5), freq: 2794, gate: 0.01,
+         env: (release: 0.06), volume: 0.10),
+        (wave: Triangle, freq: 4186, gate: 0.01,
+         env: (release: 0.05), volume: 0.10),
+    ],
+    // The arc switches on: a buzzing hum, as long as the arc is live (1.2 s).
+    ArcHum: [
+        (wave: Square(duty: 0.5), freq: 98, gate: 1.15,
+         vibrato: (depth: 0.4, rate: 30.0),
+         env: (attack: 0.03, release: 0.05), volume: 0.12),
+        (wave: Noise, freq: 400, gate: 1.15,
+         env: (attack: 0.03, release: 0.05), volume: 0.05),
+    ],
+    // Two beeps while the chevron blinks (0.75 s), so a Hook behind is heard.
+    HookWarning: [
+        (at: 0.00, wave: Square(duty: 0.5), freq: 1480, gate: 0.07,
+         env: (release: 0.02), volume: 0.20),
+        (at: 0.20, wave: Square(duty: 0.5), freq: 1480, gate: 0.07,
+         env: (release: 0.02), volume: 0.20),
     ],
 }
