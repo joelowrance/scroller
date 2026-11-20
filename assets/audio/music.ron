@@ -476,4 +476,314 @@
         },
         order: ["s1", "s2"],
     ),
+
+    // "Cloudline" (Cabinet 2, Stage 1): original. D major, 140 BPM.
+    Cloudline: (
+        bpm: 140,
+        rows_per_beat: 4,
+        channels: [
+            // Lead: wide, leaping
+            (instrument: (wave: Square(duty: 0.5), volume: 0.20,
+                          env: (attack: 0.006, decay: 0.12, sustain: 0.7, release: 0.06),
+                          vibrato: (depth: 0.15, rate: 5.5))),
+            // Chord stabs on beats 2 and 4
+            (instrument: (wave: Square(duty: 0.125), volume: 0.10,
+                          env: (decay: 0.10, sustain: 0.4, release: 0.04))),
+            // Pulsing bass
+            (instrument: (wave: Triangle, volume: 0.34,
+                          env: (decay: 0.06, sustain: 0.6, release: 0.01))),
+            // Drums
+            (kit: {
+                "k": (freq: 150, gate: 0.08, instrument: (wave: Triangle, volume: 0.32, slide: -24,
+                      env: (decay: 0.08, sustain: 0.0, release: 0.01))),
+                "s": (freq: 6000, gate: 0.09, instrument: (wave: Noise, volume: 0.18,
+                      env: (decay: 0.09, sustain: 0.0, release: 0.02))),
+                "h": (freq: 15000, gate: 0.02, instrument: (wave: Noise, volume: 0.09,
+                      env: (decay: 0.02, sustain: 0.0, release: 0.01))),
+            }),
+        ],
+        patterns: {
+            "intro": [ // D
+                ". . . . . . . . . . . . . . . .",
+                ". . . . . . . . . . . . . . . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . . . h . k . h . . . h .",
+            ],
+            "intro2": [ // D
+                ". . . . . . . . . . . . . . . .",
+                ". . . . F#4 - . . . . . . F#4 - . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . s . s . s s . s s s s s",
+            ],
+            "a1": [ // D
+                "D5 - - - A5 - - - F#5 - - - A5 - D6 -",
+                ". . . . F#4 - . . . . . . F#4 - . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a2": [ // G
+                "B5 - - - - - G5 - D5 - - - G5 - B5 -",
+                ". . . . B4 - . . . . . . B4 - . .",
+                "G2 - G2 - G3 - G2 - G2 - G2 - G3 - G2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a3": [ // A
+                "C#6 - - - A5 - - - E5 - - - A5 - C#6 -",
+                ". . . . C#5 - . . . . . . C#5 - . .",
+                "A2 - A2 - A3 - A2 - A2 - A2 - A3 - A2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a4": [ // D
+                "D6 - - - - - - - A5 - - - F#5 - . .",
+                ". . . . F#4 - . . . . . . F#4 - . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a5": [ // Bm
+                "F#5 - - - B5 - - - D6 - C#6 - B5 - A5 -",
+                ". . . . D5 - . . . . . . D5 - . .",
+                "B2 - B2 - B3 - B2 - B2 - B2 - B3 - B2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a6": [ // G
+                "G5 - - - B5 - - - D6 - - - E6 - D6 -",
+                ". . . . B4 - . . . . . . B4 - . .",
+                "G2 - G2 - G3 - G2 - G2 - G2 - G3 - G2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a7": [ // Em
+                "E5 - - - G5 - B5 - E6 - - - D6 - B5 -",
+                ". . . . G4 - . . . . . . G4 - . .",
+                "E2 - E2 - E3 - E2 - E2 - E2 - E3 - E2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a8": [ // A
+                "C#6 - - - - - - - E6 - - - A5 - . .",
+                ". . . . C#5 - . . . . . . C#5 - . .",
+                "A2 - A2 - A3 - A2 - A2 - A2 - A3 - A2 -",
+                "k . h . s . s . s s . s s s s s",
+            ],
+            "b1": [ // G
+                "B5 - D6 - G6 - - - F#6 - E6 - D6 - B5 -",
+                ". . . . B4 - . . . . . . B4 - . .",
+                "G2 - G2 - G3 - G2 - G2 - G2 - G3 - G2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b2": [ // A
+                "C#6 - E6 - A6 - - - G6 - F#6 - E6 - C#6 -",
+                ". . . . C#5 - . . . . . . C#5 - . .",
+                "A2 - A2 - A3 - A2 - A2 - A2 - A3 - A2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b3": [ // F#m
+                "C#6 - - - F#6 - - - A6 - - - F#6 - C#6 -",
+                ". . . . A4 - . . . . . . A4 - . .",
+                "F#2 - F#2 - F#3 - F#2 - F#2 - F#2 - F#3 - F#2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b4": [ // Bm
+                "D6 - - - - - B5 - F#5 - - - B5 - D6 -",
+                ". . . . D5 - . . . . . . D5 - . .",
+                "B2 - B2 - B3 - B2 - B2 - B2 - B3 - B2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b5": [ // G
+                "G5 - B5 - D6 - G6 - F#6 - D6 - B5 - D6 -",
+                ". . . . B4 - . . . . . . B4 - . .",
+                "G2 - G2 - G3 - G2 - G2 - G2 - G3 - G2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b6": [ // A
+                "A5 - C#6 - E6 - A6 - G6 - E6 - C#6 - E6 -",
+                ". . . . C#5 - . . . . . . C#5 - . .",
+                "A2 - A2 - A3 - A2 - A2 - A2 - A3 - A2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b7": [ // D
+                "F#6 - - - E6 - - - D6 - - - A5 - - -",
+                ". . . . F#4 - . . . . . . F#4 - . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b8": [ // D
+                "D6 - - - - - - - - - - - . . . .",
+                ". . . . F#4 - . . . . . . F#4 - . .",
+                "D2 - D2 - D3 - D2 - D2 - D2 - D3 - D2 -",
+                "k . h . s . s . s s . s s s s s",
+            ],
+        },
+        order: ["intro", "intro2", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8"],
+    ),
+
+    // "The Outer Yard" (Cabinet 2, Stage 2): original. C minor, 165 BPM.
+    OuterYard: (
+        bpm: 165,
+        rows_per_beat: 4,
+        channels: [
+            // Lead: long, tense notes
+            (instrument: (wave: Square(duty: 0.25), volume: 0.16,
+                          env: (attack: 0.02, decay: 0.2, sustain: 0.7, release: 0.08),
+                          vibrato: (depth: 0.2, rate: 5.0))),
+            // The riff
+            (instrument: (wave: Square(duty: 0.5), volume: 0.13,
+                          env: (decay: 0.06, sustain: 0.5, release: 0.02))),
+            // Bass pedal
+            (instrument: (wave: Triangle, volume: 0.36,
+                          env: (decay: 0.05, sustain: 0.6, release: 0.01))),
+            // Drums: heavy
+            (kit: {
+                "k": (freq: 120, gate: 0.10, instrument: (wave: Triangle, volume: 0.38, slide: -30,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.01))),
+                "s": (freq: 2800, gate: 0.14, instrument: (wave: Noise, volume: 0.30,
+                      env: (decay: 0.14, sustain: 0.0, release: 0.03))),
+                "c": (freq: 1500, gate: 0.05, instrument: (wave: Noise, volume: 0.22,
+                      env: (decay: 0.05, sustain: 0.0, release: 0.01))),
+                "h": (freq: 16000, gate: 0.02, instrument: (wave: Noise, volume: 0.12,
+                      env: (decay: 0.02, sustain: 0.0, release: 0.01))),
+            }),
+        ],
+        patterns: {
+            "intro": [ // Cm
+                ". . . . . . . . . . . . . . . .",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                ". . . . . . . . . . . . . . . .",
+                "k . c . k . c . k . c . k . c c",
+            ],
+            "intro2": [ // Cm
+                ". . . . . . . . . . . . . . . .",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "C2 - C2 C2 C2 - C2 C2 C2 - C2 C2 C2 - C2 C2",
+                "k h s h s h s s s s c s s s s s",
+            ],
+            "a1": [ // Cm
+                "G4 - - - - - - - - - - - Ab4 - G4 -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "C2 - C2 C2 C2 - C2 C2 C2 - C2 C2 C2 - C2 C2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "a2": [ // Cm
+                "Eb4 - - - - - - - D4 - - - - - - -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "C2 - C2 C2 C2 - C2 C2 C2 - C2 C2 C2 - C2 C2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "a3": [ // Ab
+                "C5 - - - - - - - Bb4 - - - Ab4 - G4 -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "a4": [ // G
+                "B4 - - - - - - - D5 - - - . . . .",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "G2 - G2 G2 G2 - G2 G2 G2 - G2 G2 G2 - G2 G2",
+                "k h s h s h s s s s c s s s s s",
+            ],
+            "b1": [ // Fm
+                "Ab4 - - - - - - - G4 - - - F4 - Ab4 -",
+                "F3 - F3 Ab3 F3 - C4 Bb3 F3 - F3 Ab3 F3 - Eb3 E3",
+                "F2 - F2 F2 F2 - F2 F2 F2 - F2 F2 F2 - F2 F2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "b2": [ // Fm
+                "C5 - - - - - - - Bb4 - - - Ab4 - - -",
+                "F3 - F3 Ab3 F3 - C4 Bb3 F3 - F3 Ab3 F3 - Eb3 E3",
+                "F2 - F2 F2 F2 - F2 F2 F2 - F2 F2 F2 - F2 F2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "b3": [ // Ab
+                "Eb5 - - - - - - - D5 - - - C5 - - -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2 Ab2 - Ab2 Ab2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "b4": [ // G
+                "D5 - - - B4 - - - G4 - - - F4 - D4 -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "G2 - G2 G2 G2 - G2 G2 G2 - G2 G2 G2 - G2 G2",
+                "k h s h s h s s s s c s s s s s",
+            ],
+        },
+        order: ["intro", "intro2", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "a1", "a2", "a3", "a4", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4"],
+    ),
+
+    // "Alarm" (Cabinet 2, Stage 2 run-out): original. A rising siren, 165 BPM.
+    OuterYardAlarm: (
+        bpm: 165,
+        rows_per_beat: 4,
+        channels: [
+            // Siren
+            (instrument: (wave: Square(duty: 0.5), volume: 0.15,
+                          env: (attack: 0.01, sustain: 0.9, release: 0.03),
+                          vibrato: (depth: 0.3, rate: 9.0))),
+            // The riff
+            (instrument: (wave: Square(duty: 0.25), volume: 0.13,
+                          env: (decay: 0.06, sustain: 0.5, release: 0.02))),
+            // Bass pedal
+            (instrument: (wave: Triangle, volume: 0.36,
+                          env: (decay: 0.05, sustain: 0.6, release: 0.01))),
+            // Drums
+            (kit: {
+                "k": (freq: 120, gate: 0.10, instrument: (wave: Triangle, volume: 0.38, slide: -30,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.01))),
+                "s": (freq: 2800, gate: 0.14, instrument: (wave: Noise, volume: 0.30,
+                      env: (decay: 0.14, sustain: 0.0, release: 0.03))),
+                "c": (freq: 1500, gate: 0.05, instrument: (wave: Noise, volume: 0.22,
+                      env: (decay: 0.05, sustain: 0.0, release: 0.01))),
+                "h": (freq: 16000, gate: 0.02, instrument: (wave: Noise, volume: 0.12,
+                      env: (decay: 0.02, sustain: 0.0, release: 0.01))),
+            }),
+        ],
+        patterns: {
+            "r1": [ // +0
+                "C6 - - - B5 - - - C6 - - - B5 - - -",
+                "C3 - C3 Eb3 C3 - G3 F3 C3 - C3 Eb3 C3 - Bb2 B2",
+                "C2 - C2 C2 C2 - C2 C2 C2 - C2 C2 C2 - C2 C2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "r2": [ // +1
+                "C#6 - - - C6 - - - C#6 - - - C6 - - -",
+                "C#3 - C#3 E3 C#3 - Ab3 F#3 C#3 - C#3 E3 C#3 - B2 C3",
+                "C#2 - C#2 C#2 C#2 - C#2 C#2 C#2 - C#2 C#2 C#2 - C#2 C#2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "r3": [ // +2
+                "D6 - - - C#6 - - - D6 - - - C#6 - - -",
+                "D3 - D3 F3 D3 - A3 G3 D3 - D3 F3 D3 - C3 C#3",
+                "D2 - D2 D2 D2 - D2 D2 D2 - D2 D2 D2 - D2 D2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "r4": [ // +3
+                "Eb6 - - - D6 - - - Eb6 - - - D6 - - -",
+                "Eb3 - Eb3 F#3 Eb3 - Bb3 Ab3 Eb3 - Eb3 F#3 Eb3 - C#3 D3",
+                "Eb2 - Eb2 Eb2 Eb2 - Eb2 Eb2 Eb2 - Eb2 Eb2 Eb2 - Eb2 Eb2",
+                "k h s h k k s h k h s h k s s h",
+            ],
+            "r5": [ // +4
+                "E6 - - - Eb6 - - - E6 - - - Eb6 - - -",
+                "E3 - E3 G3 E3 - B3 A3 E3 - E3 G3 E3 - D3 Eb3",
+                "E2 - E2 E2 E2 - E2 E2 E2 - E2 E2 E2 - E2 E2",
+                "k h s h k h s h k h s h k s k s",
+            ],
+            "r6": [ // +5
+                "F6 - - - E6 - - - F6 - - - E6 - - -",
+                "F3 - F3 Ab3 F3 - C4 Bb3 F3 - F3 Ab3 F3 - Eb3 E3",
+                "F2 - F2 F2 F2 - F2 F2 F2 - F2 F2 F2 - F2 F2",
+                "k h s h k h s h k h s h k s k s",
+            ],
+            "r7": [ // +6
+                "F#6 - - - F6 - - - F#6 - - - F6 - - -",
+                "F#3 - F#3 A3 F#3 - C#4 B3 F#3 - F#3 A3 F#3 - E3 F3",
+                "F#2 - F#2 F#2 F#2 - F#2 F#2 F#2 - F#2 F#2 F#2 - F#2 F#2",
+                "k h s h k h s h k h s h k s k s",
+            ],
+            "r8": [ // +7
+                "G6 - - - F#6 - - - G6 - - - F#6 - - -",
+                "G3 - G3 Bb3 G3 - D4 C4 G3 - G3 Bb3 G3 - F3 F#3",
+                "G2 - G2 G2 G2 - G2 G2 G2 - G2 G2 G2 - G2 G2",
+                "k s s s s s s s s s s s s s s s",
+            ],
+        },
+        order: ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"],
+    ),
 }

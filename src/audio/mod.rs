@@ -7,8 +7,9 @@
 //! - Play a sound effect: write a [`PlaySfx`] message.
 //! - Music follows the screen (see [`song_for_screen`]); the Stage Card after a
 //!   cleared Stage plays the [`Song::StageClear`] sting. While a Stage is
-//!   playing, the song is [`StageMusic`], which the Cabinet sets (for example
-//!   in `OnEnter(Screen::Playing)`); it is cleared when the Stage ends.
+//!   playing, the song is [`StageMusic`], chosen from the table in
+//!   `stage_music.rs` (one entry per Cabinet and Stage); it is cleared when
+//!   the Stage ends.
 //! - Lost lives and extra lives make their sounds here, for every Cabinet.
 //! - **M** mutes. The master volume and mute are stored with the high scores.
 //! - Music and gameplay sounds stop while a Stage is paused.
@@ -29,6 +30,7 @@ use crate::storage::{self, AUDIO_KEY};
 
 mod music;
 mod output;
+mod stage_music;
 mod synth;
 
 use output::{Output, Play, StopHandle};
@@ -91,6 +93,35 @@ sfx_list! {
     ArcHum,
     /// The chevron warning before a Hook.
     HookWarning,
+    // Cabinet 2 (docs/cabinets/2-vertical-shooter.md). Shots, lances,
+    // Power-ups G/S/W/B, the medal, hits, explosions, shield sparks
+    // (ShellPing) and the Ward reuse the sounds above.
+    PowerUpPod,
+    PowerUpRockets,
+    /// A pair of rockets; twice a second, so a soft hiss.
+    RocketLaunch,
+    /// The Squall bomb.
+    Squall,
+    /// The chevron warning before a Swift.
+    SwiftWarning,
+    /// A Flak Battery marks the Hero with its crosshair.
+    FlakMark,
+    /// The flak shell bursts at the mark.
+    FlakBurst,
+    /// A Riser throws a pod: a thump and a whistle over the 1 s climb.
+    RiserLaunch,
+    /// A Loom's shield drops (its last shuttle is gone).
+    LoomShieldBreak,
+    /// A destroyed Loom shuttle falls away.
+    ShuttleFall,
+    /// One volley of the Loom's spiral.
+    LoomTick,
+    /// A Silo's hatch opens.
+    SiloClank,
+    /// A Tether's line goes live.
+    TetherHum,
+    /// The flak hit that ends Cabinet 2 and starts the 2 → 3 Transition.
+    FinalHit,
 }
 
 impl Sfx {
@@ -112,15 +143,24 @@ pub enum Song {
     FoundryClimb,
     /// A one-shot sting on the Stage Card after a Stage is cleared.
     StageClear,
+    /// Cabinet 2, Stage 1.
+    Cloudline,
+    /// Cabinet 2, Stage 2.
+    OuterYard,
+    /// Cabinet 2, Stage 2's run-out: a rising siren toward the hit.
+    OuterYardAlarm,
 }
 
 impl Song {
-    pub const ALL: [Song; 5] = [
+    pub const ALL: [Song; 8] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
         Song::FoundryClimb,
         Song::StageClear,
+        Song::Cloudline,
+        Song::OuterYard,
+        Song::OuterYardAlarm,
     ];
 }
 
@@ -128,7 +168,7 @@ impl Song {
 #[derive(Message, Clone, Copy, Debug)]
 pub struct PlaySfx(pub Sfx);
 
-/// The song for the current Stage, set by its Cabinet. It is used while the
+/// The song for the current Stage, set from `stage_music.rs`. It is used while the
 /// screen is [`Screen::Playing`] and cleared when the Stage ends.
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct StageMusic(pub Option<Song>);
@@ -352,6 +392,7 @@ impl Plugin for AudioPlugin {
             .add_message::<PlaySfx>()
             .add_systems(OnExit(Screen::Playing), clear_stage_music)
             .add_systems(Update, life_sounds.before(play_sfx))
+            .add_plugins(stage_music::StageMusicPlugin)
             .add_systems(
                 Update,
                 (
@@ -430,6 +471,10 @@ mod tests {
         assert_eq!(defs[&Song::LowTide].bpm, 150.0);
         assert_eq!(defs[&Song::Foundry].bpm, 160.0);
         assert_eq!(defs[&Song::FoundryClimb].bpm, 160.0);
+        // docs/cabinets/2-vertical-shooter.md: about 140 and 165 BPM.
+        assert_eq!(defs[&Song::Cloudline].bpm, 140.0);
+        assert_eq!(defs[&Song::OuterYard].bpm, 165.0);
+        assert_eq!(defs[&Song::OuterYardAlarm].bpm, 165.0);
     }
 
     /// Writes every sound to `target/audio-preview/*.wav` for listening:
