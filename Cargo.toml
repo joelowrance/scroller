@@ -9,7 +9,9 @@ fps-log = []
 
 [dependencies]
 # 2D only: skips the 3D renderer, glTF and UI to keep the web download small.
-bevy = { version = "0.20.1", default-features = false, features = ["2d", "audio"] }
+# No Bevy audio: sound is synthesized in src/audio and played through rodio
+# directly, so the output device opens only after the first input (web autoplay).
+bevy = { version = "0.20.1", default-features = false, features = ["2d"] }
 ron = "0.12.3"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -34,6 +36,8 @@ strip = "debuginfo"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dirs = "7.0.0"
+rodio = { version = "0.22.2", default-features = false, features = ["playback"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.107", features = ["Window", "Storage", "Location"] }
+rodio = { version = "0.22.2", default-features = false, features = ["playback", "wasm-bindgen"] }

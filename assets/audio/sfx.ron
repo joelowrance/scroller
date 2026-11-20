@@ -1,0 +1,53 @@
+// Sound effects, rendered by src/audio/synth.rs at start-up.
+//
+// Each sound is a list of tones. A tone's fields (all optional):
+//   at:      start time in seconds (for multi-note sounds)
+//   wave:    Square(duty: 0.125 | 0.25 | 0.5), Triangle or Noise
+//   freq:    starting pitch in Hz (for Noise, the noise clock rate)
+//   gate:    seconds the note is held before its release
+//   env:     (attack, decay, sustain, release) – seconds, sustain is a 0–1 level
+//   slide:   pitch change over the gate, in semitones
+//   vibrato: (depth: semitones, rate: Hz)
+//   volume:  0–1
+{
+    Shot: [
+        (wave: Square(duty: 0.25), freq: 1400, gate: 0.07, slide: -14,
+         env: (decay: 0.07, sustain: 0.0, release: 0.01), volume: 0.30),
+    ],
+    Explosion: [
+        (wave: Noise, freq: 3000, gate: 0.45, slide: -30,
+         env: (decay: 0.45, sustain: 0.0, release: 0.05), volume: 0.50),
+        (wave: Triangle, freq: 110, gate: 0.25, slide: -12,
+         env: (decay: 0.25, sustain: 0.0, release: 0.02), volume: 0.40),
+    ],
+    Hit: [
+        (wave: Square(duty: 0.5), freq: 220, gate: 0.12, slide: -7,
+         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.40),
+        (wave: Noise, freq: 6000, gate: 0.06,
+         env: (decay: 0.06, sustain: 0.0, release: 0.01), volume: 0.30),
+    ],
+    Pickup: [
+        (at: 0.00, wave: Square(duty: 0.125), freq: 988, gate: 0.05, volume: 0.30),   // B5
+        (at: 0.05, wave: Square(duty: 0.125), freq: 1319, gate: 0.05, volume: 0.30),  // E6
+        (at: 0.10, wave: Square(duty: 0.125), freq: 1661, gate: 0.08, volume: 0.30,
+         env: (release: 0.08)),                                                       // G#6
+    ],
+    ExtraLife: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 523, gate: 0.08, volume: 0.30),    // C5
+        (at: 0.09, wave: Square(duty: 0.25), freq: 659, gate: 0.08, volume: 0.30),    // E5
+        (at: 0.18, wave: Square(duty: 0.25), freq: 784, gate: 0.08, volume: 0.30),    // G5
+        (at: 0.27, wave: Square(duty: 0.25), freq: 1047, gate: 0.30, volume: 0.30,
+         vibrato: (depth: 0.25, rate: 9.0), env: (release: 0.15)),                     // C6
+        (at: 0.27, wave: Triangle, freq: 262, gate: 0.30, volume: 0.35,
+         env: (release: 0.15)),                                                       // C4
+    ],
+    MenuMove: [
+        (wave: Square(duty: 0.5), freq: 1760, gate: 0.025,
+         env: (release: 0.015), volume: 0.20),
+    ],
+    MenuSelect: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 1175, gate: 0.04, volume: 0.25),   // D6
+        (at: 0.05, wave: Square(duty: 0.25), freq: 1760, gate: 0.07, volume: 0.25,
+         env: (release: 0.05)),                                                       // A6
+    ],
+}

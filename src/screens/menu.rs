@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+use crate::audio::{PlaySfx, Sfx};
 use crate::font::{CELL_H, PixelText, text_at};
 use crate::input::{Button, Controls};
 
@@ -56,7 +57,7 @@ impl Menu {
     }
 }
 
-fn navigate(controls: Res<Controls>, mut menus: Query<&mut Menu>) {
+fn navigate(controls: Res<Controls>, mut menus: Query<&mut Menu>, mut sfx: MessageWriter<PlaySfx>) {
     for mut menu in &mut menus {
         if !menu.active || menu.items.is_empty() {
             continue;
@@ -64,9 +65,15 @@ fn navigate(controls: Res<Controls>, mut menus: Query<&mut Menu>) {
         let len = menu.items.len();
         if controls.just_pressed(Button::Down) {
             menu.selected = (menu.selected + 1) % len;
+            sfx.write(PlaySfx(Sfx::MenuMove));
         }
         if controls.just_pressed(Button::Up) {
             menu.selected = (menu.selected + len - 1) % len;
+            sfx.write(PlaySfx(Sfx::MenuMove));
+        }
+        // Each screen acts on the choice itself; the menu only beeps.
+        if controls.just_pressed(Button::A) || controls.just_pressed(Button::Start) {
+            sfx.write(PlaySfx(Sfx::MenuSelect));
         }
     }
 }

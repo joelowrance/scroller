@@ -16,6 +16,23 @@
 <body>
   <canvas id="game" tabindex="0"></canvas>
   <div id="loading">LOADING...</div>
+  <script>
+    // The game opens audio on the first input (src/audio). Escape and gamepads
+    // don't count as a gesture for the browser, so a context opened by one
+    // starts suspended: resume it on the next real gesture.
+    (() => {
+      const Ctx = window.AudioContext;
+      if (!Ctx) return;
+      const contexts = [];
+      window.AudioContext = class extends Ctx {
+        constructor(...args) { super(...args); contexts.push(this); }
+      };
+      const resume = () => contexts.forEach((c) => c.state === "suspended" && c.resume());
+      for (const e of ["pointerdown", "keydown", "touchend"]) {
+        document.addEventListener(e, resume, { capture: true });
+      }
+    })();
+  </script>
   <script type="module">
     import init from "./scroller.js";
     const canvas = document.getElementById("game");

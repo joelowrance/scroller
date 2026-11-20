@@ -1,6 +1,7 @@
 //! Small key/value persistence: JSON files on desktop, `localStorage` on the web.
 //!
-//! Used for the Save, the High Score Table and which Cabinets have been cleared.
+//! Used for the Save, the High Score Table, which Cabinets have been cleared
+//! and the sound settings.
 //! Failures are logged and otherwise ignored: losing a high score is better than
 //! crashing the game.
 
@@ -10,6 +11,7 @@ use serde::{Serialize, de::DeserializeOwned};
 pub const SAVE_KEY: &str = "save";
 pub const HIGH_SCORES_KEY: &str = "high_scores";
 pub const PROGRESS_KEY: &str = "progress";
+pub const AUDIO_KEY: &str = "audio";
 
 pub fn load<T: DeserializeOwned>(key: &str) -> Option<T> {
     let text = backend::read(key)?;

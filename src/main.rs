@@ -1,6 +1,7 @@
 // Bevy systems routinely take many parameters and nested query types.
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
+mod audio;
 mod cabinets;
 mod display;
 mod flow;
@@ -49,6 +50,7 @@ fn main() {
         kit::KitPlugin,
         cabinets::CabinetsPlugin,
         screens::ScreensPlugin,
+        audio::AudioPlugin,
     ));
 
     #[cfg(feature = "fps-log")]
