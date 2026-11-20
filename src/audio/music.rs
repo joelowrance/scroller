@@ -193,7 +193,7 @@ impl SongDef {
         for (at, tone) in &tones {
             tone.mix_into(&mut out, *at, self.looping);
         }
-        synth::clamp(&mut out);
+        synth::normalize(&mut out);
         Ok(out)
     }
 }

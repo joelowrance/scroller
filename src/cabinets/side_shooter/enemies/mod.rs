@@ -583,7 +583,10 @@ fn run_arcs(
         // Only a live arc touches anything: it hurts the Hero and stops shots.
         if live && !has_layer {
             commands.entity(entity).insert(Layer::Enemy);
-            sfx.write(PlaySfx(Sfx::ArcHum));
+            // Hum only where the player can see the gate.
+            if transform.translation.x < HALF_W {
+                sfx.write(PlaySfx(Sfx::ArcHum));
+            }
         } else if !live && has_layer {
             commands.entity(entity).remove::<Layer>();
         }

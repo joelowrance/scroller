@@ -144,6 +144,9 @@ pub fn song_for_screen(screen: Screen, card: Option<CardReason>) -> Option<Song>
     match screen {
         Screen::Title | Screen::PracticeSelect => Some(Song::Title),
         Screen::StageCard if card == Some(CardReason::StageCleared) => Some(Song::StageClear),
+        // A Cabinet's last Stage goes straight to the Transition; the sting
+        // opens it until each Transition has its own music.
+        Screen::CabinetTransition => Some(Song::StageClear),
         _ => None,
     }
 }
@@ -382,6 +385,20 @@ mod tests {
     }
 
     #[test]
+    fn no_rendered_buffer_clips() {
+        let bank = AudioBank::render().unwrap();
+        let buffers = bank
+            .sfx
+            .iter()
+            .map(|(id, s)| (format!("{id:?}"), s))
+            .chain(bank.songs.iter().map(|(id, (s, _))| (format!("{id:?}"), s)));
+        for (name, samples) in buffers {
+            let peak = samples.iter().fold(0.0f32, |m, s| m.max(s.abs()));
+            assert!(peak <= synth::MAX_PEAK, "{name} peaks at {peak}");
+        }
+    }
+
+    #[test]
     fn rendering_the_bank_is_deterministic() {
         let a = AudioBank::render().unwrap();
         let b = AudioBank::render().unwrap();
@@ -524,6 +541,13 @@ mod tests {
         app.insert_resource(CardReason::StageCleared);
         go(&mut app, Screen::StageCard);
         assert_eq!(wanted(&app), Some(Song::StageClear));
+        // A Cabinet's last Stage: the sting opens the Transition instead.
+        go(&mut app, Screen::Playing);
+        go(&mut app, Screen::CabinetTransition);
+        assert_eq!(wanted(&app), Some(Song::StageClear));
+        app.insert_resource(CardReason::AfterTransition);
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
     }
 
     fn life_app() -> App {

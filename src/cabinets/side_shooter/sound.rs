@@ -32,10 +32,25 @@ pub fn stage_song(stage: usize, seconds_left: f32) -> Song {
     }
 }
 
-/// Seconds until the scroll ends at the current speed.
+/// Seconds until the scroll ends, following the Stage's speed keys, so a
+/// speed change in the last stretch can't flip the song back and forth.
 fn seconds_left(run: &StageRun) -> f32 {
-    let left = (run.timeline.length - run.cursor.position).max(0.0);
-    left / run.speed().max(1.0)
+    let timeline = &run.timeline;
+    let end = timeline.length;
+    let mut at = run.cursor.position.min(end);
+    let mut seconds = 0.0;
+    while at < end {
+        // The next speed key after `at` ends this stretch.
+        let next = timeline
+            .speed
+            .iter()
+            .map(|k| k.from)
+            .filter(|&from| from > at)
+            .fold(end, f32::min);
+        seconds += (next - at) / timeline.speed_at(at).max(1.0);
+        at = next;
+    }
+    seconds
 }
 
 /// Keeps [`StageMusic`] on the right song. It runs every frame, so a rewind
@@ -140,15 +155,36 @@ mod tests {
     }
 
     #[test]
-    fn seconds_left_uses_the_current_speed() {
+    fn seconds_left_follows_the_speed_keys() {
         let timeline = StageTimeline::parse(
-            "(length: 1000.0, speed: [(from: 0.0, speed: 30.0), (from: 600.0, speed: 40.0)])",
+            "(length: 1000.0, speed: [(from: 0.0, speed: 30.0), (from: 600.0, speed: 40.0), \
+             (from: 900.0, speed: 20.0)])",
         )
         .unwrap();
         let mut run = StageRun::new(timeline);
-        run.cursor.position = 200.0;
-        assert_eq!(seconds_left(&run), 800.0 / 30.0);
+        run.cursor.position = 300.0;
+        assert_eq!(seconds_left(&run), 10.0 + 7.5 + 5.0);
         run.cursor.position = 800.0;
-        assert_eq!(seconds_left(&run), 5.0);
+        assert_eq!(seconds_left(&run), 2.5 + 5.0);
+        run.cursor.position = 1000.0;
+        assert_eq!(seconds_left(&run), 0.0);
+    }
+
+    #[test]
+    fn a_slowdown_near_the_end_does_not_undo_the_climb() {
+        // 40 px/s, then 10 px/s for the last 100 px: once 20 s are left the
+        // estimate only falls, so the song never flips back.
+        let timeline = StageTimeline::parse(
+            "(length: 1000.0, speed: [(from: 0.0, speed: 40.0), (from: 900.0, speed: 10.0)])",
+        )
+        .unwrap();
+        let mut run = StageRun::new(timeline);
+        let mut last = f32::INFINITY;
+        for step in 0..=100 {
+            run.cursor.position = step as f32 * 10.0;
+            let left = seconds_left(&run);
+            assert!(left <= last);
+            last = left;
+        }
     }
 }
