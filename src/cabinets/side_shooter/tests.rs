@@ -253,7 +253,7 @@ fn a_bombed_formation_drops_its_power_up() {
     let mut enemies = app.world_mut().query::<&super::enemies::Enemy>();
     assert_eq!(enemies.iter(app.world()).count(), 0, "all three bombed");
     let mut capsules = app.world_mut().query::<&crate::kit::Pickup>();
-    // The stand-in Stage drops its own capsules too; count only the drop.
+    // The Stage drops its own capsules too; count only the drop.
     let drops = capsules
         .iter(app.world())
         .filter(|p| p.kind == "power_up:D")

@@ -59,11 +59,10 @@ try {
   await shot("stage-card-new-run");
 
   await tap("Space"); // play 1-1
-  // Hold fire on the starting row until the first Power-up capsule (G) of
-  // the stand-in Stage drifts into the Wren: twin shots from here on.
+  // Hold fire on the starting row through Stage 1-1's first Skiff V.
   await page.keyboard.down("Space");
-  await wait(11_000);
-  await shot("wren-firing-with-power-up");
+  await wait(8_000);
+  await shot("wren-firing");
   await page.keyboard.up("Space");
   await tap("KeyP", 6); // developer key: +6000 points, beats the seeded table
   await tap("KeyK"); // developer key: lose a life

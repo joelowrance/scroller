@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Browser smoke test: builds the web version, serves it, drives a short Run in
 # headless Chromium and fails on any page error, console error or bad Save /
-# High Score state. Each run's screenshots go to a new folder,
+# High Score state, then plays both Cabinet 1 Stages unattended. Each run's screenshots go to a new folder,
 # target/smoke/<timestamp>/, and target/smoke/latest points at the newest.
 #
 #   scripts/smoke-web.sh                 build dist/, serve it locally, test it
@@ -39,3 +39,5 @@ fi
 
 echo "Smoke testing $url"
 node tests/web/smoke.mjs "$url" "$out"
+# Cabinet 1 must clear both Stages unattended (invincible Hero, sped up).
+node tests/web/stages.mjs "$url" "$out"

@@ -29,12 +29,12 @@ use bevy::prelude::*;
 use serde::Deserialize;
 
 use crate::audio::{PlaySfx, Sfx};
-use crate::cabinets::ScoreGained;
+use crate::cabinets::{ScoreGained, cabinet_is};
 use crate::display::{HALF_H, HALF_W};
-use crate::flow::{Screen, gameplay_running};
+use crate::flow::Screen;
 use crate::kit::{
     DespawnOffscreen, EnemyDestroyed, Health, Hero, Hitbox, Immune, KitSet, Layer, ScoreValue,
-    SpawnRequested, StageRestarted, StageRun, StageTimeline, projectile,
+    SpawnRequested, StageRestarted, StageRun, StageTimeline, projectile, stage_live,
 };
 use crate::run::Session;
 use crate::tuning::Tuning;
@@ -43,13 +43,16 @@ pub mod brain;
 pub mod formation;
 pub mod look;
 
+use super::stages::terrain::{self, Terrain};
 use brain::{Arc, Brain, Ctx, Out};
+
+/// How far past the right edge a Hook's path is checked against terrain.
+const HOOK_LOOKAHEAD: f32 = 120.0;
 use formation::{Formation, Member, POWER_UPS, Reward};
 
 const GALLERY_STAGE: &str = include_str!("../../../../assets/stages/1-gallery.ron");
 
-/// Cabinet 1's index in the Run.
-const CABINET: usize = 0;
+use super::CABINET;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Kind {
@@ -146,10 +149,6 @@ pub fn gallery_timeline(tuning: &Tuning) -> Option<StageTimeline> {
 
 fn on_screen(at: Vec2) -> bool {
     at.x.abs() <= HALF_W && at.y.abs() <= HALF_H
-}
-
-fn cabinet_active(session: Option<Res<Session>>) -> bool {
-    session.is_some_and(|s| s.cabinet == CABINET)
 }
 
 /// Where each member of a spawn starts and how it behaves.
@@ -319,10 +318,18 @@ fn spawn_requested(
     tuning: Res<Tuning>,
     session: Res<Session>,
     hero: Option<Single<&Transform, With<Hero>>>,
+    stage: Res<StageRun>,
+    terrain: Option<Res<Terrain>>,
     mut requests: MessageReader<SpawnRequested>,
     mut sfx: MessageWriter<PlaySfx>,
 ) {
     let hero = hero.map(|h| h.translation.truncate());
+    // The tightest corridor from the left edge to a little past the right:
+    // where a Hook will fly.
+    let corridor = terrain.filter(|t| !t.is_empty()).map(|t| {
+        let left = terrain::scroll_at(-HALF_W, stage.cursor.position);
+        t.corridor(left, left + 2.0 * HALF_W + HOOK_LOOKAHEAD)
+    });
     let stage2 = session.stage == 1;
     let t = &tuning.side_shooter.enemies;
     for request in requests.read() {
@@ -351,7 +358,15 @@ fn spawn_requested(
                 request.pos.x
             );
         }
-        let members = layout(kind, request.pos, &params, hero, t);
+        let mut members = layout(kind, request.pos, &params, hero, t);
+        if let Some((floor, ceiling)) = corridor {
+            for (at, brain) in &mut members {
+                if let Brain::Hook(hook) = brain {
+                    *hook = hook.clone().within(floor, ceiling, t);
+                    at.y = hook.row;
+                }
+            }
+        }
         let mut spawned = Vec::new();
         for (i, (at, brain)) in members.into_iter().enumerate() {
             let flipped =
@@ -395,7 +410,7 @@ fn spawn_requested(
                 DespawnOnExit(Screen::Playing),
             ));
             for member in spawned {
-                commands.entity(member).insert(Member);
+                commands.entity(member).try_insert(Member);
             }
         }
     }
@@ -477,9 +492,9 @@ fn think(
         if let Brain::Clam(clam) = &brain.0 {
             let open = clam.is_open(&tt.enemies);
             if open && immune {
-                commands.entity(entity).remove::<Immune>();
+                commands.entity(entity).try_remove::<Immune>();
             } else if !open && !immune {
-                commands.entity(entity).insert(Immune);
+                commands.entity(entity).try_insert(Immune);
             }
         }
         let (offset_x, offset_y) = tt.enemies.ferry.launch_offset;
@@ -582,13 +597,13 @@ fn run_arcs(
         visibility.set_if_neq(vis);
         // Only a live arc touches anything: it hurts the Hero and stops shots.
         if live && !has_layer {
-            commands.entity(entity).insert(Layer::Enemy);
+            commands.entity(entity).try_insert(Layer::Enemy);
             // Hum only where the player can see the gate.
             if transform.translation.x < HALF_W {
                 sfx.write(PlaySfx(Sfx::ArcHum));
             }
         } else if !live && has_layer {
-            commands.entity(entity).remove::<Layer>();
+            commands.entity(entity).try_remove::<Layer>();
         }
     }
 }
@@ -689,7 +704,7 @@ fn track_formations(
             }
             None => {}
         }
-        commands.entity(entity).despawn();
+        commands.entity(entity).try_despawn();
     }
 }
 
@@ -716,10 +731,8 @@ impl Plugin for EnemiesPlugin {
                     .after(KitSet::Resolve)
                     .before(KitSet::Effects),
             )
-                .run_if(in_state(Screen::Playing))
-                .run_if(gameplay_running)
-                .run_if(resource_exists::<StageRun>)
-                .run_if(cabinet_active),
+                .run_if(cabinet_is(CABINET))
+                .run_if(stage_live),
         );
     }
 }

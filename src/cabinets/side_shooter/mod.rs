@@ -2,7 +2,8 @@
 //! Design: `docs/cabinets/1-side-shooter.md`.
 //!
 //! This module owns the Hero's ship (the Wren), its Power-ups and the Stage
-//! set-up. Enemies and Formations live in `enemies/` (#8).
+//! set-up. Enemies and Formations live in `enemies/` (#8),
+//! the Stages, backgrounds and terrain in `stages/` (#9).
 
 use bevy::prelude::*;
 
@@ -18,6 +19,7 @@ pub mod hero;
 pub mod palette;
 pub mod power_ups;
 pub mod sound;
+pub mod stages;
 pub mod tuning;
 
 use power_ups::{PowerUp, PowerUps};
@@ -25,15 +27,10 @@ use power_ups::{PowerUp, PowerUps};
 /// This Cabinet's place in the Run.
 pub const CABINET: usize = 0;
 
-/// Stand-in Stage used for both Stages until #9 writes `1-1.ron` and
-/// `1-2.ron`.
-const STAND_IN_STAGE: &str = include_str!("../../../assets/stages/side-shooter-stand-in.ron");
-
-/// The debug enemy gallery when it is switched on, else the stand-in Stage.
-fn stage_timeline(tuning: &Tuning) -> StageTimeline {
-    enemies::gallery_timeline(tuning).unwrap_or_else(|| {
-        StageTimeline::parse(STAND_IN_STAGE).expect("Cabinet 1 Stage file must be valid")
-    })
+/// The debug enemy gallery when it is switched on, else the Stage's own
+/// timeline (`assets/stages/1-1.ron` or `1-2.ron`).
+fn stage_timeline(tuning: &Tuning, session: &Session) -> StageTimeline {
+    enemies::gallery_timeline(tuning).unwrap_or_else(|| stages::timeline(session.stage))
 }
 
 fn spawn_stage(
@@ -44,7 +41,7 @@ fn spawn_stage(
 ) {
     let t = &tuning.side_shooter;
     let power = PowerUps::from_session(&session.power_ups, t);
-    commands.insert_resource(StageRun::new(stage_timeline(&tuning)));
+    commands.insert_resource(StageRun::new(stage_timeline(&tuning, &session)));
     hero::spawn_wren(&mut commands, &sprites, t, &power);
     commands.insert_resource(power);
 }
@@ -91,50 +88,54 @@ pub struct SideShooterPlugin;
 
 impl Plugin for SideShooterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((enemies::EnemiesPlugin, sound::SoundPlugin))
-            .init_resource::<WrenLastSeen>()
-            .add_systems(
-                PostUpdate,
-                remember_wren
-                    .run_if(in_state(Screen::Playing))
-                    .run_if(cabinet_is(CABINET)),
-            )
-            .add_systems(
-                OnEnter(Screen::Playing),
-                spawn_stage.run_if(cabinet_is(CABINET)),
-            )
-            .add_systems(
-                Update,
+        app.add_plugins((
+            enemies::EnemiesPlugin,
+            sound::SoundPlugin,
+            stages::StagesPlugin,
+        ))
+        .init_resource::<WrenLastSeen>()
+        .add_systems(
+            PostUpdate,
+            remember_wren
+                .run_if(in_state(Screen::Playing))
+                .run_if(cabinet_is(CABINET)),
+        )
+        .add_systems(
+            OnEnter(Screen::Playing),
+            spawn_stage.run_if(cabinet_is(CABINET)),
+        )
+        .add_systems(
+            Update,
+            (
+                spawn_requested.after(KitSet::Timeline),
                 (
-                    spawn_requested.after(KitSet::Timeline),
-                    (
-                        hero::fly_in,
-                        hero::steer,
-                        hero::fire,
-                        hero::bomb,
-                        hero::sync_equipment,
-                        power_ups::move_capsules,
-                    )
-                        .chain()
-                        .after(spawn_requested)
-                        .before(KitSet::Move),
-                    (
-                        hero::grow_undertow,
-                        power_ups::collect_capsules,
-                        hero::ward_absorbed,
-                        hero::after_restart,
-                    )
-                        .chain()
-                        .after(KitSet::Resolve)
-                        .before(KitSet::Effects),
-                    (hero::drones_blink, hero::show_bombs, save_power_ups).after(KitSet::Effects),
+                    hero::fly_in,
+                    hero::steer,
+                    hero::fire,
+                    hero::bomb,
+                    hero::sync_equipment,
+                    power_ups::move_capsules,
                 )
-                    .run_if(cabinet_is(CABINET))
-                    .run_if(stage_live),
+                    .chain()
+                    .after(spawn_requested)
+                    .before(KitSet::Move),
+                (
+                    hero::grow_undertow,
+                    power_ups::collect_capsules,
+                    hero::ward_absorbed,
+                    hero::after_restart,
+                )
+                    .chain()
+                    .after(KitSet::Resolve)
+                    .before(KitSet::Effects),
+                (hero::drones_blink, hero::show_bombs, save_power_ups).after(KitSet::Effects),
             )
-            .add_systems(OnExit(Screen::Playing), |mut commands: Commands| {
-                commands.remove_resource::<PowerUps>();
-            });
+                .run_if(cabinet_is(CABINET))
+                .run_if(stage_live),
+        )
+        .add_systems(OnExit(Screen::Playing), |mut commands: Commands| {
+            commands.remove_resource::<PowerUps>();
+        });
     }
 }
 

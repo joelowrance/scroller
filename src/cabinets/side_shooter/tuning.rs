@@ -20,6 +20,7 @@ pub struct SideShooterTuning {
     pub shot: ShotTuning,
     pub bomb: BombTuning,
     pub power_up: PowerUpTuning,
+    pub terrain: TerrainTuning,
     pub score: ScoreTuning,
 }
 
@@ -34,6 +35,7 @@ impl Default for SideShooterTuning {
             shot: ShotTuning::default(),
             bomb: BombTuning::default(),
             power_up: PowerUpTuning::default(),
+            terrain: TerrainTuning::default(),
             score: ScoreTuning::default(),
         }
     }
@@ -202,6 +204,10 @@ pub struct ScoreTuning {
     pub formation_bonus_per_enemy: u64,
     pub maxed_power_up: u64,
     pub bomb_cancel: u64,
+    /// Paid when a Stage's scroll ends.
+    pub stage_clear: u64,
+    /// Paid on top when the Stage was cleared without losing a life.
+    pub no_miss: u64,
 }
 
 impl Default for ScoreTuning {
@@ -210,6 +216,8 @@ impl Default for ScoreTuning {
             formation_bonus_per_enemy: 100,
             maxed_power_up: 1000,
             bomb_cancel: 10,
+            stage_clear: 3000,
+            no_miss: 5000,
         }
     }
 }
@@ -244,6 +252,28 @@ macro_rules! tuning_struct {
             }
         }
     };
+}
+
+/// Stage 2's terrain; the Stage files must keep to these (a test checks).
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
+pub struct TerrainTuning {
+    /// Terrain heights snap to this grid.
+    pub tile_size: f32,
+    /// The narrowest a corridor may be.
+    pub min_gap: f32,
+    /// The narrowest a corridor may be where Hooks fly.
+    pub hook_min_gap: f32,
+}
+
+impl Default for TerrainTuning {
+    fn default() -> Self {
+        Self {
+            tile_size: 8.0,
+            min_gap: 72.0,
+            hook_min_gap: 120.0,
+        }
+    }
 }
 
 tuning_struct!(Skiff {

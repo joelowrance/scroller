@@ -241,8 +241,11 @@ pub struct FontPlugin;
 impl Plugin for FontPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup_font)
-            .add_systems(PostUpdate, rebuild_text)
-            .add_systems(Update, blink);
+            // In Update, not PostUpdate: the glyph sprites it despawns and
+            // spawns must be settled before the sprite renderer adds meshes to
+            // new sprites in PostUpdate, or a glyph replaced on two frames in a
+            // row (a fast-changing score) gets a mesh after it was despawned.
+            .add_systems(Update, (blink, rebuild_text));
     }
 }
 

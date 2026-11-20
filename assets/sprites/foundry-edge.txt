@@ -1,0 +1,13 @@
+#! background
+# The surface tile of the Stage 1-2 terrain: a Rust lip over riveted Slate.
+# Drawn for the floor; flipped for the ceiling. A background sprite: roles
+# 1, 2, 3 and 8 only. Format in README.md.
+
+88888888
+28282828
+22222222
+21222212
+22222222
+22222222
+22122222
+22222222
