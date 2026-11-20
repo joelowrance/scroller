@@ -67,10 +67,9 @@ used. The verdict line is the approval.
 
 **Merging (project manager)**
 
-Merge with squash only when the latest verdict is APPROVED and the PR's CI
-check is green, rebasing first if `main` moved. Until the PR check from #2
-exists, the gate is the developer's and the reviewer's local runs of the
-definition of done. Then confirm the deploy run on `main` succeeded. The live game at
+Merge with squash only when the latest verdict is APPROVED and the PR's
+required `check` status is green, rebasing first if `main` moved. Then confirm
+the deploy run on `main` succeeded. The live game at
 http://joelowrance.com/scroller/ shows the result.
 
 ## Definition of done
@@ -80,9 +79,11 @@ these pass:
 
 - `cargo test`
 - `cargo clippy --all-targets -- -D warnings`
-- `scripts/smoke-web.sh` (once #1 exists), with its screenshots looked at,
-  not just generated
-- CI is green on the PR, and the deploy run on `main` is green after merge
+- `scripts/smoke-web.sh`, with its screenshots looked at, not just generated
+- CI is green on the PR, and the deploy run on `main` is green after merge.
+  CI runs two jobs: `check` (tests, clippy, web build; required) and `smoke`
+  (the browser smoke test on that build; advisory, with its screenshots
+  attached to the run as the `smoke-screenshots` artifact)
 
 ## Deciding alone
 
