@@ -323,7 +323,9 @@ impl Lamplighter {
             LampPhase::Enter => {
                 // Even braking over the last `brake_distance` px.
                 let left = pos.x - l.stop_x;
-                let brake = (left / l.brake_distance.max(1.0)).sqrt().clamp(0.15, 1.0);
+                let brake = (left / l.brake_distance.max(1.0))
+                    .sqrt()
+                    .clamp(l.brake_floor.clamp(0.01, 1.0), 1.0);
                 pos.x -= l.speed * brake * ctx.dt;
                 if pos.x <= l.stop_x {
                     pos.x = l.stop_x;
@@ -572,8 +574,9 @@ impl Barnacle {
         self.timer -= ctx.dt;
         if self.timer <= 0.0 {
             self.timer += b.fire_interval.max(0.1);
-            out.shots
-                .push((hero - *pos).normalize_or(Vec2::NEG_X) * b.shot_speed);
+            // Along the barrel, not straight at the Hero: a Hero that moves
+            // fast enough outruns the barrel's turn rate.
+            out.shots.push(Vec2::from_angle(self.barrel) * b.shot_speed);
         }
         out
     }
@@ -917,6 +920,24 @@ mod tests {
         let outs = run(&mut b, &mut pos, passed, 5.0);
         assert_eq!(shots(&outs), 0);
         assert!(!b.telegraph(&t));
+    }
+
+    #[test]
+    fn barnacle_fires_along_its_lagging_barrel() {
+        let mut t = types();
+        t.barnacle.turn_rate = 10.0;
+        let mut b = Barnacle::new(false, &t);
+        let mut pos = Vec2::new(150.0, -100.0);
+        // The Hero is far to the left; the barrel starts pointing straight up.
+        let c = ctx(Some(Vec2::new(-150.0, -90.0)));
+        let frames = (t.barnacle.fire_interval / DT).ceil() as usize + 1;
+        let shot = (0..frames)
+            .find_map(|_| b.step(&mut pos, &c, &t).shots.first().copied())
+            .expect("fires once the interval is up");
+        // 10°/s for 1.6 s turns the barrel only ~16° from straight up.
+        let degrees = shot.to_angle().to_degrees();
+        assert!(close(degrees, 90.0 + 16.0, 1.0), "shot at {degrees}°");
+        assert!(close(shot.length(), t.barnacle.shot_speed, 0.01));
     }
 
     #[test]

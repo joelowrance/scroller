@@ -13,7 +13,6 @@ pub mod palette {
     use bevy::color::Color;
 
     pub const SEA: Color = Color::srgb(0.180, 0.478, 0.549); // #2E7A8C
-    pub const SPARK: Color = Color::srgb(0.302, 0.851, 1.0); // #4DD9FF
     pub const FOAM: Color = Color::srgb(0.957, 0.957, 0.941); // #F4F4F0
     pub const SIGNAL: Color = Color::srgb(1.0, 0.235, 0.471); // #FF3C78
     pub const RUST: Color = Color::srgb(0.541, 0.227, 0.133); // #8A3A22
@@ -42,6 +41,21 @@ pub fn size(kind: Kind) -> Vec2 {
 /// shows only while the shell is open).
 #[derive(Component)]
 pub struct Core;
+
+/// A Barnacle's barrel; [`aim_barrel`] turns it each frame.
+#[derive(Component)]
+pub struct Barrel;
+
+const BARREL_SIZE: Vec2 = Vec2::new(7.0, 2.0);
+
+/// Places a barrel so it sticks out from the dome's centre at `angle`
+/// (radians).
+pub fn aim_barrel(transform: &mut Transform, angle: f32) {
+    let reach = Vec2::from_angle(angle) * BARREL_SIZE.x / 2.0;
+    transform.translation.x = reach.x;
+    transform.translation.y = reach.y;
+    transform.rotation = Quat::from_rotation_z(angle);
+}
 
 /// Draws an enemy of `kind` on `entity`: the hull as its own sprite (so
 /// kit hit flashes and explosions use the hull colour), with the outline
@@ -81,6 +95,12 @@ pub fn body(entity: &mut EntityCommands, kind: Kind, flipped: bool) {
                     Visibility::Inherited
                 },
             ));
+            if kind == Kind::Barnacle {
+                // Starts pointing away from the wall it sits on.
+                let mut transform = Transform::from_xyz(0.0, 0.0, 0.05);
+                aim_barrel(&mut transform, flip * std::f32::consts::FRAC_PI_2);
+                c.spawn((Barrel, Sprite::from_color(FOAM, BARREL_SIZE), transform));
+            }
         });
 }
 
@@ -103,11 +123,12 @@ pub fn bullet_core() -> impl Bundle {
 
 pub const BULLET: Color = SIGNAL;
 
-/// The arc between Arc Gate pylons: Spark while live, a faint Foam
-/// flicker while it warns, otherwise nothing.
+/// The arc between Arc Gate pylons: solid Foam while live, a faint Foam
+/// flicker while it warns, otherwise nothing. Foam, not Spark: Spark is the
+/// Hero's colour, and backgrounds never use Foam, so the arc reads as enemy.
 pub fn arc_look(live: bool, warning: bool, clock: f32) -> (Color, Visibility) {
     if live {
-        (SPARK, Visibility::Inherited)
+        (FOAM, Visibility::Inherited)
     } else if warning && ((clock * 20.0) as u32).is_multiple_of(2) {
         (FOAM.with_alpha(0.6), Visibility::Inherited)
     } else {
