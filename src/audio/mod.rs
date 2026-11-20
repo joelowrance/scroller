@@ -5,8 +5,9 @@
 //! buffers once at start-up.
 //!
 //! - Play a sound effect: write a [`PlaySfx`] message.
-//! - Music follows the screen (see [`song_for_screen`]); a Cabinet can pick
-//!   its own by setting [`Music`] after its screen opens.
+//! - Music follows the screen (see [`song_for_screen`]). While a Stage is
+//!   playing, the song is [`StageMusic`], which the Cabinet sets (for example
+//!   in `OnEnter(Screen::Playing)`); it is cleared when the Stage ends.
 //! - **M** mutes. The master volume and mute are stored with the high scores.
 //! - Music and gameplay sounds stop while a Stage is paused.
 //! - On the web, nothing plays until the first input (browser autoplay rules).
@@ -74,11 +75,17 @@ impl Song {
 #[derive(Message, Clone, Copy, Debug)]
 pub struct PlaySfx(pub Sfx);
 
-/// The song that should be playing, or silence.
+/// The song for the current Stage, set by its Cabinet. It is used while the
+/// screen is [`Screen::Playing`] and cleared when the Stage ends.
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Music(pub Option<Song>);
+pub struct StageMusic(pub Option<Song>);
 
-/// The song each screen starts with.
+/// The song that should be playing now, worked out every frame by
+/// [`choose_music`] so no schedule ordering can overwrite a Cabinet's choice.
+#[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
+struct WantedMusic(Option<Song>);
+
+/// The song each screen outside a Stage plays.
 pub fn song_for_screen(screen: Screen) -> Option<Song> {
     match screen {
         Screen::Title | Screen::PracticeSelect => Some(Song::Title),
@@ -186,12 +193,24 @@ fn apply_pause(paused: Res<Paused>, screen: Res<State<Screen>>, output: Res<Outp
         .set_paused(paused.0 && *screen.get() == Screen::Playing);
 }
 
-fn music_follows_screen(screen: Res<State<Screen>>, mut music: ResMut<Music>) {
-    music.0 = song_for_screen(*screen.get());
+fn choose_music(
+    screen: Res<State<Screen>>,
+    stage: Res<StageMusic>,
+    mut wanted: ResMut<WantedMusic>,
+) {
+    let song = match screen.get() {
+        Screen::Playing => stage.0,
+        other => song_for_screen(*other),
+    };
+    wanted.set_if_neq(WantedMusic(song));
+}
+
+fn clear_stage_music(mut stage: ResMut<StageMusic>) {
+    stage.0 = None;
 }
 
 fn play_music(
-    music: Res<Music>,
+    music: Res<WantedMusic>,
     bank: Res<AudioBank>,
     output: Res<Output>,
     mut now: ResMut<NowPlaying>,
@@ -228,9 +247,11 @@ impl Plugin for AudioPlugin {
         app.insert_resource(bank)
             .insert_resource(settings)
             .init_resource::<Output>()
-            .init_resource::<Music>()
+            .init_resource::<StageMusic>()
+            .init_resource::<WantedMusic>()
             .init_resource::<NowPlaying>()
             .add_message::<PlaySfx>()
+            .add_systems(OnExit(Screen::Playing), clear_stage_music)
             .add_systems(
                 Update,
                 (
@@ -238,7 +259,7 @@ impl Plugin for AudioPlugin {
                     toggle_mute,
                     apply_settings.run_if(resource_changed::<AudioSettings>),
                     apply_pause,
-                    music_follows_screen.run_if(state_changed::<Screen>),
+                    choose_music,
                     play_music,
                     play_sfx,
                 )
@@ -324,6 +345,66 @@ mod tests {
             out.extend(((s.clamp(-1.0, 1.0) * i16::MAX as f32) as i16).to_le_bytes());
         }
         out
+    }
+
+    /// An app with just the screens and the music choice.
+    fn music_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(bevy::state::app::StatesPlugin)
+            .init_state::<Screen>()
+            .init_resource::<StageMusic>()
+            .init_resource::<WantedMusic>()
+            .add_systems(OnExit(Screen::Playing), clear_stage_music)
+            .add_systems(Update, choose_music);
+        app
+    }
+
+    fn wanted(app: &App) -> Option<Song> {
+        app.world().resource::<WantedMusic>().0
+    }
+
+    fn go(app: &mut App, screen: Screen) {
+        app.world_mut()
+            .resource_mut::<NextState<Screen>>()
+            .set(screen);
+        app.update();
+    }
+
+    #[test]
+    fn music_follows_the_screen() {
+        let mut app = music_app();
+        app.update();
+        assert_eq!(wanted(&app), Some(Song::Title));
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
+        go(&mut app, Screen::Playing);
+        assert_eq!(wanted(&app), None);
+    }
+
+    #[test]
+    fn a_cabinet_sets_stage_music_on_enter() {
+        let mut app = music_app();
+        app.add_systems(OnEnter(Screen::Playing), |mut stage: ResMut<StageMusic>| {
+            stage.0 = Some(Song::Title)
+        });
+        app.update();
+        go(&mut app, Screen::StageCard);
+        go(&mut app, Screen::Playing);
+        assert_eq!(wanted(&app), Some(Song::Title));
+        // It survives later frames and is cleared when the Stage ends.
+        app.update();
+        assert_eq!(wanted(&app), Some(Song::Title));
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
+        assert_eq!(app.world().resource::<StageMusic>().0, None);
+    }
+
+    #[test]
+    fn only_menu_sounds_play_over_the_pause_menu() {
+        for sfx in Sfx::ALL {
+            let menu = matches!(sfx, Sfx::MenuMove | Sfx::MenuSelect);
+            assert_eq!(sfx.pausable(), !menu, "{sfx:?}");
+        }
     }
 
     #[test]

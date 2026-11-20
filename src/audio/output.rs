@@ -102,7 +102,8 @@ enum Device {
     #[default]
     Closed,
     Open(MixerDeviceSink),
-    /// No device (e.g. a headless machine): play nothing, quietly.
+    /// No device (e.g. a headless machine): play nothing, quietly. This is
+    /// not retried, so a device plugged in later needs a restart.
     Missing,
 }
 
