@@ -57,5 +57,5 @@ The self-running title loop shown when nobody is playing, including the High Sco
 _Avoid_: Demo, idle screen
 
 **Save**:
-The record of an unfinished Run, written each time a Stage is cleared and used up when that Run is resumed.
+The record of an unfinished Run, written each time a Stage is cleared and used up as soon as the next Stage begins; it only exists between Stages.
 _Avoid_: Checkpoint, savegame, suspend

@@ -1,0 +1,25 @@
+// Gameplay numbers for Scroller. On desktop, edits are picked up while the
+// game is running. The web build uses the values committed here.
+(
+    // Lives: start with 3, extra life at 20,000 and every 50,000 after, max 5.
+    starting_lives: 3,
+    max_lives: 5,
+    first_extra_life: 20000,
+    extra_life_every: 50000,
+
+    // Seconds before Attract Mode flips between the title and High Score Table.
+    attract_panel_seconds: 8.0,
+
+    // Length of each Cabinet Transition (placeholder until the real ones exist).
+    transition_seconds: 3.0,
+
+    // Developer keys: K loses a life, P adds 1000 points, C clears the Stage.
+    debug_keys: true,
+
+    // The stand-in Cabinet used until the real Cabinets are built.
+    placeholder: (
+        stage_seconds: 20.0,
+        hero_speed: 90.0,
+        scroll_speed: 40.0,
+    ),
+)
