@@ -109,13 +109,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
+      # Installs the system libraries; the browser download is skipped on a cache hit.
       - name: Install Chromium
-        if: steps.browser-cache.outputs.cache-hit != 'true'
         run: npx --prefix tests/web playwright install --with-deps chromium
-
-      - name: Install Chromium's system libraries
-        if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: npx --prefix tests/web playwright install-deps chromium
 
       - uses: actions/download-artifact@v8
         with:
