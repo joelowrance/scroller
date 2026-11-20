@@ -15,7 +15,9 @@ The domain language is defined in [GLOSSARY.md](GLOSSARY.md).
 
 **Status:** the framework is in place (screens, Run rules, Save, High Score
 Table, Practice, pause, tuning). Every Cabinet is currently a stand-in that
-scrolls and clears on a timer. The real Cabinets are next.
+scrolls and clears on a timer. The real Cabinets are next: see
+[ROADMAP.md](ROADMAP.md) and the [issues](https://github.com/joelowrance/scroller/issues).
+The settled design is in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Play it
 
