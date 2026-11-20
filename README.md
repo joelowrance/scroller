@@ -59,6 +59,29 @@ cargo test             # unit tests for the Run rules, Save, scores and input
 The web build needs `rustup target add wasm32-unknown-unknown` and a
 `wasm-bindgen-cli` matching the `wasm-bindgen` version in `Cargo.lock`.
 
+## Browser smoke test
+
+`scripts/smoke-web.sh` builds the web version, serves it locally and drives a
+short Run in headless Chromium. It fails on any page error, console error, or
+wrong Save / High Score Table state in `localStorage`. Each run saves a
+screenshot of every screen in a new `target/smoke/<timestamp>/` folder;
+`target/smoke/latest` links to the newest.
+
+One-time setup (needs Node.js 20 or newer):
+
+```sh
+npm ci --prefix tests/web
+npx --prefix tests/web playwright install --with-deps chromium  # --with-deps needs sudo; drop it if the libraries are present
+```
+
+Then:
+
+```sh
+./scripts/smoke-web.sh                                  # build, serve and test
+SMOKE_SKIP_BUILD=1 ./scripts/smoke-web.sh               # test the existing dist/
+./scripts/smoke-web.sh http://joelowrance.com/scroller/ # test a deployed site
+```
+
 ## Where data is kept
 
 The Save, High Score Table and Practice unlocks are stored as JSON files in

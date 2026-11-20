@@ -1,0 +1,9 @@
+{
+  "name": "scroller-web-smoke",
+  "private": true,
+  "description": "Headless-browser smoke test for the web build. Run it with scripts/smoke-web.sh.",
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.65.1"
+  }
+}
