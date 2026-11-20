@@ -1,4 +1,4 @@
-//! How enemies look. Until the sprite pipeline (#4) lands they are plain
+//! How enemies look. Until they get sprite files they are plain
 //! shapes in the Cabinet palette: a hull with a 1 px Foam outline and a
 //! Signal core. Swap [`body`] for real sprites later; nothing else draws
 //! enemies.
@@ -7,15 +7,10 @@ use bevy::prelude::*;
 
 use super::Kind;
 
-/// Cabinet 1 palette (docs/cabinets/1-side-shooter.md). Only the colours
-/// enemies use are here; the sprite pipeline will own the full palette.
+/// The Cabinet 1 colours enemies use. The palette is defined once, in
+/// `sprites::palette`.
 pub mod palette {
-    use bevy::color::Color;
-
-    pub const SEA: Color = Color::srgb(0.180, 0.478, 0.549); // #2E7A8C
-    pub const FOAM: Color = Color::srgb(0.957, 0.957, 0.941); // #F4F4F0
-    pub const SIGNAL: Color = Color::srgb(1.0, 0.235, 0.471); // #FF3C78
-    pub const RUST: Color = Color::srgb(0.541, 0.227, 0.133); // #8A3A22
+    pub use crate::cabinets::side_shooter::palette::{FOAM, RUST, SEA, SIGNAL};
 }
 
 use palette::*;

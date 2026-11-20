@@ -19,9 +19,12 @@ use crate::kit::{
     Damage, Explode, Hero, HitStop, Hitbox, Hurt, Invulnerable, Layer, Shield, ShieldAbsorbed,
     StageRestarted, TerrainHitbox, projectile,
 };
+use crate::sprites::{SpriteAnimation, Sprites};
 use crate::tuning::Tuning;
 
 pub const WREN_SIZE: Vec2 = Vec2::new(16.0, 10.0);
+/// Seconds per frame of the Wren's engine flicker (15 changes a second).
+const ENGINE_FLICKER_SECONDS: f32 = 1.0 / 15.0;
 const DRONE_SIZE: Vec2 = Vec2::splat(8.0);
 const RING_DOTS: usize = 64;
 
@@ -48,9 +51,6 @@ pub(super) struct Drone(u32);
 
 #[derive(Component)]
 pub(super) struct WardGlow;
-
-#[derive(Component)]
-pub(super) struct EngineFlame;
 
 /// The Undertow: a ring of force growing out from where B was pressed. It
 /// only touches what its edge passes over, so bullets fired into the area
@@ -139,23 +139,13 @@ pub fn clamp_to_play_area(at: Vec2, t: &SideShooterTuning) -> Vec2 {
     )
 }
 
-/// The Wren's look: a Foam body, Spark canopy and Ember engine.
-/// Swap this for the sprite from #4 when it lands.
-fn wren_visual() -> impl Bundle {
+/// The Wren's look: `assets/sprites/hero.txt` in Cabinet 1's palette (Foam
+/// body, Spark canopy), its two frames flickering the Ember engine.
+fn wren_visual(sprites: &Sprites) -> impl Bundle {
     (
-        Sprite::from_color(palette::FOAM, WREN_SIZE),
-        children![
-            (
-                Sprite::from_color(palette::SPARK, Vec2::new(5.0, 3.0)),
-                Transform::from_xyz(2.0, 1.0, 0.1),
-            ),
-            (
-                Sprite::from_color(palette::EMBER, Vec2::new(3.0, 4.0)),
-                Transform::from_xyz(-WREN_SIZE.x / 2.0 - 1.0, 0.0, 0.1),
-                EngineFlame,
-            ),
-            (ward_visual(), Visibility::Hidden, WardGlow),
-        ],
+        sprites.sprite("hero", 0),
+        SpriteAnimation::looping([0, 1], ENGINE_FLICKER_SECONDS),
+        children![(ward_visual(), Visibility::Hidden, WardGlow)],
     )
 }
 
@@ -220,12 +210,17 @@ fn entry_invulnerability(t: &SideShooterTuning) -> f32 {
     t.hero.entry_seconds + t.hero.respawn_invulnerable_seconds
 }
 
-pub(super) fn spawn_wren(commands: &mut Commands, t: &SideShooterTuning, power: &PowerUps) {
+pub(super) fn spawn_wren(
+    commands: &mut Commands,
+    sprites: &Sprites,
+    t: &SideShooterTuning,
+    power: &PowerUps,
+) {
     let entry = entry_for(t);
     let hitbox = vec2(t.hero.hitbox);
     let terrain = vec2(t.hero.terrain_hitbox);
     commands.spawn((
-        wren_visual(),
+        wren_visual(sprites),
         Transform::from_translation(entry.from.extend(5.0)),
         (Hero, Wren, Layer::Hero),
         Hitbox::new(hitbox.x, hitbox.y),
@@ -388,13 +383,6 @@ pub(super) fn drones_blink(
 ) {
     for mut visibility in &mut drones {
         visibility.set_if_neq(**wren);
-    }
-}
-
-pub(super) fn flicker_engine(time: Res<Time>, mut flames: Query<&mut Sprite, With<EngineFlame>>) {
-    let on = ((time.elapsed_secs() * 15.0) as u32).is_multiple_of(2);
-    for mut sprite in &mut flames {
-        sprite.custom_size = Some(Vec2::new(if on { 3.0 } else { 2.0 }, 4.0));
     }
 }
 

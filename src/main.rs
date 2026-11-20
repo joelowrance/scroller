@@ -11,6 +11,7 @@ mod input;
 mod kit;
 mod run;
 mod screens;
+mod sprites;
 mod storage;
 mod tuning;
 
@@ -45,6 +46,7 @@ fn main() {
         tuning::TuningPlugin,
         display::DisplayPlugin,
         font::FontPlugin,
+        sprites::SpritesPlugin,
         input::InputPlugin,
         flow::FlowPlugin,
         kit::KitPlugin,

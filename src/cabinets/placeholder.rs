@@ -4,6 +4,8 @@
 //! (a square) moves and fires with A, drones fly in and gunners shoot back.
 //! It scrolls in the Cabinet's direction and clears when the scroll ends.
 
+use std::f32::consts::FRAC_PI_2;
+
 use bevy::prelude::*;
 
 use super::{CABINETS, Scroll};
@@ -15,6 +17,7 @@ use crate::kit::{
     SpawnRequested, StageRun, StageTimeline, Velocity, projectile, stage_live,
 };
 use crate::run::Session;
+use crate::sprites::{SpriteAnimation, Sprites};
 use crate::tuning::Tuning;
 
 const HERO_SIZE: f32 = 8.0;
@@ -57,7 +60,7 @@ fn stage_timeline(scroll: Scroll) -> StageTimeline {
     StageTimeline::parse(text).expect("placeholder Stage file must be valid")
 }
 
-fn spawn_stage(mut commands: Commands, session: Res<Session>) {
+fn spawn_stage(mut commands: Commands, session: Res<Session>, sprites: Res<Sprites>) {
     let cabinet = &CABINETS[session.cabinet];
     let stage = StageRun::new(stage_timeline(cabinet.scroll));
     let start = stage.start_point().hero_pos();
@@ -67,22 +70,28 @@ fn spawn_stage(mut commands: Commands, session: Res<Session>) {
         let depth = (i % 3) as f32 + 1.0;
         let along = (i as f32 * 37.0) % (HALF_W * 2.0) - HALF_W;
         let across = (i as f32 * 53.0) % (HALF_H * 2.0) - HALF_H;
-        let color = cabinet.accent.with_alpha(0.15 * depth);
-        let (size, pos) = match cabinet.scroll {
-            Scroll::Sideways => (Vec2::new(4.0 * depth, 1.0), Vec2::new(along, across)),
-            Scroll::Upward => (Vec2::new(1.0, 4.0 * depth), Vec2::new(across, along)),
+        let (turn, pos) = match cabinet.scroll {
+            Scroll::Sideways => (0.0, Vec2::new(along, across)),
+            Scroll::Upward => (FRAC_PI_2, Vec2::new(across, along)),
         };
         commands.spawn((
-            Sprite::from_color(color, size),
-            Transform::from_xyz(pos.x.round(), pos.y.round(), 1.0),
+            sprites.frame("stripe", session.cabinet, i % 3),
+            Transform::from_xyz(pos.x.round(), pos.y.round(), 1.0)
+                .with_rotation(Quat::from_rotation_z(turn)),
             Stripe { speed: depth },
             DespawnOnExit(Screen::Playing),
         ));
     }
 
     commands.spawn((
-        Sprite::from_color(cabinet.accent, Vec2::splat(HERO_SIZE)),
-        Transform::from_translation(start.extend(5.0)),
+        sprites.sprite("hero", session.cabinet),
+        SpriteAnimation::looping([0, 1], 0.08),
+        Transform::from_translation(start.extend(5.0)).with_rotation(Quat::from_rotation_z(
+            match cabinet.scroll {
+                Scroll::Sideways => 0.0,
+                Scroll::Upward => FRAC_PI_2,
+            },
+        )),
         Hero,
         Invulnerable(0.0),
         // A forgiving hitbox, smaller than the sprite.

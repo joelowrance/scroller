@@ -13,7 +13,8 @@
     // Length of each Cabinet Transition (placeholder until the real ones exist).
     transition_seconds: 3.0,
 
-    // Developer keys: K loses a life, P adds 1000 points, C clears the Stage.
+    // Developer keys: K loses a life, P adds 1000 points, C clears the Stage,
+    // F2 shows the sprite sheet.
     debug_keys: true,
     // Debug aids, only with debug_keys on: a Hero nothing can hit, and a game
     // speed multiplier during Stages (2.0 = twice as fast). In the browser,

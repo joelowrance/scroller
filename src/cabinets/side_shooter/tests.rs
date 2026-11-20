@@ -34,6 +34,7 @@ fn app_at(step: Duration) -> App {
         .insert_resource(tuning)
         .insert_resource(session)
         .init_resource::<Paused>()
+        .init_resource::<Sprites>()
         .init_resource::<Controls>()
         .init_resource::<ButtonInput<KeyCode>>()
         .init_state::<Screen>()
