@@ -290,8 +290,15 @@ fn play_music(
     }
 }
 
+/// Plays each requested sound once per frame, however many times it was
+/// asked for (a Hook pair, several enemies dying together).
 fn play_sfx(mut requests: MessageReader<PlaySfx>, bank: Res<AudioBank>, output: Res<Output>) {
+    let mut seen = Vec::new();
     for PlaySfx(sfx) in requests.read() {
+        if seen.contains(sfx) {
+            continue;
+        }
+        seen.push(*sfx);
         let play = Play {
             looping: false,
             pausable: sfx.pausable(),
