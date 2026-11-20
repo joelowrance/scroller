@@ -1,6 +1,6 @@
 # Checks every pull request (tests, clippy, web build) and, on a push to main,
 # also publishes the browser version to GitHub Pages.
-# Branch protection should require the `check` job.
+# Branch protection requires the `check` job; `smoke` is advisory for now.
 name: CI
 
 on:
@@ -64,11 +64,74 @@ jobs:
       - name: Build for the web
         run: ./scripts/build-web.sh
 
+      # Handed to the smoke job so it tests exactly this build.
+      - name: Upload the web build
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-dist
+          path: dist
+          retention-days: 3
+
       - name: Upload the Pages artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
+  # Browser smoke test of the web build from `check`. A separate job so that a
+  # problem with headless Chromium never blocks `check` or the deploy; it is
+  # not a required check until it has proven reliable.
+  smoke:
+    name: smoke
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tests/web/package-lock.json
+
+      - name: Install the test's npm packages
+        run: npm ci --prefix tests/web --no-audit --no-fund
+
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p 'require("./tests/web/node_modules/playwright/package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright's Chromium
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: npx --prefix tests/web playwright install --with-deps chromium
+
+      - name: Install Chromium's system libraries
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx --prefix tests/web playwright install-deps chromium
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-dist
+          path: dist
+
+      - name: Smoke test
+        run: SMOKE_SKIP_BUILD=1 ./scripts/smoke-web.sh
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-screenshots
+          path: target/smoke/
+          retention-days: 7
 
   deploy:
     needs: check
