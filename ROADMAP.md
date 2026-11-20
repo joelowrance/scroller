@@ -8,8 +8,9 @@ and [GLOSSARY.md](GLOSSARY.md) (the domain language) before the first ticket.
 
 ## Order
 
-Work the milestones in order and, within a milestone, the issues in number
-order. An issue may start once the issues it names are closed.
+Work the milestones in order. Within a milestone, issues whose dependencies
+are closed run in parallel, one developer agent each. An issue may start
+once the issues it names are closed.
 
 | Milestone | Issues | Notes |
 |---|---|---|
@@ -24,18 +25,53 @@ Skip them; the next milestone starts without waiting for them. Before starting
 each Cabinet's design doc, read the comments on every `needs-human` issue and
 act on any feedback first.
 
-## Working a ticket
+## Process
 
-1. **Claim it:** read the issue and its comments, and any design doc it names.
-2. **Build it** to the issue's scope, in the domain language. Every gameplay
-   number goes in `assets/tuning.ron`.
+This runs as an IT project: every change is tracked by an issue, lands
+through a pull request, and is code-reviewed before it merges. Nobody pushes
+to `main` directly, and branch protection enforces it.
+
+**Roles**
+
+- **Project manager** (the coordinating agent): assigns issues, runs the
+  developer and reviewer agents, and merges pull requests.
+- **Developer** (one agent per issue): builds the issue on its own branch in
+  its own git worktree.
+- **Reviewer** (a standing agent): reviews every pull request.
+- **The user** owns the `needs-human` issues and can veto anything by
+  commenting.
+
+**Working a ticket (developer)**
+
+1. **Claim it:** read the issue and its comments, plus any design doc it
+   names, and comment that work has started.
+2. **Build it** on branch `t<N>-<slug>` (slug: a few kebab-case words from
+   the issue title) in the worktree you were given. Use
+   the domain language, and put every gameplay number in `assets/tuning.ron`.
 3. **Prove it** against the definition of done below.
-4. **Ship it:** commit to `main` with a message ending `Closes #N`, push, and
-   watch the Pages run (`gh run watch`) until it is green. The game at
-   http://joelowrance.com/scroller/ is then the user's way to see the work.
-5. **Report it:** comment on the issue with what was built, any decision made
-   along the way, and anything left for later. Open a new issue for follow-up
-   work rather than leaving it in a comment.
+4. **Open a pull request:** rebase on `origin/main`, push the branch, and open
+   a PR whose body starts `Closes #N`. It says what changed, which decisions
+   were made, and how it was verified (commands run, screenshots looked at).
+   Follow-up work becomes a new issue, not a note in a comment.
+5. **Address the review:** fix every blocking finding, push, and reply on the
+   PR. Repeat until the reviewer's verdict is APPROVED.
+
+**Reviewing (reviewer)**
+
+Check the PR against its issue's "Done when" list, the design docs, the
+glossary, correctness, tests for the logic, every gameplay number living in
+`assets/tuning.ron`, and originality. Post findings as a PR review comment ending in
+one verdict line: `Verdict: APPROVED` or `Verdict: CHANGES REQUESTED`. All
+agents share one GitHub account, so GitHub's own approve button can't be
+used. The verdict line is the approval.
+
+**Merging (project manager)**
+
+Merge with squash only when the latest verdict is APPROVED and the PR's CI
+check is green, rebasing first if `main` moved. Until the PR check from #2
+exists, the gate is the developer's and the reviewer's local runs of the
+definition of done. Then confirm the deploy run on `main` succeeded. The live game at
+http://joelowrance.com/scroller/ shows the result.
 
 ## Definition of done
 
@@ -46,14 +82,14 @@ these pass:
 - `cargo clippy --all-targets -- -D warnings`
 - `scripts/smoke-web.sh` (once #1 exists), with its screenshots looked at,
   not just generated
-- the CI run for the push is green and deployed
+- CI is green on the PR, and the deploy run on `main` is green after merge
 
 ## Deciding alone
 
 The user has handed this work off, so make design calls without asking.
 
 - **Within the settled design:** decide, and record the decision and its reason
-  in the relevant design doc and in the issue comment. The user vetoes by
+  in the relevant design doc and in the PR body. The user vetoes by
   commenting; until then the decision stands.
 - **Changes to the settled design** (anything in `docs/DESIGN.md` or the
   glossary's meanings): pick the most reversible option that keeps the current
@@ -74,6 +110,7 @@ before anything else.
 
 To start or resume autonomous work, the user can say:
 
-> Work through ROADMAP.md. Take the next open issue that isn't `needs-human`
-> or `blocked`, finish it to the definition of done, and keep going until
-> nothing is left or you're blocked.
+> You are the project manager. Work through ROADMAP.md: run developer agents
+> on the open issues that aren't `needs-human` or `blocked`, have every pull
+> request reviewed, merge what is approved, and keep going until nothing is
+> left or everything remaining is blocked.
