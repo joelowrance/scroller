@@ -24,29 +24,48 @@ Skip them; the next milestone starts without waiting for them. Before starting
 each Cabinet's design doc, read the comments on every `needs-human` issue and
 act on any feedback first.
 
-## Working a ticket
+## Process
 
-1. **Claim it:** read the issue and its comments, and any design doc it names.
-2. **Build it** to the issue's scope, in the domain language. Every gameplay
-   number goes in `assets/tuning.ron`.
+This runs as an IT project: every change is tracked by an issue, lands
+through a pull request, and is code-reviewed before it merges. Nobody pushes
+to `main` directly, and branch protection enforces it.
+
+**Roles**
+
+- **Project manager** (the coordinating agent): assigns issues, runs the
+  developer and reviewer agents, and merges pull requests.
+- **Developer** (one agent per issue): builds the issue on its own branch in
+  its own git worktree.
+- **Reviewer** (a standing agent): reviews every pull request.
+- **The user** owns the `needs-human` issues and can veto anything by
+  commenting.
+
+**Working a ticket (developer)**
+
+1. **Claim it:** read the issue and its comments, plus any design doc it
+   names, and comment that work has started.
+2. **Build it** on branch `t<N>-<slug>` in the worktree you were given. Use
+   the domain language, and put every gameplay number in `assets/tuning.ron`.
 3. **Prove it** against the definition of done below.
-4. **Ship it:** commit to `main` with a message ending `Closes #N`, push, and
-   watch the Pages run (`gh run watch`) until it is green. The game at
-   http://joelowrance.com/scroller/ is then the user's way to see the work.
-5. **Report it:** comment on the issue with what was built, any decision made
-   along the way, and anything left for later. Open a new issue for follow-up
-   work rather than leaving it in a comment.
+4. **Open a pull request:** rebase on `origin/main`, push the branch, and open
+   a PR whose body starts `Closes #N`. It says what changed, which decisions
+   were made, and how it was verified (commands run, screenshots looked at).
+5. **Address the review:** fix every blocking finding, push, and reply on the
+   PR. Repeat until the reviewer's verdict is APPROVED.
 
-## Definition of done
+**Reviewing (reviewer)**
 
-A ticket is done when every box in its "Done when" list is ticked and all of
-these pass:
+Check the PR against its issue's "Done when" list, the design docs, the
+glossary, and correctness. Post findings as a PR review comment ending in
+one verdict line: `Verdict: APPROVED` or `Verdict: CHANGES REQUESTED`. All
+agents share one GitHub account, so GitHub's own approve button can't be
+used. The verdict line is the approval.
 
-- `cargo test`
-- `cargo clippy --all-targets -- -D warnings`
-- `scripts/smoke-web.sh` (once #1 exists), with its screenshots looked at,
-  not just generated
-- the CI run for the push is green and deployed
+**Merging (project manager)**
+
+Merge with squash only when the latest verdict is APPROVED and CI is green.
+Then confirm the deploy run on `main` succeeded. The live game at
+http://joelowrance.com/scroller/ shows the result.
 
 ## Deciding alone
 
@@ -74,6 +93,7 @@ before anything else.
 
 To start or resume autonomous work, the user can say:
 
-> Work through ROADMAP.md. Take the next open issue that isn't `needs-human`
-> or `blocked`, finish it to the definition of done, and keep going until
-> nothing is left or you're blocked.
+> You are the project manager. Work through ROADMAP.md: run developer agents
+> on the open issues that aren't `needs-human` or `blocked`, have every pull
+> request reviewed, merge what is approved, and keep going until nothing is
+> left or everything remaining is blocked.
