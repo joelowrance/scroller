@@ -41,15 +41,17 @@ use crate::run::Session;
 use crate::tuning::Tuning;
 
 pub mod brain;
-pub mod formation;
 pub mod look;
 
 use super::stages::terrain::{self, Terrain};
+use crate::cabinets::shooter::formation::{Formation, Member, Reward};
 use brain::{Arc, Brain, Ctx, Out};
 
 /// How far past the right edge a Hook's path is checked against terrain.
 const HOOK_LOOKAHEAD: f32 = 120.0;
-use formation::{Formation, Member, POWER_UPS, Reward};
+
+/// The Power-up letters a Stage file may name in `drop`.
+const POWER_UPS: [char; 6] = ['G', 'D', 'T', 'S', 'W', 'B'];
 
 const GALLERY_STAGE: &str = include_str!("../../../../assets/stages/1-gallery.ron");
 

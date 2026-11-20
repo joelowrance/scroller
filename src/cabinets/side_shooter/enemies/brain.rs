@@ -11,6 +11,8 @@ use std::f32::consts::{PI, TAU};
 
 use bevy::math::Vec2;
 
+pub use crate::cabinets::shooter::pattern::fan;
+use crate::cabinets::shooter::pattern::{Pulse, bob, dir, home, turn_toward};
 use crate::cabinets::side_shooter::tuning::EnemyTypes;
 use crate::display::{HALF_H, HALF_W};
 
@@ -45,33 +47,6 @@ pub struct Out {
     pub launch: u32,
     /// The enemy is done (a Mote dissolving) and should go without points.
     pub despawn: bool,
-}
-
-/// Unit vector at `degrees` (0 = right, 90 = up).
-fn dir(degrees: f32) -> Vec2 {
-    Vec2::from_angle(degrees.to_radians())
-}
-
-/// `count` directions spread evenly over `width` degrees, centred on `aim`.
-pub fn fan(aim: Vec2, count: u32, width: f32) -> Vec<Vec2> {
-    let centre = aim.to_angle().to_degrees();
-    if count <= 1 {
-        return vec![dir(centre)];
-    }
-    let step = width / (count - 1) as f32;
-    (0..count)
-        .map(|i| dir(centre - width / 2.0 + step * i as f32))
-        .collect()
-}
-
-/// Rotates `heading` (radians) toward `target` by at most `max` radians.
-fn turn_toward(heading: f32, target: f32, max: f32) -> f32 {
-    let diff = (target - heading + PI).rem_euclid(TAU) - PI;
-    heading + diff.clamp(-max, max)
-}
-
-fn bob(amplitude: f32, period: f32, t: f32) -> f32 {
-    amplitude * (TAU * t / period.max(0.01)).sin()
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -677,11 +652,14 @@ impl Mote {
     fn step(&mut self, pos: &mut Vec2, ctx: &Ctx, t: &EnemyTypes) -> Out {
         let m = &t.mote;
         self.age += ctx.dt;
-        if let Some(hero) = ctx.hero {
-            let want = (hero - *pos).to_angle();
-            self.heading = turn_toward(self.heading, want, m.turn_rate.to_radians() * ctx.dt);
-        }
-        *pos += Vec2::from_angle(self.heading) * m.speed * ctx.dt;
+        home(
+            &mut self.heading,
+            pos,
+            ctx.hero,
+            m.speed,
+            m.turn_rate,
+            ctx.dt,
+        );
         Out {
             despawn: self.age >= m.lifetime,
             ..Out::default()
@@ -704,20 +682,21 @@ pub struct Arc {
 }
 
 impl Arc {
-    fn phase(&self, t: &EnemyTypes) -> f32 {
+    fn pulse(t: &EnemyTypes) -> Pulse {
         let a = &t.arc_gate;
-        self.age
-            .rem_euclid((a.on_seconds + a.off_seconds).max(0.01))
+        Pulse {
+            on_seconds: a.on_seconds,
+            off_seconds: a.off_seconds,
+            telegraph_seconds: a.telegraph_seconds,
+        }
     }
 
     pub fn live(&self, t: &EnemyTypes) -> bool {
-        self.phase(t) >= t.arc_gate.off_seconds
+        Self::pulse(t).live(self.age)
     }
 
     pub fn telegraph(&self, t: &EnemyTypes) -> bool {
-        let a = &t.arc_gate;
-        let p = self.phase(t);
-        p < a.off_seconds && p >= a.off_seconds - a.telegraph_seconds
+        Self::pulse(t).telegraph(self.age)
     }
 }
 
