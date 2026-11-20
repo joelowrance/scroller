@@ -8,21 +8,30 @@ use bevy::prelude::*;
 
 use crate::cabinets::CABINET_COUNT;
 
-/// Number of colours in a palette (sprite characters `0`–`7`).
+/// Number of colours in a palette: sprite characters `1`–`8`.
 pub const PALETTE_SIZE: usize = 8;
 
-/// Colour roles, by palette index. Not all are used by code yet; sprite files
-/// use them by number.
+/// Colour roles, by sprite character. Every Cabinet palette keeps these
+/// roles so shared sprites read the same way in each; the names and exact
+/// uses per Cabinet are in its design doc.
 #[allow(dead_code)]
 mod roles {
-    pub const BACKDROP: usize = 0;
-    pub const SHADOW: usize = 1;
-    pub const BASE: usize = 2;
-    pub const LIGHT: usize = 3;
-    pub const ACCENT: usize = 4;
-    pub const HOT: usize = 5;
-    pub const BRIGHT: usize = 6;
-    pub const ALT: usize = 7;
+    /// The Cabinet's background colour.
+    pub const BACKDROP: u8 = 1;
+    /// Dark shading: far parallax, terrain, outlines on the Hero.
+    pub const SHADE: u8 = 2;
+    /// Mid tone: water, mid parallax, enemy hull fill.
+    pub const FILL: u8 = 3;
+    /// The Cabinet's highlight colour.
+    pub const ACCENT: u8 = 4;
+    /// Near-white: Hero body, enemy outlines, bullet cores, text.
+    pub const BRIGHT: u8 = 5;
+    /// Hero shots, engines, explosions.
+    pub const WARM: u8 = 6;
+    /// Enemy bullets and weak points only.
+    pub const DANGER: u8 = 7;
+    /// A spare colour for the Cabinet to use as its design doc says.
+    pub const EXTRA: u8 = 8;
 }
 pub use roles::*;
 
@@ -32,8 +41,9 @@ pub struct Palette {
 }
 
 impl Palette {
-    pub const fn color(&self, role: usize) -> Color {
-        self.colors[role]
+    /// The colour for a sprite character `1`–`8` (see the roles above).
+    pub const fn color(&self, role: u8) -> Color {
+        self.colors[role as usize - 1]
     }
 }
 
@@ -51,18 +61,19 @@ const fn palette(colors: [u32; PALETTE_SIZE]) -> Palette {
     Palette { colors: out }
 }
 
-/// One palette per Cabinet, in Run order.
+/// One palette per Cabinet, in Run order. Cabinet 1's is fixed by its design
+/// doc; the others are starting points until their design docs settle them.
 #[rustfmt::skip]
 pub const PALETTES: [Palette; CABINET_COUNT] = [
-    //        backdrop  shadow    base      light     accent    hot       bright    alt
-    // 1: side-scrolling shooter — deep space blue with cyan.
-    palette([0x05051a, 0x1c2a5a, 0x3a6ea5, 0x7fb8e6, 0x4dd9ff, 0xff8c3a, 0xf0f8ff, 0xc050ff]),
+    //        backdrop  shade     fill      accent    bright    warm      danger    extra
+    // 1: side-scrolling shooter — Night, Slate, Sea, Spark, Foam, Ember, Signal, Rust.
+    palette([0x05051a, 0x23305e, 0x2e7a8c, 0x4dd9ff, 0xf4f4f0, 0xffb43c, 0xff3c78, 0x8a3a22]),
     // 2: vertical shooter — night violet with magenta.
-    palette([0x140019, 0x3d1450, 0x8a2d8f, 0xd070c8, 0xff66cc, 0xffd23f, 0xfff0fa, 0x40e0d0]),
+    palette([0x140019, 0x3d1450, 0x8a2d8f, 0xff66cc, 0xfff0fa, 0xffd23f, 0x40e0d0, 0xd070c8]),
     // 3: run-and-gun platformer — dusk earth with amber.
-    palette([0x1a0d00, 0x4a2a10, 0x8c5a2b, 0xc89650, 0xffbf33, 0xe83a2a, 0xfff6e0, 0x6aa84f]),
+    palette([0x1a0d00, 0x4a2a10, 0x8c5a2b, 0xffbf33, 0xfff6e0, 0xff7a2a, 0x66d9ff, 0x6aa84f]),
     // 4: vertical climber — jungle green.
-    palette([0x00140a, 0x144a2a, 0x2e8a4a, 0x7fd08a, 0x66ff80, 0xff5a5a, 0xeffff0, 0xf0d040]),
+    palette([0x00140a, 0x144a2a, 0x2e8a4a, 0x66ff80, 0xeffff0, 0xf0d040, 0xff3c8c, 0x7fd08a]),
 ];
 
 #[cfg(test)]
@@ -72,6 +83,19 @@ mod tests {
     #[test]
     fn hex_colours_decode() {
         assert_eq!(rgb(0xff8000), Color::srgb_u8(255, 128, 0));
+    }
+
+    #[test]
+    fn cabinet_one_matches_its_design_doc() {
+        let doc = include_str!("../../docs/cabinets/1-side-shooter.md");
+        for role in 1..=PALETTE_SIZE as u8 {
+            let hex = PALETTES[0].color(role).to_srgba().to_hex().to_uppercase();
+            assert!(doc.contains(&format!("| {role} |")), "role {role} in doc");
+            assert!(
+                doc.contains(&format!("`{hex}`")),
+                "role {role} {hex} in doc"
+            );
+        }
     }
 
     #[test]

@@ -6,7 +6,7 @@ use std::io::Cursor;
 
 use bevy::prelude::*;
 
-use super::palette::{PALETTE_SIZE, Palette};
+use super::palette::Palette;
 
 /// A sprite as embedded by `build.rs`: its text grid and/or an override PNG.
 #[derive(Clone, Copy, Debug)]
@@ -19,7 +19,7 @@ pub struct SpriteSource {
 /// Every sprite under `assets/sprites/`, sorted by name.
 pub const SOURCES: &[SpriteSource] = include!(concat!(env!("OUT_DIR"), "/sprite_sources.rs"));
 
-/// A parsed text sprite: palette indices, `None` for transparent.
+/// A parsed text sprite: palette roles `1`–`8`, `None` for transparent.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Grid {
     pub width: u32,
@@ -28,7 +28,7 @@ pub struct Grid {
 }
 
 /// Parses a text sprite. Frames are separated by blank lines; `#` starts a
-/// comment line; `.` is transparent and `0`–`7` are palette indices.
+/// comment line; `.` and `0` are transparent and `1`–`8` are palette roles.
 pub fn parse(text: &str) -> Result<Grid, String> {
     let mut frames: Vec<Vec<&str>> = vec![Vec::new()];
     for line in text.lines() {
@@ -72,8 +72,8 @@ pub fn parse(text: &str) -> Result<Grid, String> {
             }
             for c in row.chars() {
                 pixels.push(match c {
-                    '.' => None,
-                    '0'..='9' if (c as usize - '0' as usize) < PALETTE_SIZE => Some(c as u8 - b'0'),
+                    '.' | '0' => None,
+                    '1'..='8' => Some(c as u8 - b'0'),
                     _ => return Err(format!("frame {} row {}: bad pixel {c:?}", f + 1, y + 1)),
                 });
             }
@@ -119,8 +119,7 @@ pub fn bake(grid: &Grid, palette: &Palette) -> SheetPixels {
             let Some(index) = px else { continue };
             let (x, y) = (i as u32 % grid.width, i as u32 / grid.width);
             let at = ((y * stride + f as u32 * grid.width + x) * 4) as usize;
-            rgba[at..at + 4]
-                .copy_from_slice(&palette.colors[*index as usize].to_srgba().to_u8_array());
+            rgba[at..at + 4].copy_from_slice(&palette.color(*index).to_srgba().to_u8_array());
         }
     }
     SheetPixels {
@@ -211,7 +210,7 @@ pub fn build(source: &SpriteSource, palettes: &[Palette]) -> Result<Baked, Strin
 
 #[cfg(test)]
 mod tests {
-    use super::super::palette::{ACCENT, HOT, PALETTES};
+    use super::super::palette::{ACCENT, BRIGHT, PALETTES};
     use super::*;
 
     fn encode_png(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
@@ -227,7 +226,7 @@ mod tests {
 
     #[test]
     fn parses_frames_comments_and_transparency() {
-        let grid = parse("# a comment\n\n.4\n5.\n\n\n44\n55\n\n").unwrap();
+        let grid = parse("# a comment\n\n.4\n50\n\n\n44\n55\n\n").unwrap();
         assert_eq!((grid.width, grid.height), (2, 2));
         assert_eq!(grid.frames.len(), 2);
         assert_eq!(grid.frames[0], vec![None, Some(4), Some(5), None]);
@@ -237,7 +236,7 @@ mod tests {
     fn rejects_ragged_frames_and_unknown_pixels() {
         assert!(parse("11\n1\n").is_err());
         assert!(parse("11\n11\n\n111\n111\n").is_err());
-        assert!(parse("18\n").is_err());
+        assert!(parse("19\n").is_err());
         assert!(parse("1x\n").is_err());
         assert!(parse("# only a comment\n").is_err());
     }
@@ -249,9 +248,9 @@ mod tests {
         assert_eq!(sheet.size(), UVec2::new(4, 1));
         assert_eq!(sheet.pixel(0, 0, 0), [0, 0, 0, 0]);
         let accent = PALETTES[0].color(ACCENT).to_srgba().to_u8_array();
-        let hot = PALETTES[0].color(HOT).to_srgba().to_u8_array();
+        let bright = PALETTES[0].color(BRIGHT).to_srgba().to_u8_array();
         assert_eq!(sheet.pixel(0, 1, 0), accent);
-        assert_eq!(sheet.pixel(1, 0, 0), hot);
+        assert_eq!(sheet.pixel(1, 0, 0), bright);
     }
 
     #[test]

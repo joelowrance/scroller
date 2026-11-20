@@ -5,16 +5,17 @@ Every `name.txt` here is a sprite, built into the game at compile time
 
 ## Format
 
-- One character per pixel. `.` is transparent; `0`–`7` pick a colour from the
-  current Cabinet's palette, by role:
+- One character per pixel. `.` (or `0`) is transparent; `1`–`8` pick a
+  colour from the current Cabinet's palette, by role:
 
-  | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
   |---|---|---|---|---|---|---|---|
-  | backdrop | shadow | base | light | accent | hot | bright | alt |
+  | backdrop | shade | fill | accent | bright | warm | danger | extra |
 
-  The palettes live in one place, `src/sprites/palette.rs`. A sprite drawn in
-  roles is baked once per Cabinet, so it changes colour at each Cabinet
-  Transition.
+  The palettes live in one place, `src/sprites/palette.rs`. Each Cabinet's
+  design doc names its colours and says what may use them (Cabinet 1:
+  `docs/cabinets/1-side-shooter.md`). A sprite is baked once per Cabinet
+  palette, so a shared sprite changes colour at each Cabinet Transition.
 - Frames are separated by a blank line and must all be the same size.
 - Lines starting with `#` are comments.
 
