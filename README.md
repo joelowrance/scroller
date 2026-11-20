@@ -33,6 +33,9 @@ The settled design is in [docs/DESIGN.md](docs/DESIGN.md).
 | B      | `;` (or X)                | East or West    |
 | Start  | Enter or Escape (pause)   | Start           |
 
+**M** mutes the sound. The setting is kept with the high scores. In the browser,
+sound starts with the first key press or click.
+
 While the stand-in Cabinets are in place, developer keys are on: **K** loses a
 life, **P** adds 1000 points, **C** clears the Stage.
 
