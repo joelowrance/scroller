@@ -16,11 +16,12 @@ pub struct SpriteSource {
     pub png: Option<&'static [u8]>,
 }
 
-/// Sprites drawn as background or terrain. They may use only the background
-/// roles, so nothing behind the action is mistaken for the Hero, an enemy or
-/// a bullet (docs/cabinets/1-side-shooter.md, "Palette"). Add terrain here.
+/// The line that marks a sprite file as background or terrain. Such sprites
+/// may use only the background roles, so nothing behind the action is
+/// mistaken for the Hero, an enemy or a bullet (each Cabinet design doc's
+/// "Palette" rules); a test enforces it.
 #[cfg_attr(not(test), allow(dead_code))]
-pub const BACKGROUND_SPRITES: &[&str] = &["stripe"];
+pub const BACKGROUND_MARK: &str = "#! background";
 
 /// Every sprite under `assets/sprites/`, sorted by name.
 pub const SOURCES: &[SpriteSource] = include!(concat!(env!("OUT_DIR"), "/sprite_sources.rs"));
@@ -132,6 +133,21 @@ pub fn bake(grid: &Grid, palette: &Palette) -> SheetPixels {
         frame_size: UVec2::new(grid.width, grid.height),
         frames,
         rgba,
+    }
+}
+
+/// The same sheet in white, keeping each pixel's alpha, to tint as a shadow.
+pub fn silhouette(sheet: &SheetPixels) -> SheetPixels {
+    let rgba = sheet
+        .rgba
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .flat_map(|p| [255, 255, 255, p[3]])
+        .collect();
+    SheetPixels {
+        rgba,
+        ..sheet.clone()
     }
 }
 
@@ -327,6 +343,14 @@ mod tests {
     }
 
     #[test]
+    fn a_silhouette_is_white_with_the_same_alpha() {
+        let sheet = bake(&parse(".4\n").unwrap(), &PALETTES[0]);
+        let shadow = silhouette(&sheet);
+        assert_eq!(shadow.pixel(0, 0, 0), [255, 255, 255, 0]);
+        assert_eq!(shadow.pixel(0, 1, 0), [255, 255, 255, 255]);
+    }
+
+    #[test]
     fn a_broken_grid_still_lets_its_png_win() {
         let png = encode_png(2, 2, &[7; 2 * 2 * 4]);
         let png: &'static [u8] = Box::leak(png.into_boxed_slice());
@@ -344,9 +368,15 @@ mod tests {
     #[test]
     fn background_sprites_use_only_background_roles() {
         use super::super::palette::BACKGROUND_ROLES;
-        for name in BACKGROUND_SPRITES {
-            let source = SOURCES.iter().find(|s| s.name == *name).expect(name);
-            let grid = parse(source.text.expect(name)).unwrap();
+        let marked = |s: &&SpriteSource| {
+            s.text
+                .is_some_and(|t| t.lines().any(|l| l.trim_end() == BACKGROUND_MARK))
+        };
+        let backgrounds: Vec<_> = SOURCES.iter().filter(marked).collect();
+        assert!(backgrounds.iter().any(|s| s.name == "stripe"));
+        for source in backgrounds {
+            let name = source.name;
+            let grid = parse(source.text.unwrap()).unwrap();
             for role in grid.frames.iter().flatten().flatten() {
                 assert!(BACKGROUND_ROLES.contains(role), "{name} uses role {role}");
             }

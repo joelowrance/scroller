@@ -100,17 +100,20 @@ from time-to-kill targets. These change or are added for the vertical genre:
 ## Palette
 
 One Cabinet palette (#4), shared by both Stages. Index 0 is transparent.
+The numbers are the sprite characters, in the same roles as Cabinet 1's
+palette (backdrop, shade, fill, accent, bright, warm, danger, extra), so the
+shared Wren sprite takes Foam, Orchid and Ember here without a second copy.
 
 | # | Name | Hex | Used for |
 |---|---|---|---|
 | 1 | Dusk | `#140019` | backdrop (matches `CABINETS[1].backdrop`), shadows |
 | 2 | Plum | `#3A1F4F` | cloud shading, far layer, ground shading |
 | 3 | Steel | `#5A6E8C` | clouds, scaffolding, **air enemy hull fill** |
-| 4 | Clay | `#8C5A3C` | mesas, the yard floor, **ground target hull fill** |
-| 5 | Orchid | `#FF66CC` | accent (matches `CABINETS[1].accent`), Hero canopy, Power-up rims |
-| 6 | Foam | `#F4F4F0` | Hero body, **enemy outlines**, bullet cores, Power-up letters, text |
-| 7 | Ember | `#FFB43C` | Hero shots, rockets, Hero engine, explosions |
-| 8 | Volt | `#C8FF3C` | **enemy bullets, enemy weak points and flak crosshairs only** |
+| 4 | Orchid | `#FF66CC` | accent (matches `CABINETS[1].accent`), Hero canopy, Power-up rims |
+| 5 | Foam | `#F4F4F0` | Hero body, **enemy outlines**, bullet cores, Power-up letters, text |
+| 6 | Ember | `#FFB43C` | Hero shots, rockets, Hero engine, explosions |
+| 7 | Volt | `#C8FF3C` | **enemy bullets, enemy weak points and flak crosshairs only** |
+| 8 | Clay | `#8C5A3C` | mesas, the yard floor, **ground target hull fill** |
 
 Rules that #4 builds and #14 checks in the screenshots (the same rules as
 Cabinet 1, with this Cabinet's colours):
@@ -805,6 +808,53 @@ write new code only where Cabinet 2 differs.
     `Session.power_ups` the same way.
 - **Gallery:** an enemy gallery Stage (`assets/stages/2-gallery.ron`), shown
   with `?gallery`, as in Cabinet 1.
+
+## Stage files and art (#15)
+
+What #15 built, and the contract #14's code keeps with it.
+
+- **Files:** `assets/stages/2-1.ron` (3:20) and `2-2.ron` (3:36), one line
+  per beat of the tables above, each with its time at normal speed in a
+  comment. The files were generated once from these tables by a throwaway
+  script; edit the RON files from now on. `src/cabinets/stage_checks.rs`
+  tests them against this doc: the lengths, the Restart Points, the
+  Power-up order, the known enemy kinds, Tethers' `left_x`/`right_x`,
+  Bellows' `side`, and no more than 2 Flak Batteries on screen.
+- **Enemy kinds and params:** `wisp`, `swift`, `bellows` (`side`), `loom`,
+  `crawler` (`heading`), `silo`, `riser`, `flak`, `mote`, `tether`
+  (`left_x`, `right_x`), with `drop` and `size` as in Cabinet 1.
+- **Where things are:** `pos` is where an enemy is when the scroll reaches
+  `at`. Ground targets then move down with the ground at the scroll speed.
+  They spawn just above the top edge on their mesa or yard floor, and they
+  stay lined up because the scenery moves the same way.
+- **Scenery** is listed in the same files as `scenery:<sprite>` entries
+  (`src/kit/scenery.rs`). Each piece is placed from the scroll position every
+  frame, so a rewind needs nothing special. The far cloud banks move at
+  0.3–0.35 of the scroll, a mid cloud layer at 0.6, and the ground (the
+  cloud sea, mesas, roads, the yard floor and its props) at 1.0. The Spire
+  barely moves (0.02–0.05).
+  - Stage 1: a cloud sea of Steel puffs with Plum undersides. The mesas are
+    Clay plateaus with Plum slopes and a cliff face, and roads are
+    scratched across them under the Crawlers.
+  - Stage 2: a continuous yard floor of Clay plates in rows across the full
+    width under every ground front. Rail lines run through each front, with
+    scaffolds, half-built segments and cranes on the floor. Open sky shows
+    over the two air fronts (0:50–1:16 and 2:18–2:30), and the yard ends at
+    a Clay lip over a Plum cliff.
+  - Sparks and the run-out flak bursts are scenery, so they use only Steel
+    and Clay, never Ember or Volt.
+- **Sprites** are `assets/sprites/c2_*.txt`, plus `enemy_bullet`, `rocket`
+  and `chevron_up`, which other Cabinets can share. The Wren uses the shared
+  `hero` sprite turned 90° (Foam, Orchid canopy, Ember engine come from the
+  palette roles). Frames: the Bellows vent glows; the Loom core is shielded
+  then open; the shuttle has a burning-wreck frame; the Silo is closed, then
+  warning, then open; the Riser pad lights; the Crawler turret is separate
+  so it can turn, and flashes. `Sprites::shadow` draws any sprite as a flat
+  Dusk silhouette for the air-enemy and Wren shadows. Background sprites
+  carry a `#! background` line, and a test holds them to Dusk, Plum, Steel
+  and Clay.
+- **Unattended run:** `scripts/stages-web.sh 2` plays both Stages with the
+  invincible Hero and a faster clock, and fails unless each one clears.
 
 ## Revisit after the Cabinet 1 playtest
 

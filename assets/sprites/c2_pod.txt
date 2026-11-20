@@ -1,0 +1,11 @@
+# Cabinet 2 Pod (Power-up P), 8x8, beside the Wren.
+# Format: see README.md in this folder.
+
+..5555..
+.544445.
+54555545
+54522545
+54522545
+54555545
+.544445.
+..5555..

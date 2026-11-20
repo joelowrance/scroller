@@ -1,0 +1,20 @@
+# Cabinet 2 Wisp, 8x8, falling nose-down. Two frames: the tail shimmers.
+# Format: see README.md in this folder.
+
+...55...
+..5335..
+..5335..
+.533335.
+53377335
+53377335
+.533335.
+..5555..
+
+........
+...55...
+..5335..
+.533335.
+53377335
+53333335
+.533335.
+..5555..

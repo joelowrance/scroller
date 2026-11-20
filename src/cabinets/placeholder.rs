@@ -27,6 +27,13 @@ const PROGRESS_BAR_W: f32 = 120.0;
 
 const SIDEWAYS_STAGE: &str = include_str!("../../assets/stages/placeholder-sideways.ron");
 const UPWARD_STAGE: &str = include_str!("../../assets/stages/placeholder-upward.ron");
+/// Cabinet 2's real Stages (#15), flown on the placeholder until its
+/// gameplay (#14) replaces it: the scenery and length are real, and the
+/// enemy kinds are skipped.
+const CABINET_2_STAGES: [&str; 2] = [
+    include_str!("../../assets/stages/2-1.ron"),
+    include_str!("../../assets/stages/2-2.ron"),
+];
 
 /// Seconds until the Hero may fire again.
 #[derive(Component)]
@@ -52,6 +59,14 @@ fn ahead(scroll: Scroll) -> Vec2 {
     }
 }
 
+fn stage_for(session: &Session) -> StageTimeline {
+    match session.cabinet {
+        1 => StageTimeline::parse(CABINET_2_STAGES[session.stage.min(1)])
+            .expect("Cabinet 2 Stage files must be valid"),
+        c => stage_timeline(CABINETS[c].scroll),
+    }
+}
+
 fn stage_timeline(scroll: Scroll) -> StageTimeline {
     let text = match scroll {
         Scroll::Sideways => SIDEWAYS_STAGE,
@@ -62,11 +77,17 @@ fn stage_timeline(scroll: Scroll) -> StageTimeline {
 
 fn spawn_stage(mut commands: Commands, session: Res<Session>, sprites: Res<Sprites>) {
     let cabinet = &CABINETS[session.cabinet];
-    let stage = StageRun::new(stage_timeline(cabinet.scroll));
+    let stage = StageRun::new(stage_for(&session));
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
-    for i in 0..STRIPE_COUNT {
+    // (Cabinet 2's Stages bring their own scenery.)
+    let stripes = if session.cabinet == 1 {
+        0
+    } else {
+        STRIPE_COUNT
+    };
+    for i in 0..stripes {
         let depth = (i % 3) as f32 + 1.0;
         let along = (i as f32 * 37.0) % (HALF_W * 2.0) - HALF_W;
         let across = (i as f32 * 53.0) % (HALF_H * 2.0) - HALF_H;

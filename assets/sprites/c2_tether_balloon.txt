@@ -1,0 +1,15 @@
+# Cabinet 2 Tether balloon, 10x12; the line attaches at the Volt node.
+# Format: see README.md in this folder.
+
+..555555..
+.53333335.
+5332222335
+5323333235
+5323333235
+5323333235
+5332222335
+.53333335.
+..555555..
+....55....
+...5775...
+....55....

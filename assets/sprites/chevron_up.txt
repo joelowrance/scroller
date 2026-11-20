@@ -1,0 +1,7 @@
+# Warning chevron, 7x4, pointing up from the bottom edge.
+# Format: see README.md in this folder.
+
+...5...
+..555..
+.55.55.
+55...55

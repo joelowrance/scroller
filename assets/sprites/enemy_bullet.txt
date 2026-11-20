@@ -1,0 +1,8 @@
+# An enemy bullet, 5x5: danger colour with a Foam core.
+# Format: see README.md in this folder.
+
+.777.
+77577
+75557
+77577
+.777.

@@ -1,0 +1,20 @@
+#! background
+# Cabinet 2 Static road, a 4x16 tile running up-down.
+# Format: see README.md in this folder.
+
+2112
+2112
+2122
+2112
+2112
+2112
+2122
+2112
+2112
+2112
+2122
+2112
+2112
+2112
+2122
+2112

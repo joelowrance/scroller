@@ -32,6 +32,8 @@ struct SheetHandles {
     layout: Handle<TextureAtlasLayout>,
     /// One image per Cabinet palette, or a single image for a PNG override.
     images: Vec<Handle<Image>>,
+    /// White where the sprite is opaque, for shadows and flashes.
+    silhouette: Handle<Image>,
 }
 
 /// Every sprite, ready to draw.
@@ -63,6 +65,26 @@ impl Sprites {
         )
     }
 
+    /// A frame of a sprite as a flat silhouette in one colour: an air
+    /// enemy's or the Hero's shadow on the ground, for example. Cabinet 2's
+    /// gameplay (#14) is the first user.
+    #[allow(dead_code)]
+    pub fn shadow(&self, name: &str, frame: usize, color: Color) -> Sprite {
+        let Some(sheet) = self.sheets.get(name) else {
+            error!("no sprite named {name:?} in assets/sprites/");
+            return Sprite::from_color(color, Vec2::splat(8.0));
+        };
+        let mut sprite = Sprite::from_atlas_image(
+            sheet.silhouette.clone(),
+            TextureAtlas {
+                layout: sheet.layout.clone(),
+                index: frame % sheet.frames,
+            },
+        );
+        sprite.color = color;
+        sprite
+    }
+
     /// How many frames a sprite has (0 if unknown).
     pub fn frame_count(&self, name: &str) -> usize {
         self.sheets.get(name).map_or(0, |s| s.frames)
@@ -80,6 +102,18 @@ impl Sprites {
             .map(|s| s.name)
             .filter(|n| self.sheets.contains_key(n))
     }
+}
+
+/// A sprite file's text, for tests that check sprites against Stage files.
+#[cfg(test)]
+pub fn sprite_text(name: &str) -> Option<&'static str> {
+    SOURCES.iter().find(|s| s.name == name).and_then(|s| s.text)
+}
+
+/// Whether a sprite file is marked as background or terrain art.
+#[cfg(test)]
+pub fn is_background(name: &str) -> bool {
+    sprite_text(name).is_some_and(|t| t.lines().any(|l| l.trim_end() == sheet::BACKGROUND_MARK))
 }
 
 fn to_image(sheet: &SheetPixels) -> Image {
@@ -119,6 +153,7 @@ fn load_sprites(
             Baked::PerPalette(sheets) => sheets.iter().map(|s| images.add(to_image(s))).collect(),
             Baked::Override(sheet) => vec![images.add(to_image(sheet))],
         };
+        let silhouette = images.add(to_image(&sheet::silhouette(first)));
         sprites.sheets.insert(
             source.name,
             SheetHandles {
@@ -126,6 +161,7 @@ fn load_sprites(
                 frame_size: first.frame_size,
                 layout: layouts.add(layout),
                 images: handles,
+                silhouette,
             },
         );
     }
