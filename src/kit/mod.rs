@@ -35,8 +35,8 @@ pub mod timeline;
 
 pub use collision::{Contact, Hitbox, Layer};
 pub use combat::{
-    Damage, EnemyDestroyed, Health, Hero, HeroStruck, Invulnerable, Pickup, PickupCollected,
-    ScoreValue,
+    Damage, EnemyDestroyed, Health, Hero, HeroStruck, Immune, Invulnerable, Pickup,
+    PickupCollected, ScoreValue,
 };
 pub use effects::{Explode, Flash, Shake};
 pub use motion::{DespawnOffscreen, Lifetime, Velocity, projectile};

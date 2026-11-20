@@ -28,6 +28,8 @@ pub struct Tuning {
     pub time_scale: f32,
     pub kit: KitTuning,
     pub placeholder: PlaceholderTuning,
+    /// Cabinet 1, the side-scrolling shooter.
+    pub side_shooter: crate::cabinets::side_shooter::tuning::SideShooterTuning,
 }
 
 /// Values for the shared gameplay kit used by every Cabinet.
@@ -79,6 +81,7 @@ impl Default for Tuning {
             time_scale: 1.0,
             kit: KitTuning::default(),
             placeholder: PlaceholderTuning::default(),
+            side_shooter: Default::default(),
         }
     }
 }
@@ -127,6 +130,7 @@ impl Tuning {
             let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
             match key {
                 "invincible" => self.invincible_hero = value != "0" && value != "false",
+                "gallery" => self.side_shooter.enemy_gallery = value != "0" && value != "false",
                 "time_scale" => {
                     if let Ok(scale) = value.parse() {
                         self.time_scale = scale;

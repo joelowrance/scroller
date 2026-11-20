@@ -37,6 +37,11 @@ impl Health {
     }
 }
 
+/// An enemy that shots can't hurt right now (a closed shell, say). Shots
+/// that hit it are still used up.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct Immune;
+
 /// Points awarded when this enemy is destroyed.
 #[derive(Component, Clone, Copy, Debug)]
 pub struct ScoreValue(pub u64);
@@ -64,6 +69,8 @@ pub struct PickupCollected {
 /// An enemy was shot down (its points are sent separately as [`ScoreGained`]).
 #[derive(Message, Clone, Copy, Debug)]
 pub struct EnemyDestroyed {
+    /// The enemy (already being despawned).
+    pub entity: Entity,
     pub at: Vec2,
     pub score: u64,
 }
@@ -84,6 +91,7 @@ pub(super) fn resolve_contacts(
         &Transform,
         Option<&Sprite>,
     )>,
+    immune: Query<(), With<Immune>>,
     pickups: Query<(&Pickup, &Transform)>,
     mut struck: MessageWriter<HeroStruck>,
     mut score: MessageWriter<ScoreGained>,
@@ -106,6 +114,9 @@ pub(super) fn resolve_contacts(
                 let Ok((mut health, value, transform, sprite)) = enemies.get_mut(c.b) else {
                     continue;
                 };
+                if immune.contains(c.b) {
+                    continue;
+                }
                 let dealt = damage.get(c.a).map_or(1, |d| d.0);
                 let at = transform.translation.truncate();
                 if health.take(dealt) {
@@ -115,7 +126,11 @@ pub(super) fn resolve_contacts(
                     if points > 0 {
                         score.write(ScoreGained(points));
                     }
-                    destroyed.write(EnemyDestroyed { at, score: points });
+                    destroyed.write(EnemyDestroyed {
+                        entity: c.b,
+                        at,
+                        score: points,
+                    });
                     let color = sprite.map_or(Color::WHITE, |s| s.color);
                     explode.write(Explode { at, color });
                 } else {

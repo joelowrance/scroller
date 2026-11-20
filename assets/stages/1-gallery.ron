@@ -1,0 +1,36 @@
+// Debug enemy gallery for Cabinet 1: every enemy type in turn, for
+// screenshot review. Switched on by `side_shooter.enemy_gallery` in
+// tuning.ron or `?gallery` on the web URL (both need debug_keys); it then
+// replaces Stage 1. At 30 px/s each 300 px is 10 seconds.
+(
+    length: 3400.0,
+    speed: [(from: 0.0, speed: 30.0)],
+    restart_points: [(at: 0.0, hero: (-110.0, 0.0))],
+    spawns: [
+        // 0:01 Skiff V of 5, dropping a Gun Power-up when cleared.
+        (at: 30.0, kind: "skiff", pos: (176.0, 30.0), params: {"drop": "G"}),
+        // 0:10 Gull snake of 6.
+        (at: 300.0, kind: "gull", pos: (176.0, 10.0)),
+        // 0:20 Three Bellbuoys on the wave line.
+        (at: 600.0, kind: "bellbuoy", pos: (176.0, 0.0)),
+        (at: 640.0, kind: "bellbuoy", pos: (176.0, 0.0)),
+        (at: 680.0, kind: "bellbuoy", pos: (176.0, 0.0)),
+        // 0:30 Lamplighter.
+        (at: 900.0, kind: "lamplighter", pos: (180.0, 40.0)),
+        // 0:40 Hook pair from behind.
+        (at: 1200.0, kind: "hook", pos: (0.0, 0.0)),
+        // 0:45 Ferry: holds, launches Skiffs, fires rings.
+        (at: 1350.0, kind: "ferry", pos: (184.0, 20.0), params: {"drop": "B"}),
+        // 1:05 Barnacles on the floor and the ceiling.
+        (at: 1950.0, kind: "barnacle", pos: (176.0, -115.0)),
+        (at: 1990.0, kind: "barnacle", pos: (176.0, 103.0), params: {"ceiling": true}),
+        // 1:13 Clam pair.
+        (at: 2200.0, kind: "clam", pos: (176.0, 40.0)),
+        // 1:23 Mote cloud.
+        (at: 2500.0, kind: "mote", pos: (200.0, 0.0)),
+        // 1:33 Arc Gate.
+        (at: 2800.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -100.0, "ceiling_y": 92.0}),
+        // 1:40 The Stage 2 Gulls that fire.
+        (at: 3000.0, kind: "gull", pos: (176.0, -20.0), params: {"fires": true}),
+    ],
+)

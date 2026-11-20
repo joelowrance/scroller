@@ -59,6 +59,10 @@ pub struct SpawnEntry {
     /// What to spawn; the Cabinet decides what each kind means.
     pub kind: String,
     pub pos: (f32, f32),
+    /// Extra settings for this spawn, read by the Cabinet (for example a
+    /// Formation's size). Written as a RON map: `params: {"size": 3}`.
+    #[serde(default)]
+    pub params: ron::Map,
 }
 
 impl StageTimeline {
@@ -208,6 +212,25 @@ impl StageRun {
 pub struct SpawnRequested {
     pub kind: String,
     pub pos: Vec2,
+    /// The spawn entry's `params`, empty when it has none.
+    pub params: ron::Map,
+}
+
+impl SpawnRequested {
+    /// A request with no params.
+    pub fn new(kind: impl Into<String>, pos: Vec2) -> Self {
+        Self {
+            kind: kind.into(),
+            pos,
+            params: ron::Map::new(),
+        }
+    }
+
+    /// Reads the params into a Cabinet's own type. Missing fields take the
+    /// type's defaults (give it `#[serde(default)]`).
+    pub fn params<T: serde::de::DeserializeOwned>(&self) -> Result<T, ron::Error> {
+        ron::Value::Map(self.params.clone()).into_rust()
+    }
 }
 
 #[cfg(test)]
