@@ -7,6 +7,8 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
+use crate::cabinets::side_shooter::tuning::SideShooterTuning;
+
 const EMBEDDED: &str = include_str!("../assets/tuning.ron");
 
 #[derive(Resource, Clone, Debug, Deserialize)]
@@ -28,8 +30,7 @@ pub struct Tuning {
     pub time_scale: f32,
     pub kit: KitTuning,
     pub placeholder: PlaceholderTuning,
-    /// Cabinet 1, the side-scrolling shooter.
-    pub side_shooter: crate::cabinets::side_shooter::tuning::SideShooterTuning,
+    pub side_shooter: SideShooterTuning,
 }
 
 /// Values for the shared gameplay kit used by every Cabinet.
@@ -81,7 +82,7 @@ impl Default for Tuning {
             time_scale: 1.0,
             kit: KitTuning::default(),
             placeholder: PlaceholderTuning::default(),
-            side_shooter: Default::default(),
+            side_shooter: SideShooterTuning::default(),
         }
     }
 }

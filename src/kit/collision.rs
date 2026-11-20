@@ -17,11 +17,13 @@ pub enum Layer {
     EnemyShot,
     Pickup,
     Terrain,
+    /// Stops enemy shots and nothing else (a Hero's drone or shield).
+    ShotBlocker,
 }
 
 /// The layer pairs that interact. In each [`Contact`], `a` is on the first
 /// layer of its pair and `b` on the second.
-pub const PAIRS: [(Layer, Layer); 7] = [
+pub const PAIRS: [(Layer, Layer); 8] = [
     (Layer::HeroShot, Layer::Enemy),
     (Layer::EnemyShot, Layer::Hero),
     (Layer::Enemy, Layer::Hero),
@@ -29,6 +31,7 @@ pub const PAIRS: [(Layer, Layer); 7] = [
     (Layer::Terrain, Layer::Hero),
     (Layer::Terrain, Layer::HeroShot),
     (Layer::Terrain, Layer::EnemyShot),
+    (Layer::EnemyShot, Layer::ShotBlocker),
 ];
 
 /// Whether two layers interact at all, in either order.
@@ -68,6 +71,11 @@ impl Hitbox {
     }
 }
 
+/// A second box used only against [`Layer::Terrain`], so a ship can have a
+/// tiny hitbox for bullets and a wider one that keeps its wings out of walls.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct TerrainHitbox(pub Hitbox);
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Aabb {
     pub min: Vec2,
@@ -93,17 +101,44 @@ pub struct Contact {
     pub b_layer: Layer,
 }
 
+/// One entity's boxes this frame.
+#[derive(Clone, Copy, Debug)]
+pub struct Collider {
+    pub entity: Entity,
+    pub layer: Layer,
+    pub aabb: Aabb,
+    /// The box used against terrain (the same as `aabb` unless it has a
+    /// [`TerrainHitbox`]).
+    pub terrain_aabb: Aabb,
+}
+
+impl Collider {
+    pub fn new(entity: Entity, layer: Layer, aabb: Aabb) -> Self {
+        Self {
+            entity,
+            layer,
+            aabb,
+            terrain_aabb: aabb,
+        }
+    }
+}
+
 /// Every contact between the given boxes, pair by pair in [`PAIRS`] order.
-pub fn find_contacts(boxes: &[(Entity, Layer, Aabb)]) -> Vec<Contact> {
+pub fn find_contacts(colliders: &[Collider]) -> Vec<Contact> {
     let mut contacts = Vec::new();
     for (a_layer, b_layer) in PAIRS {
-        for (a, _, a_box) in boxes.iter().filter(|b| b.1 == a_layer) {
-            for (b, _, b_box) in boxes.iter().filter(|b| b.1 == b_layer) {
-                if a_box.overlaps(b_box) {
+        for a in colliders.iter().filter(|c| c.layer == a_layer) {
+            for b in colliders.iter().filter(|c| c.layer == b_layer) {
+                let b_box = if a_layer == Layer::Terrain {
+                    &b.terrain_aabb
+                } else {
+                    &b.aabb
+                };
+                if a.aabb.overlaps(b_box) {
                     contacts.push(Contact {
-                        a: *a,
+                        a: a.entity,
                         a_layer,
-                        b: *b,
+                        b: b.entity,
                         b_layer,
                     });
                 }
@@ -114,14 +149,23 @@ pub fn find_contacts(boxes: &[(Entity, Layer, Aabb)]) -> Vec<Contact> {
 }
 
 pub(super) fn detect(
-    hitboxes: Query<(Entity, &Layer, &Hitbox, &Transform)>,
+    hitboxes: Query<(Entity, &Layer, &Hitbox, Option<&TerrainHitbox>, &Transform)>,
     mut contacts: MessageWriter<Contact>,
 ) {
-    let boxes: Vec<_> = hitboxes
+    let colliders: Vec<_> = hitboxes
         .iter()
-        .map(|(e, layer, hitbox, t)| (e, *layer, hitbox.aabb(t.translation.truncate())))
+        .map(|(entity, layer, hitbox, terrain, t)| {
+            let at = t.translation.truncate();
+            let aabb = hitbox.aabb(at);
+            Collider {
+                entity,
+                layer: *layer,
+                aabb,
+                terrain_aabb: terrain.map_or(aabb, |t| t.0.aabb(at)),
+            }
+        })
         .collect();
-    contacts.write_batch(find_contacts(&boxes));
+    contacts.write_batch(find_contacts(&colliders));
 }
 
 #[cfg(test)]
@@ -162,6 +206,27 @@ mod tests {
         assert!(!interacts(Layer::Enemy, Layer::Enemy));
         assert!(!interacts(Layer::EnemyShot, Layer::Enemy));
         assert!(!interacts(Layer::Pickup, Layer::HeroShot));
+        assert!(interacts(Layer::ShotBlocker, Layer::EnemyShot));
+        assert!(!interacts(Layer::ShotBlocker, Layer::Enemy));
+    }
+
+    #[test]
+    fn terrain_uses_the_terrain_hitbox_and_everything_else_the_small_one() {
+        let hero = Entity::from_raw_u32(1).unwrap();
+        let wall = Entity::from_raw_u32(2).unwrap();
+        let bullet = Entity::from_raw_u32(3).unwrap();
+        let mut ship = Collider::new(hero, Layer::Hero, at(0.0, 0.0, 4.0, 4.0));
+        ship.terrain_aabb = at(0.0, 0.0, 12.0, 6.0);
+        // The wall reaches the wide box; the bullet sits just above the small
+        // box but inside the wide one.
+        let boxes = [
+            ship,
+            Collider::new(wall, Layer::Terrain, at(8.0, 0.0, 6.0, 6.0)),
+            Collider::new(bullet, Layer::EnemyShot, at(0.0, 3.0, 2.0, 2.0)),
+        ];
+        let contacts = find_contacts(&boxes);
+        assert_eq!(contacts.len(), 1);
+        assert_eq!(contacts[0].a, wall);
     }
 
     #[test]
@@ -171,10 +236,10 @@ mod tests {
         let shot = Entity::from_raw_u32(3).unwrap();
         let friend = Entity::from_raw_u32(4).unwrap();
         let boxes = [
-            (hero, Layer::Hero, at(0.0, 0.0, 8.0, 8.0)),
-            (enemy, Layer::Enemy, at(2.0, 0.0, 8.0, 8.0)),
-            (shot, Layer::HeroShot, at(1.0, 0.0, 2.0, 2.0)),
-            (friend, Layer::Enemy, at(100.0, 0.0, 8.0, 8.0)),
+            Collider::new(hero, Layer::Hero, at(0.0, 0.0, 8.0, 8.0)),
+            Collider::new(enemy, Layer::Enemy, at(2.0, 0.0, 8.0, 8.0)),
+            Collider::new(shot, Layer::HeroShot, at(1.0, 0.0, 2.0, 2.0)),
+            Collider::new(friend, Layer::Enemy, at(100.0, 0.0, 8.0, 8.0)),
         ];
         let contacts = find_contacts(&boxes);
         assert_eq!(

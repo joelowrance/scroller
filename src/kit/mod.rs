@@ -18,7 +18,8 @@
 //!
 //! Each frame runs the [`KitSet`]s in order. Cabinet systems that react to
 //! spawns go after [`KitSet::Timeline`]; movement and AI go before
-//! [`KitSet::Collide`].
+//! [`KitSet::Collide`]. Gate them with the [`stage_live`] run condition, so
+//! they stop for pauses and hit-stops.
 
 // Parts of the kit's API are there for the real Cabinets and not used by the
 // placeholder yet.
@@ -33,14 +34,15 @@ pub mod motion;
 pub mod stage;
 pub mod timeline;
 
+pub use collision::TerrainHitbox;
 pub use collision::{Contact, Hitbox, Layer};
 pub use combat::{
-    Damage, EnemyDestroyed, Health, Hero, HeroStruck, Immune, Invulnerable, Pickup,
-    PickupCollected, ScoreValue,
+    Damage, EnemyDestroyed, Health, Hero, HeroStruck, HitStop, Hurt, Immune, Invulnerable, Pickup,
+    PickupCollected, ScoreValue, Shield, ShieldAbsorbed,
 };
 pub use effects::{Explode, Flash, Shake};
 pub use motion::{DespawnOffscreen, Lifetime, Velocity, projectile};
-pub use stage::StageRestarted;
+pub use stage::{HitStopTimer, StageRestarted, stage_live};
 pub use timeline::{SpawnRequested, StageRun, StageTimeline};
 
 use crate::flow::{Screen, gameplay_running};
@@ -60,6 +62,10 @@ pub enum KitSet {
     Effects,
 }
 
+fn not_frozen(hit_stop: Res<stage::HitStopTimer>) -> bool {
+    hit_stop.0.is_none()
+}
+
 pub struct KitPlugin;
 
 impl Plugin for KitPlugin {
@@ -74,6 +80,9 @@ impl Plugin for KitPlugin {
             .add_message::<Explode>()
             .add_message::<Flash>()
             .add_message::<Shake>()
+            .add_message::<Hurt>()
+            .add_message::<ShieldAbsorbed>()
+            .init_resource::<stage::HitStopTimer>()
             .init_resource::<effects::Trauma>()
             .init_resource::<effects::EffectRng>()
             .configure_sets(
@@ -83,6 +92,11 @@ impl Plugin for KitPlugin {
                     .run_if(in_state(Screen::Playing))
                     .run_if(gameplay_running)
                     .run_if(resource_exists::<StageRun>),
+            )
+            // A hit-stop freezes everything except the step that ends it.
+            .configure_sets(
+                Update,
+                (Timeline, Move, Collide, Effects).run_if(not_frozen),
             )
             .add_systems(
                 Update,
@@ -94,7 +108,11 @@ impl Plugin for KitPlugin {
                         .chain()
                         .in_set(Move),
                     collision::detect.in_set(Collide),
-                    (combat::resolve_contacts, stage::restart_after_hit)
+                    (
+                        combat::resolve_contacts,
+                        combat::apply_hurt,
+                        stage::restart_after_hit,
+                    )
                         .chain()
                         .in_set(Resolve),
                     (

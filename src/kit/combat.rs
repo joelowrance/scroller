@@ -1,12 +1,13 @@
 //! Health, damage and score: what each [`Contact`] means.
 //!
-//! - A Hero shot hitting an enemy deals its [`Damage`]; an enemy with no
-//!   [`Health`] left explodes and awards its [`ScoreValue`] as
-//!   [`ScoreGained`].
+//! - A Hero shot hitting an enemy deals its [`Damage`] as a [`Hurt`]. Any
+//!   system can send [`Hurt`] (a bomb, say). An enemy with no [`Health`] left
+//!   explodes and awards its [`ScoreValue`] as [`ScoreGained`]. An
+//!   [`Immune`] enemy takes no damage, but still uses up the shot.
 //! - An enemy, enemy shot or terrain touching the Hero sends [`HeroStruck`]
-//!   (see `restart.rs` for what follows).
+//!   (see `stage.rs` for what follows).
 //! - A [`Pickup`] touching the Hero is collected.
-//! - Shots stop at terrain.
+//! - Shots stop at terrain, and enemy shots stop at a [`Layer::ShotBlocker`].
 
 use std::collections::HashSet;
 
@@ -56,9 +57,37 @@ pub struct Pickup {
     pub kind: String,
 }
 
-/// Something hit the Hero. The debug K key sends it too.
+/// Absorbs hits on the Hero that would cost a life, one per charge, then
+/// makes the Hero invulnerable for a moment.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct Shield {
+    pub charges: u32,
+    pub invulnerable_seconds: f32,
+}
+
+/// Seconds the game freezes after the Hero is hit, before the explosion and
+/// the rewind. Put it on the Hero; without it there is no hit-stop.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct HitStop(pub f32);
+
+/// Something hit the Hero: `from` is what hit it (None for the debug K key).
 #[derive(Message, Clone, Copy, Debug, Default)]
-pub struct HeroStruck;
+pub struct HeroStruck {
+    pub from: Option<Entity>,
+}
+
+/// A [`Shield`] charge absorbed a hit from `from`.
+#[derive(Message, Clone, Copy, Debug, Default)]
+pub struct ShieldAbsorbed {
+    pub from: Option<Entity>,
+}
+
+/// Damage to an enemy, from a shot or anything else.
+#[derive(Message, Clone, Copy, Debug)]
+pub struct Hurt {
+    pub target: Entity,
+    pub damage: u32,
+}
 
 #[derive(Message, Clone, Debug)]
 pub struct PickupCollected {
@@ -69,7 +98,7 @@ pub struct PickupCollected {
 /// An enemy was shot down (its points are sent separately as [`ScoreGained`]).
 #[derive(Message, Clone, Copy, Debug)]
 pub struct EnemyDestroyed {
-    /// The enemy (already being despawned).
+    /// The enemy, despawned at the end of this frame.
     pub entity: Entity,
     pub at: Vec2,
     pub score: u64,
@@ -85,69 +114,42 @@ pub(super) fn resolve_contacts(
     tuning: Res<Tuning>,
     mut contacts: MessageReader<Contact>,
     damage: Query<&Damage>,
-    mut enemies: Query<(
-        &mut Health,
-        Option<&ScoreValue>,
-        &Transform,
-        Option<&Sprite>,
-    )>,
-    immune: Query<(), With<Immune>>,
     pickups: Query<(&Pickup, &Transform)>,
+    mut hurt: MessageWriter<Hurt>,
     mut struck: MessageWriter<HeroStruck>,
-    mut score: MessageWriter<ScoreGained>,
-    mut destroyed: MessageWriter<EnemyDestroyed>,
     mut collected: MessageWriter<PickupCollected>,
-    mut explode: MessageWriter<Explode>,
-    mut flash: MessageWriter<Flash>,
 ) {
-    // Entities used up earlier this frame (despawns apply later).
-    let mut gone = HashSet::new();
-    let mut hero_hit = false;
+    // Shots and pickups used up earlier this frame (despawns apply later).
+    let mut spent = HashSet::new();
+    let mut hero_hit = None;
     for c in contacts.read() {
-        if gone.contains(&c.a) || gone.contains(&c.b) {
+        if spent.contains(&c.a) || spent.contains(&c.b) {
             continue;
         }
         match (c.a_layer, c.b_layer) {
             (Layer::HeroShot, Layer::Enemy) => {
-                gone.insert(c.a);
+                spent.insert(c.a);
                 commands.entity(c.a).try_despawn();
-                let Ok((mut health, value, transform, sprite)) = enemies.get_mut(c.b) else {
-                    continue;
-                };
-                if immune.contains(c.b) {
-                    continue;
-                }
-                let dealt = damage.get(c.a).map_or(1, |d| d.0);
-                let at = transform.translation.truncate();
-                if health.take(dealt) {
-                    gone.insert(c.b);
-                    commands.entity(c.b).try_despawn();
-                    let points = value.map_or(0, |v| v.0);
-                    if points > 0 {
-                        score.write(ScoreGained(points));
-                    }
-                    destroyed.write(EnemyDestroyed {
-                        entity: c.b,
-                        at,
-                        score: points,
-                    });
-                    let color = sprite.map_or(Color::WHITE, |s| s.color);
-                    explode.write(Explode { at, color });
-                } else {
-                    flash.write(Flash(c.b));
-                }
+                hurt.write(Hurt {
+                    target: c.b,
+                    damage: damage.get(c.a).map_or(1, |d| d.0),
+                });
             }
             (Layer::EnemyShot | Layer::Enemy | Layer::Terrain, Layer::Hero) => {
                 if c.a_layer == Layer::EnemyShot {
-                    gone.insert(c.a);
+                    spent.insert(c.a);
                     commands.entity(c.a).try_despawn();
                 }
-                if !hero_invincible(&tuning) {
-                    hero_hit = true;
+                if !hero_invincible(&tuning) && hero_hit.is_none() {
+                    hero_hit = Some(c.a);
                 }
             }
+            (Layer::EnemyShot, Layer::ShotBlocker) => {
+                spent.insert(c.a);
+                commands.entity(c.a).try_despawn();
+            }
             (Layer::Pickup, Layer::Hero) => {
-                gone.insert(c.a);
+                spent.insert(c.a);
                 commands.entity(c.a).try_despawn();
                 if let Ok((pickup, transform)) = pickups.get(c.a) {
                     collected.write(PickupCollected {
@@ -157,14 +159,58 @@ pub(super) fn resolve_contacts(
                 }
             }
             (Layer::Terrain, _) => {
-                gone.insert(c.b);
+                spent.insert(c.b);
                 commands.entity(c.b).try_despawn();
             }
             _ => {}
         }
     }
-    if hero_hit {
-        struck.write_default();
+    if let Some(from) = hero_hit {
+        struck.write(HeroStruck { from: Some(from) });
+    }
+}
+
+/// Applies every [`Hurt`]: flashes survivors, explodes and scores the rest.
+pub(super) fn apply_hurt(
+    mut commands: Commands,
+    mut hurts: MessageReader<Hurt>,
+    mut enemies: Query<(
+        &mut Health,
+        Option<&ScoreValue>,
+        &Transform,
+        Option<&Sprite>,
+        Has<Immune>,
+    )>,
+    mut score: MessageWriter<ScoreGained>,
+    mut destroyed: MessageWriter<EnemyDestroyed>,
+    mut explode: MessageWriter<Explode>,
+    mut flash: MessageWriter<Flash>,
+) {
+    for hurt in hurts.read() {
+        let Ok((mut health, value, transform, sprite, immune)) = enemies.get_mut(hurt.target)
+        else {
+            continue;
+        };
+        if immune {
+            continue;
+        }
+        if health.take(hurt.damage) {
+            commands.entity(hurt.target).try_despawn();
+            let at = transform.translation.truncate();
+            let points = value.map_or(0, |v| v.0);
+            if points > 0 {
+                score.write(ScoreGained(points));
+            }
+            destroyed.write(EnemyDestroyed {
+                entity: hurt.target,
+                at,
+                score: points,
+            });
+            let color = sprite.map_or(Color::WHITE, |s| s.color);
+            explode.write(Explode { at, color });
+        } else if health.0 > 0 {
+            flash.write(Flash(hurt.target));
+        }
     }
 }
 

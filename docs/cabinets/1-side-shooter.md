@@ -673,3 +673,37 @@ side_shooter: (
   the pace fast but readable, and #11 can check it.
 - **The Stage 2 ending is a shaft.** It sets up the 1 → 2 Cabinet Transition
   without needing a boss (DESIGN: no bosses).
+
+## Decisions made while building the Wren (#7)
+
+- **The Wren's start and respawn spot is `side_shooter.hero.start`.** The kit
+  moves the Hero to the Restart Point's `hero` position, then the Cabinet
+  replaces that with the fly-in to `hero.start`. Stage files can leave
+  `hero` out.
+- **The 14×14 pickup box** is done by giving each capsule a hitbox of
+  `size + pickup_box − hero.hitbox` (20×20). Against the Wren's 4×4 hitbox it
+  overlaps in exactly the cases where the capsule touches the 14×14 box.
+- **The Wren blinks while invulnerable**, whether from the respawn, the
+  Undertow or the Ward. The blink is the kit's single "can't be hit" signal.
+- **Bomb and fire are locked during the fly-in.** The Wren can't be steered
+  then, so it can't bomb either.
+- **Drones are numbered:** the first flies above the Wren and the second
+  below, so losing "the lower one first" removes the second.
+- **The gun keeps its leftover time** between volleys, so it fires 10
+  volleys a second at any frame rate (30 to 144 fps are tested). A frame long
+  enough to owe two volleys still fires only one.
+- **The Undertow is a ring, not a disc.** Each frame it touches only what its
+  edge sweeps over (a band two frames wide, so slower enemy bullets flying
+  inward can't slip through). Bullets fired into the area it has already
+  passed are not cancelled. Enemies it kills go through the kit's `Hurt`
+  path, so they count as destroyed and bombed Formations still drop their
+  Power-up.
+- **The Wren's position is not rounded to whole pixels** while steering. At
+  100 px/s a frame is about 1.7 px, and rounding each frame would change the
+  speed. Snapping what is drawn to the pixel grid is the camera's job.
+- **Angled shots are drawn along their path,** but their hitbox stays
+  axis-aligned (8×2). At 10° the difference is under a pixel.
+- **The Stage-clear and no-miss bonuses are left to #9,** which owns the end
+  of the Stage. Cabinet 1 plays a stand-in Stage
+  (`assets/stages/side-shooter-stand-in.ron`) until #9 adds `1-1.ron` and
+  `1-2.ron`.

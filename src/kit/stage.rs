@@ -4,10 +4,11 @@
 use bevy::prelude::*;
 
 use super::collision::Layer;
-use super::combat::{Hero, HeroStruck, Invulnerable};
+use super::combat::{Hero, HeroStruck, HitStop, Invulnerable, Shield, ShieldAbsorbed};
 use super::effects::{Explode, Shake};
 use super::timeline::{SpawnRequested, StageRun};
 use crate::cabinets::{LifeLost, ScoreGained, StageCleared};
+use crate::flow::{Paused, Screen};
 use crate::tuning::Tuning;
 
 /// The Hero lost a life and the Stage went back to a Restart Point. Enemies
@@ -38,28 +39,80 @@ pub(super) fn advance_timeline(
     }
 }
 
-/// The Hero was hit: a life is lost and the Stage rewinds to the latest
+/// A lost life waiting out its hit-stop: seconds left. While it runs, the
+/// Stage is frozen (see [`stage_live`]).
+#[derive(Resource, Default)]
+pub struct HitStopTimer(pub Option<f32>);
+
+/// Run condition for Cabinet gameplay systems: a Stage is playing, not
+/// paused, and not frozen in a hit-stop.
+pub fn stage_live(
+    screen: Res<State<Screen>>,
+    paused: Res<Paused>,
+    stage: Option<Res<StageRun>>,
+    hit_stop: Res<HitStopTimer>,
+) -> bool {
+    *screen.get() == Screen::Playing && !paused.0 && stage.is_some() && hit_stop.0.is_none()
+}
+
+/// The Hero was hit. A [`Shield`] charge absorbs it; otherwise, after the
+/// Hero's [`HitStop`], a life is lost and the Stage rewinds to the latest
 /// Restart Point. If that was the last life, the flow moves to Game Over.
 pub(super) fn restart_after_hit(
     mut commands: Commands,
+    time: Res<Time>,
     tuning: Res<Tuning>,
     mut struck: MessageReader<HeroStruck>,
+    mut hit_stop: ResMut<HitStopTimer>,
     mut stage: ResMut<StageRun>,
-    mut hero: Single<(&mut Transform, &mut Invulnerable, Option<&Sprite>), With<Hero>>,
+    mut hero: Single<
+        (
+            &mut Transform,
+            &mut Invulnerable,
+            Option<&mut Shield>,
+            Option<&HitStop>,
+            Option<&Sprite>,
+        ),
+        With<Hero>,
+    >,
     clearable: Query<(Entity, &Layer)>,
     mut lost: MessageWriter<LifeLost>,
+    mut absorbed: MessageWriter<ShieldAbsorbed>,
     mut restarted: MessageWriter<StageRestarted>,
     mut explode: MessageWriter<Explode>,
     mut shake: MessageWriter<Shake>,
 ) {
-    // One life per frame at most, however many things hit at once.
-    if struck.read().count() == 0 || stage.cursor.is_cleared() {
-        return;
+    let (transform, invulnerable, shield, stop, sprite) = &mut *hero;
+    // One hit per frame at most, however many things hit at once.
+    let hit = struck.read().last().copied();
+    match hit_stop.0 {
+        Some(left) => {
+            let left = left - time.delta_secs();
+            if left > 0.0 {
+                hit_stop.0 = Some(left);
+                return;
+            }
+            hit_stop.0 = None;
+        }
+        None => {
+            let Some(hit) = hit else { return };
+            if stage.cursor.is_cleared() || invulnerable.0 > 0.0 {
+                return;
+            }
+            if let Some(shield) = shield.as_mut().filter(|s| s.charges > 0) {
+                shield.charges -= 1;
+                invulnerable.0 = shield.invulnerable_seconds;
+                absorbed.write(ShieldAbsorbed { from: hit.from });
+                return;
+            }
+            let seconds = stop.map_or(0.0, |s| s.0);
+            if seconds > 0.0 {
+                hit_stop.0 = Some(seconds);
+                return;
+            }
+        }
     }
-    let (transform, invulnerable, sprite) = &mut *hero;
-    if invulnerable.0 > 0.0 {
-        return;
-    }
+
     lost.write_default();
     let at = transform.translation.truncate();
     explode.write(Explode {
@@ -99,7 +152,7 @@ pub(super) fn debug_keys(
         return;
     }
     if keys.just_pressed(KeyCode::KeyK) {
-        struck.write_default();
+        struck.write(HeroStruck { from: None });
     }
     if keys.just_pressed(KeyCode::KeyP) {
         score.write(ScoreGained(1000));
@@ -125,6 +178,7 @@ pub(super) fn reset_time_scale(mut time: ResMut<Time<Virtual>>) {
     time.set_relative_speed(1.0);
 }
 
-pub(super) fn end_stage(mut commands: Commands) {
+pub(super) fn end_stage(mut commands: Commands, mut hit_stop: ResMut<HitStopTimer>) {
+    hit_stop.0 = None;
     commands.remove_resource::<StageRun>();
 }
