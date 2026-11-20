@@ -127,7 +127,7 @@ pub(super) fn resolve_contacts(
             continue;
         }
         match (c.a_layer, c.b_layer) {
-            (Layer::HeroShot, Layer::Enemy) => {
+            (Layer::HeroShot, Layer::Enemy | Layer::Ground) | (Layer::Rocket, Layer::Ground) => {
                 spent.insert(c.a);
                 commands.entity(c.a).try_despawn();
                 hurt.write(Hurt {

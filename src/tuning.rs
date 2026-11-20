@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use serde::Deserialize;
 
 use crate::cabinets::side_shooter::tuning::SideShooterTuning;
+use crate::cabinets::vertical_shooter::tuning::VerticalShooterTuning;
 
 const EMBEDDED: &str = include_str!("../assets/tuning.ron");
 
@@ -32,6 +33,7 @@ pub struct Tuning {
     pub kit: KitTuning,
     pub placeholder: PlaceholderTuning,
     pub side_shooter: SideShooterTuning,
+    pub vertical_shooter: VerticalShooterTuning,
 }
 
 /// Values for the shared gameplay kit used by every Cabinet.
@@ -84,6 +86,7 @@ impl Default for Tuning {
             kit: KitTuning::default(),
             placeholder: PlaceholderTuning::default(),
             side_shooter: SideShooterTuning::default(),
+            vertical_shooter: VerticalShooterTuning::default(),
         }
     }
 }
@@ -132,7 +135,11 @@ impl Tuning {
             let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
             match key {
                 "invincible" => self.invincible_hero = value != "0" && value != "false",
-                "gallery" => self.side_shooter.enemy_gallery = value != "0" && value != "false",
+                "gallery" => {
+                    let on = value != "0" && value != "false";
+                    self.side_shooter.enemy_gallery = on;
+                    self.vertical_shooter.enemy_gallery = on;
+                }
                 "time_scale" => {
                     if let Ok(scale) = value.parse() {
                         self.time_scale = scale;

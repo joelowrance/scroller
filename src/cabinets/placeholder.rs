@@ -287,7 +287,9 @@ fn update_progress(
 
 /// Cabinets without their own code yet use the placeholder.
 fn uses_placeholder(session: Option<Res<Session>>) -> bool {
-    session.is_some_and(|s| s.cabinet != super::side_shooter::CABINET)
+    session.is_some_and(|s| {
+        s.cabinet != super::side_shooter::CABINET && s.cabinet != super::vertical_shooter::CABINET
+    })
 }
 
 pub struct PlaceholderCabinetPlugin;
