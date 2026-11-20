@@ -1,28 +1,37 @@
 //! A stand-in Cabinet used for every slot until the real Cabinets are built.
 //!
-//! It scrolls in the Cabinet's direction, lets the Hero (a square) move
-//! around, and clears the Stage after a timer, so the whole Run flow can be
-//! played end to end. With `debug_keys` on: K loses a life, P adds 1000
-//! points, C clears the Stage at once.
+//! Built on the gameplay kit: the Stage comes from `assets/stages/`, the Hero
+//! (a square) moves and fires with A, drones fly in and gunners shoot back.
+//! It scrolls in the Cabinet's direction and clears when the scroll ends.
 
 use bevy::prelude::*;
 
-use super::{CABINETS, LifeLost, ScoreGained, Scroll, StageCleared};
+use super::{CABINETS, Scroll};
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::{Screen, gameplay_running};
-use crate::input::Controls;
+use crate::input::{Button, Controls};
+use crate::kit::{
+    DespawnOffscreen, Health, Hero, Hitbox, Invulnerable, KitSet, Layer, ScoreValue,
+    SpawnRequested, StageRun, StageTimeline, Velocity, projectile,
+};
 use crate::run::Session;
 use crate::tuning::Tuning;
 
 const HERO_SIZE: f32 = 8.0;
+const DRONE_SIZE: f32 = 10.0;
 const STRIPE_COUNT: usize = 24;
 const PROGRESS_BAR_W: f32 = 120.0;
 
+const SIDEWAYS_STAGE: &str = include_str!("../../assets/stages/placeholder-sideways.ron");
+const UPWARD_STAGE: &str = include_str!("../../assets/stages/placeholder-upward.ron");
+
+/// Seconds until the Hero may fire again.
 #[derive(Component)]
-struct Hero {
-    /// Seconds of post-restart blinking left.
-    invulnerable: f32,
-}
+struct Gun(f32);
+
+/// A gunner drone's seconds until its next shot.
+#[derive(Component)]
+struct Gunner(f32);
 
 #[derive(Component)]
 struct Stripe {
@@ -32,18 +41,26 @@ struct Stripe {
 #[derive(Component)]
 struct ProgressFill;
 
-#[derive(Resource)]
-struct StageClock {
-    elapsed: f32,
-    done: bool,
+/// Unit vector pointing "ahead" (the way the Stage scrolls towards).
+fn ahead(scroll: Scroll) -> Vec2 {
+    match scroll {
+        Scroll::Sideways => Vec2::X,
+        Scroll::Upward => Vec2::Y,
+    }
+}
+
+fn stage_timeline(scroll: Scroll) -> StageTimeline {
+    let text = match scroll {
+        Scroll::Sideways => SIDEWAYS_STAGE,
+        Scroll::Upward => UPWARD_STAGE,
+    };
+    StageTimeline::parse(text).expect("placeholder Stage file must be valid")
 }
 
 fn spawn_stage(mut commands: Commands, session: Res<Session>) {
     let cabinet = &CABINETS[session.cabinet];
-    commands.insert_resource(StageClock {
-        elapsed: 0.0,
-        done: false,
-    });
+    let stage = StageRun::new(stage_timeline(cabinet.scroll));
+    let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
     for i in 0..STRIPE_COUNT {
@@ -65,34 +82,49 @@ fn spawn_stage(mut commands: Commands, session: Res<Session>) {
 
     commands.spawn((
         Sprite::from_color(cabinet.accent, Vec2::splat(HERO_SIZE)),
-        Transform::from_xyz(0.0, 0.0, 5.0),
-        Hero { invulnerable: 0.0 },
+        Transform::from_translation(start.extend(5.0)),
+        Hero,
+        Invulnerable(0.0),
+        // A forgiving hitbox, smaller than the sprite.
+        Hitbox::new(HERO_SIZE - 2.0, HERO_SIZE - 2.0),
+        Layer::Hero,
+        Gun(0.0),
         DespawnOnExit(Screen::Playing),
     ));
 
-    // Progress bar along the bottom of the screen.
+    // Progress bar along the bottom, with a tick at each Restart Point.
     let bar_y = -HALF_H + 6.0;
     commands.spawn((
         Sprite::from_color(Color::srgb(0.2, 0.2, 0.2), Vec2::new(PROGRESS_BAR_W, 2.0)),
         Transform::from_xyz(0.0, bar_y, 20.0),
         DespawnOnExit(Screen::Playing),
     ));
+    for point in &stage.timeline.restart_points[1..] {
+        let x = -PROGRESS_BAR_W / 2.0 + PROGRESS_BAR_W * point.at / stage.timeline.length;
+        commands.spawn((
+            Sprite::from_color(Color::srgb(0.6, 0.6, 0.6), Vec2::new(1.0, 4.0)),
+            Transform::from_xyz(x.round(), bar_y, 20.5),
+            DespawnOnExit(Screen::Playing),
+        ));
+    }
     commands.spawn((
         Sprite::from_color(Color::WHITE, Vec2::new(1.0, 2.0)),
         Transform::from_xyz(-PROGRESS_BAR_W / 2.0, bar_y, 21.0),
         ProgressFill,
         DespawnOnExit(Screen::Playing),
     ));
+
+    commands.insert_resource(stage);
 }
 
 fn scroll_stripes(
     time: Res<Time>,
-    tuning: Res<Tuning>,
+    stage: Res<StageRun>,
     session: Res<Session>,
     mut stripes: Query<(&Stripe, &mut Transform)>,
 ) {
     let scroll = CABINETS[session.cabinet].scroll;
-    let base = tuning.placeholder.scroll_speed * time.delta_secs();
+    let base = stage.speed() * time.delta_secs();
     for (stripe, mut transform) in &mut stripes {
         let pos = &mut transform.translation;
         match scroll {
@@ -112,79 +144,117 @@ fn scroll_stripes(
     }
 }
 
-fn move_hero(
+fn move_and_fire(
+    mut commands: Commands,
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
-    mut hero: Single<(&mut Hero, &mut Transform, &mut Visibility)>,
+    session: Res<Session>,
+    mut hero: Single<(&mut Transform, &mut Gun), With<Hero>>,
 ) {
-    let (hero, transform, visibility) = &mut *hero;
-    let step = controls.direction().normalize_or_zero()
-        * tuning.placeholder.hero_speed
-        * time.delta_secs();
+    let t = &tuning.placeholder;
+    let cabinet = &CABINETS[session.cabinet];
+    let (transform, gun) = &mut *hero;
+    let step = controls.direction().normalize_or_zero() * t.hero_speed * time.delta_secs();
     let limit = Vec2::new(HALF_W - HERO_SIZE, HALF_H - HERO_SIZE - 10.0);
     let pos = (transform.translation.truncate() + step).clamp(-limit, limit);
     transform.translation.x = pos.x;
     transform.translation.y = pos.y;
 
-    hero.invulnerable = (hero.invulnerable - time.delta_secs()).max(0.0);
-    let blink_on =
-        hero.invulnerable == 0.0 || ((hero.invulnerable * 10.0) as u32).is_multiple_of(2);
-    **visibility = if blink_on {
-        Visibility::Inherited
-    } else {
-        Visibility::Hidden
-    };
+    gun.0 = (gun.0 - time.delta_secs()).max(0.0);
+    if controls.held(Button::A) && gun.0 == 0.0 {
+        gun.0 = t.fire_seconds;
+        let dir = ahead(cabinet.scroll);
+        let size = if dir.x != 0.0 {
+            Vec2::new(6.0, 2.0)
+        } else {
+            Vec2::new(2.0, 6.0)
+        };
+        commands.spawn(projectile(
+            Layer::HeroShot,
+            pos + dir * HERO_SIZE,
+            dir * t.shot_speed,
+            size,
+            Color::WHITE,
+            3.0,
+        ));
+    }
 }
 
-fn advance_clock(
+fn spawn_enemies(
+    mut commands: Commands,
+    tuning: Res<Tuning>,
+    session: Res<Session>,
+    mut requests: MessageReader<SpawnRequested>,
+) {
+    let t = &tuning.placeholder;
+    let cabinet = &CABINETS[session.cabinet];
+    for request in requests.read() {
+        let (color, gunner) = match request.kind.as_str() {
+            "drone" => (Color::srgb(1.0, 0.35, 0.25), None),
+            "gunner" => (
+                Color::srgb(1.0, 0.8, 0.2),
+                Some(Gunner(t.gunner_fire_seconds / 2.0)),
+            ),
+            other => {
+                warn!("placeholder Cabinet: unknown spawn kind {other:?}");
+                continue;
+            }
+        };
+        let mut enemy = commands.spawn((
+            Sprite::from_color(color, Vec2::splat(DRONE_SIZE)),
+            Transform::from_translation(request.pos.extend(4.0)),
+            Hitbox::new(DRONE_SIZE, DRONE_SIZE),
+            Layer::Enemy,
+            Health(t.drone_health),
+            ScoreValue(t.drone_score),
+            Velocity(-ahead(cabinet.scroll) * t.drone_speed),
+            DespawnOffscreen::default(),
+            DespawnOnExit(Screen::Playing),
+        ));
+        if let Some(gunner) = gunner {
+            enemy.insert(gunner);
+        }
+    }
+}
+
+fn gunners_fire(
+    mut commands: Commands,
     time: Res<Time>,
     tuning: Res<Tuning>,
-    mut clock: ResMut<StageClock>,
-    mut fill: Single<(&mut Sprite, &mut Transform), With<ProgressFill>>,
-    mut cleared: MessageWriter<StageCleared>,
+    hero: Single<&Transform, With<Hero>>,
+    mut gunners: Query<(&mut Gunner, &Transform)>,
 ) {
-    if clock.done {
-        return;
+    let t = &tuning.placeholder;
+    let target = hero.translation.truncate();
+    for (mut gunner, transform) in &mut gunners {
+        gunner.0 -= time.delta_secs();
+        let from = transform.translation.truncate();
+        let on_screen = from.x.abs() < HALF_W && from.y.abs() < HALF_H;
+        if gunner.0 > 0.0 || !on_screen {
+            continue;
+        }
+        gunner.0 = t.gunner_fire_seconds;
+        let aim = (target - from).normalize_or(Vec2::NEG_X);
+        commands.spawn(projectile(
+            Layer::EnemyShot,
+            from,
+            aim * t.enemy_shot_speed,
+            Vec2::splat(3.0),
+            Color::srgb(1.0, 0.5, 1.0),
+            6.0,
+        ));
     }
-    clock.elapsed += time.delta_secs();
-    let progress = (clock.elapsed / tuning.placeholder.stage_seconds.max(0.1)).min(1.0);
-    let width = (PROGRESS_BAR_W * progress).round().max(1.0);
+}
+
+fn update_progress(
+    stage: Res<StageRun>,
+    mut fill: Single<(&mut Sprite, &mut Transform), With<ProgressFill>>,
+) {
+    let width = (PROGRESS_BAR_W * stage.progress()).round().max(1.0);
     let (sprite, transform) = &mut *fill;
     sprite.custom_size = Some(Vec2::new(width, 2.0));
     transform.translation.x = -PROGRESS_BAR_W / 2.0 + width / 2.0;
-    if progress >= 1.0 {
-        clock.done = true;
-        cleared.write_default();
-    }
-}
-
-fn debug_keys(
-    keys: Res<ButtonInput<KeyCode>>,
-    tuning: Res<Tuning>,
-    mut clock: ResMut<StageClock>,
-    mut hero: Single<(&mut Hero, &mut Transform)>,
-    mut lost: MessageWriter<LifeLost>,
-    mut score: MessageWriter<ScoreGained>,
-    mut cleared: MessageWriter<StageCleared>,
-) {
-    if !tuning.debug_keys {
-        return;
-    }
-    if keys.just_pressed(KeyCode::KeyK) && hero.0.invulnerable == 0.0 {
-        lost.write_default();
-        // Back to the Restart Point: the middle of the screen, briefly blinking.
-        hero.0.invulnerable = 2.0;
-        hero.1.translation.x = 0.0;
-        hero.1.translation.y = 0.0;
-    }
-    if keys.just_pressed(KeyCode::KeyP) {
-        score.write(ScoreGained(1000));
-    }
-    if keys.just_pressed(KeyCode::KeyC) && !clock.done {
-        clock.done = true;
-        cleared.write_default();
-    }
 }
 
 pub struct PlaceholderCabinetPlugin;
@@ -194,9 +264,32 @@ impl Plugin for PlaceholderCabinetPlugin {
         app.add_systems(OnEnter(Screen::Playing), spawn_stage)
             .add_systems(
                 Update,
-                (scroll_stripes, move_hero, advance_clock, debug_keys)
+                (
+                    spawn_enemies.after(KitSet::Timeline),
+                    (scroll_stripes, move_and_fire, gunners_fire, update_progress)
+                        .after(spawn_enemies)
+                        .before(KitSet::Move),
+                )
                     .run_if(in_state(Screen::Playing))
-                    .run_if(gameplay_running),
+                    .run_if(gameplay_running)
+                    .run_if(resource_exists::<StageRun>),
             );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn both_stage_files_parse_and_only_use_known_kinds() {
+        for scroll in [Scroll::Sideways, Scroll::Upward] {
+            let t = stage_timeline(scroll);
+            assert!(
+                t.spawns
+                    .iter()
+                    .all(|s| s.kind == "drone" || s.kind == "gunner")
+            );
+        }
     }
 }

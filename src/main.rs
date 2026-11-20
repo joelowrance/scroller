@@ -7,6 +7,7 @@ mod flow;
 mod font;
 mod highscore;
 mod input;
+mod kit;
 mod run;
 mod screens;
 mod storage;
@@ -45,6 +46,7 @@ fn main() {
         font::FontPlugin,
         input::InputPlugin,
         flow::FlowPlugin,
+        kit::KitPlugin,
         cabinets::CabinetsPlugin,
         screens::ScreensPlugin,
     ));
