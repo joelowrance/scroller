@@ -130,7 +130,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: smoke-screenshots
-          path: target/smoke/
+          # `latest` is a symlink to the run's folder; skip it to avoid a copy.
+          path: |
+            target/smoke/
+            !target/smoke/latest
           retention-days: 7
 
   deploy:
