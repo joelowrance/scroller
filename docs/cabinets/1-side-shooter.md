@@ -354,11 +354,12 @@ teaches the player that hugging the bottom isn't free.
 
 ### 4. Lamplighter: the gunner
 
-A squat craft with a lamp on its nose. It comes in from the right at 70 px/s
-(`lamplighter.speed: 70.0`), brakes over its last 24 px
+A squat craft with a lamp on its nose. It comes in from the right at 80 px/s
+(`lamplighter.speed: 80.0`), brakes over its last 24 px
 (`lamplighter.brake_distance: 24.0`) to stop at x = +100
 (`lamplighter.stop_x: 100.0`), and hovers for 3.0 s
-(`lamplighter.hover_seconds: 3.0`), bobbing 2 px (`lamplighter.bob_amplitude: 2.0`).
+(`lamplighter.hover_seconds: 3.0`), bobbing 2 px (`lamplighter.bob_amplitude: 2.0`) every 1.5 s
+(`lamplighter.bob_period: 1.5`).
 It lights its lamp **as soon as it stops**. After 0.4 s
 (`lamplighter.telegraph_seconds: 0.4`) it fires one aimed shot at
 100 px/s (`lamplighter.shot_speed: 100.0`), and it fires 2 shots in all
@@ -374,11 +375,15 @@ A hooked blade, in pairs (`hook.formation_size: 2`). A chevron blinks on the
 left edge for 0.75 s (`hook.warning_seconds: 0.75`) at the row where each Hook
 will appear. It then **enters from behind** and flies right at 150 px/s
 (`hook.speed: 150.0`) along a row 50 px above or below the Hero
-(`hook.pass_offset: 50.0`; one of the pair above, one below). The row is
+(`hook.pass_offset: 50.0`; one of the pair above, one below; larger
+Formations add pairs further out, each by half an offset more,
+`hook.pair_spread: 0.5`). The row is
 clamped to stay at least 12 px clear of terrain and the play-area edges
-(`hook.terrain_clearance: 12.0`). It U-turns at x = +110 (`hook.turn_x: 110.0`),
-then charges straight left along the Hero's current row at 170 px/s
-(`hook.charge_speed: 170.0`). It has no bullets. It rams. Drones don't stop
+(`hook.terrain_clearance: 12.0`). It U-turns at x = +110 (`hook.turn_x: 110.0`) on a half-circle of radius 14 px
+(`hook.turn_radius: 14.0`) toward the Hero's side, and then charges straight left at 170 px/s (`hook.charge_speed: 170.0`),
+sliding vertically at up to 85 px/s (`hook.charge_steer_speed: 85.0`) onto
+the row the Hero was on when the turn ended. The slide is what makes a Hook
+dodgeable: move off that row and it can't follow. It has no bullets. It rams. Drones don't stop
 it. It is what makes the Tail Power-up worth having.
 
 Stage authoring rule: Hooks only appear where the corridor is at least 120 px
@@ -419,7 +424,8 @@ getting past it.
 
 ### 8. Clam: the timing lock (Stage 2)
 
-A hovering shell, in pairs (`clam.formation_size: 2`). It drifts left with the
+A hovering shell, in pairs (`clam.formation_size: 2`), the second 48 px
+below the first (`clam.pair_spacing: (0.0, -48.0)`). It drifts left with the
 scroll and bobs 3 px (`clam.bob_amplitude: 3.0`) every 2.0 s
 (`clam.bob_period: 2.0`). It is closed for 2.0 s (`clam.closed_seconds: 2.0`)
 and immune to all damage then, the Undertow included (shots spark off it). It
@@ -444,7 +450,7 @@ Two pylons, one on the floor and one on the ceiling, with a 4 px wide electric
 arc between them (`arc_gate.arc_width: 4.0`). The arc is live for 1.2 s
 (`arc_gate.on_seconds: 1.2`) and off for 0.8 s (`arc_gate.off_seconds: 0.8`).
 It flickers for 0.3 s before it switches on
-(`arc_gate.telegraph_seconds: 0.3`). Touching the live arc is a hit.
+(`arc_gate.telegraph_seconds: 0.3`). Touching the live arc is a hit, and the live arc stops Hero shots.
 Destroying either pylon (40 HP, 600 points each) kills the arc for good.
 Pylons sit against the walls, so killing one means flying close to the floor
 or ceiling. That's quick at high power and a long, risky job at gun 1, where
@@ -619,18 +625,20 @@ side_shooter: (
         bellbuoy: (hp: 10, score: 300, wave_y: -104.0, bob_amplitude: 2.0, bob_period: 1.4,
                    trigger_range: 80.0, telegraph_seconds: 0.4, fan_count: 3,
                    fan_degrees: 15.0, shot_speed: 90.0, cooldown: 2.5),
-        lamplighter: (hp: 36, score: 500, speed: 70.0, brake_distance: 24.0, stop_x: 100.0,
-                      hover_seconds: 3.0, bob_amplitude: 2.0, telegraph_seconds: 0.4,
+        lamplighter: (hp: 36, score: 500, speed: 80.0, brake_distance: 24.0, stop_x: 100.0,
+                      hover_seconds: 3.0, bob_amplitude: 2.0, bob_period: 1.5, telegraph_seconds: 0.4,
                       shots: 2, shot_speed: 100.0, fire_interval: 1.2, exit_speed: 80.0),
         hook: (hp: 2, score: 200, formation_size: 2, warning_seconds: 0.75, speed: 150.0,
-               pass_offset: 50.0, terrain_clearance: 12.0, turn_x: 110.0, charge_speed: 170.0),
+               pass_offset: 50.0, terrain_clearance: 12.0, turn_x: 110.0, turn_radius: 14.0,
+               charge_speed: 170.0, charge_steer_speed: 85.0, pair_spread: 0.5),
         ferry: (hp: 400, hp_stage2: 640, score: 2000, speed: 25.0, hold_x: 60.0,
                 hold_seconds: 15.0, sink_speed: 20.0,
                 launch_count: 2, first_launch_delay: 1.0, launch_interval: 3.0,
                 ring_count: 8, ring_speed: 70.0, first_ring_delay: 2.0, ring_interval: 3.0),
         barnacle: (hp: 10, score: 400, turn_rate: 120.0, telegraph_seconds: 0.3,
                    shot_speed: 110.0, fire_interval: 1.6),
-        clam: (hp: 16, score: 800, formation_size: 2, bob_amplitude: 3.0, bob_period: 2.0,
+        clam: (hp: 16, score: 800, formation_size: 2, pair_spacing: (0.0, -48.0),
+               bob_amplitude: 3.0, bob_period: 2.0,
                closed_seconds: 2.0, open_seconds: 1.0, fan_count: 5, fan_degrees: 60.0,
                shot_speed: 100.0),
         mote: (hp: 1, score: 50, formation_size: 10, cloud_radius: 40.0, speed: 65.0,

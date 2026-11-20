@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 
 mod placeholder;
+pub mod side_shooter;
 
 pub const CABINET_COUNT: usize = 4;
 
@@ -76,6 +77,7 @@ impl Plugin for CabinetsPlugin {
         app.add_message::<StageCleared>()
             .add_message::<LifeLost>()
             .add_message::<ScoreGained>()
-            .add_plugins(placeholder::PlaceholderCabinetPlugin);
+            .add_plugins(placeholder::PlaceholderCabinetPlugin)
+            .add_plugins(side_shooter::SideShooterPlugin);
     }
 }

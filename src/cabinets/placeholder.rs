@@ -57,9 +57,13 @@ fn stage_timeline(scroll: Scroll) -> StageTimeline {
     StageTimeline::parse(text).expect("placeholder Stage file must be valid")
 }
 
-fn spawn_stage(mut commands: Commands, session: Res<Session>) {
+fn spawn_stage(mut commands: Commands, session: Res<Session>, tuning: Res<Tuning>) {
     let cabinet = &CABINETS[session.cabinet];
-    let stage = StageRun::new(stage_timeline(cabinet.scroll));
+    // Cabinet 1's debug enemy gallery runs on the placeholder until #7 lands.
+    let gallery = (session.cabinet == 0)
+        .then(|| super::side_shooter::enemies::gallery_timeline(&tuning))
+        .flatten();
+    let stage = StageRun::new(gallery.unwrap_or_else(|| stage_timeline(cabinet.scroll)));
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
@@ -196,10 +200,8 @@ fn spawn_enemies(
                 Color::srgb(1.0, 0.8, 0.2),
                 Some(Gunner(t.gunner_fire_seconds / 2.0)),
             ),
-            other => {
-                warn!("placeholder Cabinet: unknown spawn kind {other:?}");
-                continue;
-            }
+            // Kinds the placeholder doesn't know belong to real Cabinet code.
+            _ => continue,
         };
         let mut enemy = commands.spawn((
             Sprite::from_color(color, Vec2::splat(DRONE_SIZE)),

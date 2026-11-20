@@ -30,6 +30,7 @@ pub(super) fn advance_timeline(
         spawns.write(SpawnRequested {
             kind: entry.kind.clone(),
             pos: Vec2::new(entry.pos.0, entry.pos.1),
+            params: entry.params.clone(),
         });
     }
     if step.cleared {

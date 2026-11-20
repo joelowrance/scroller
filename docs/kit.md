@@ -22,6 +22,10 @@ A Stage is a RON file under `assets/stages/`, compiled into the binary with
   began.
 - `pos` and `hero` are canvas coordinates (origin at the centre, ±160 × ±120).
 - `kind` is a free string; the Cabinet maps it to an enemy, pickup or terrain.
+- `params` is optional: a RON map of extra settings the Cabinet reads, such
+  as `params: {"size": 3, "drop": "G"}`. It reaches the Cabinet on
+  `SpawnRequested::params`; `SpawnRequested::params::<T>()` reads it into the
+  Cabinet's own `#[serde(default)]` struct.
 - A Restart Point at 0 is added if the file has none.
 
 ## Frame order
@@ -43,6 +47,10 @@ after `Timeline`; movement and AI run before `Move`.
 - **Touching boxes don't collide**; boxes must share area.
 - **Hit flash** tints the sprite white. Image sprites from #4 may need a
   different flash later.
+- **`Immune` enemies** (a closed shell, say) use up shots that hit them but
+  take no damage.
+- **`EnemyDestroyed` names the enemy** (`entity`), so a Cabinet can tell which
+  member of a group was shot down.
 - **An enemy touching the Hero** costs a life but the enemy survives (the
   rewind clears it anyway).
 - **Debug aids** (`invincible_hero`, `time_scale` in `tuning.ron`) only act
