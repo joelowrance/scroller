@@ -8,8 +8,9 @@ and [GLOSSARY.md](GLOSSARY.md) (the domain language) before the first ticket.
 
 ## Order
 
-Work the milestones in order and, within a milestone, the issues in number
-order. An issue may start once the issues it names are closed.
+Work the milestones in order. Within a milestone, issues whose dependencies
+are closed run in parallel, one developer agent each. An issue may start
+once the issues it names are closed.
 
 | Milestone | Issues | Notes |
 |---|---|---|
@@ -44,35 +45,51 @@ to `main` directly, and branch protection enforces it.
 
 1. **Claim it:** read the issue and its comments, plus any design doc it
    names, and comment that work has started.
-2. **Build it** on branch `t<N>-<slug>` in the worktree you were given. Use
+2. **Build it** on branch `t<N>-<slug>` (slug: a few kebab-case words from
+   the issue title) in the worktree you were given. Use
    the domain language, and put every gameplay number in `assets/tuning.ron`.
 3. **Prove it** against the definition of done below.
 4. **Open a pull request:** rebase on `origin/main`, push the branch, and open
    a PR whose body starts `Closes #N`. It says what changed, which decisions
    were made, and how it was verified (commands run, screenshots looked at).
+   Follow-up work becomes a new issue, not a note in a comment.
 5. **Address the review:** fix every blocking finding, push, and reply on the
    PR. Repeat until the reviewer's verdict is APPROVED.
 
 **Reviewing (reviewer)**
 
 Check the PR against its issue's "Done when" list, the design docs, the
-glossary, and correctness. Post findings as a PR review comment ending in
+glossary, correctness, tests for the logic, every gameplay number living in
+`assets/tuning.ron`, and originality. Post findings as a PR review comment ending in
 one verdict line: `Verdict: APPROVED` or `Verdict: CHANGES REQUESTED`. All
 agents share one GitHub account, so GitHub's own approve button can't be
 used. The verdict line is the approval.
 
 **Merging (project manager)**
 
-Merge with squash only when the latest verdict is APPROVED and CI is green.
-Then confirm the deploy run on `main` succeeded. The live game at
+Merge with squash only when the latest verdict is APPROVED and the PR's CI
+check is green, rebasing first if `main` moved. Until the PR check from #2
+exists, the gate is the developer's and the reviewer's local runs of the
+definition of done. Then confirm the deploy run on `main` succeeded. The live game at
 http://joelowrance.com/scroller/ shows the result.
+
+## Definition of done
+
+A ticket is done when every box in its "Done when" list is ticked and all of
+these pass:
+
+- `cargo test`
+- `cargo clippy --all-targets -- -D warnings`
+- `scripts/smoke-web.sh` (once #1 exists), with its screenshots looked at,
+  not just generated
+- CI is green on the PR, and the deploy run on `main` is green after merge
 
 ## Deciding alone
 
 The user has handed this work off, so make design calls without asking.
 
 - **Within the settled design:** decide, and record the decision and its reason
-  in the relevant design doc and in the issue comment. The user vetoes by
+  in the relevant design doc and in the PR body. The user vetoes by
   commenting; until then the decision stands.
 - **Changes to the settled design** (anything in `docs/DESIGN.md` or the
   glossary's meanings): pick the most reversible option that keeps the current
