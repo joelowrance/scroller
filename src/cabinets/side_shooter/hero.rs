@@ -141,8 +141,9 @@ pub fn clamp_to_play_area(at: Vec2, t: &SideShooterTuning) -> Vec2 {
 }
 
 /// The Wren's look: `assets/sprites/hero.txt` in Cabinet 1's palette (Foam
-/// body, Spark canopy), its two frames flickering the Ember engine.
-fn wren_visual(sprites: &Sprites) -> impl Bundle {
+/// body, Spark canopy), its two frames flickering the Ember engine. Also used
+/// by the 1 → 2 Cabinet Transition.
+pub(crate) fn wren_visual(sprites: &Sprites) -> impl Bundle {
     (
         sprites.sprite("hero", 0),
         SpriteAnimation::looping([0, 1], ENGINE_FLICKER_SECONDS),
