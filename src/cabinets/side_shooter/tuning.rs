@@ -3,6 +3,7 @@
 //!
 //! Each struct defaults field by field, so the file can list only some keys.
 
+use bevy::prelude::*;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -15,6 +16,10 @@ pub struct SideShooterTuning {
     pub enemy_gallery: bool,
     pub enemy: EnemyRules,
     pub enemies: EnemyTypes,
+    pub hero: HeroTuning,
+    pub shot: ShotTuning,
+    pub bomb: BombTuning,
+    pub power_up: PowerUpTuning,
     pub score: ScoreTuning,
 }
 
@@ -25,6 +30,10 @@ impl Default for SideShooterTuning {
             enemy_gallery: false,
             enemy: EnemyRules::default(),
             enemies: EnemyTypes::default(),
+            hero: HeroTuning::default(),
+            shot: ShotTuning::default(),
+            bomb: BombTuning::default(),
+            power_up: PowerUpTuning::default(),
             score: ScoreTuning::default(),
         }
     }
@@ -60,14 +69,144 @@ impl Default for EnemyRules {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(default)]
+pub struct HeroTuning {
+    pub hitbox: (f32, f32),
+    pub terrain_hitbox: (f32, f32),
+    pub speed: f32,
+    pub speed_step: f32,
+    pub edge_margin: f32,
+    pub start: (f32, f32),
+    pub entry_from_x: f32,
+    pub entry_seconds: f32,
+    pub respawn_invulnerable_seconds: f32,
+    pub hit_stop_seconds: f32,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
+pub struct ShotTuning {
+    pub fire_interval: f32,
+    pub speed: f32,
+    pub damage: u32,
+    pub size: (f32, f32),
+    pub twin_spacing: f32,
+    pub spread_degrees: f32,
+    pub lance_size: (f32, f32),
+    pub lance_damage: u32,
+    pub tail_every: u32,
+    pub max_on_screen: usize,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
+pub struct BombTuning {
+    pub starting: u32,
+    pub max: u32,
+    pub ring_speed: f32,
+    pub damage: u32,
+    pub invulnerable_seconds: f32,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
+pub struct PowerUpTuning {
+    pub size: (f32, f32),
+    pub pickup_box: (f32, f32),
+    pub edge_inset: f32,
+    pub drift_speed: f32,
+    pub bob_amplitude: f32,
+    pub bob_period: f32,
+    pub gun_max: u32,
+    pub drone_max: u32,
+    pub drone_offset: f32,
+    pub speed_max: u32,
+    pub ward_invulnerable_seconds: f32,
+    pub ward_push: f32,
+}
+
+pub fn vec2((x, y): (f32, f32)) -> Vec2 {
+    Vec2::new(x, y)
+}
+
+impl Default for HeroTuning {
+    fn default() -> Self {
+        Self {
+            hitbox: (4.0, 4.0),
+            terrain_hitbox: (12.0, 6.0),
+            speed: 100.0,
+            speed_step: 20.0,
+            edge_margin: 4.0,
+            start: (-110.0, 0.0),
+            entry_from_x: -176.0,
+            entry_seconds: 1.0,
+            respawn_invulnerable_seconds: 2.0,
+            hit_stop_seconds: 0.15,
+        }
+    }
+}
+
+impl Default for ShotTuning {
+    fn default() -> Self {
+        Self {
+            fire_interval: 0.1,
+            speed: 360.0,
+            damage: 1,
+            size: (8.0, 2.0),
+            twin_spacing: 6.0,
+            spread_degrees: 10.0,
+            lance_size: (12.0, 3.0),
+            lance_damage: 2,
+            tail_every: 2,
+            max_on_screen: 96,
+        }
+    }
+}
+
+impl Default for BombTuning {
+    fn default() -> Self {
+        Self {
+            starting: 2,
+            max: 4,
+            ring_speed: 420.0,
+            damage: 12,
+            invulnerable_seconds: 1.0,
+        }
+    }
+}
+
+impl Default for PowerUpTuning {
+    fn default() -> Self {
+        Self {
+            size: (10.0, 10.0),
+            pickup_box: (14.0, 14.0),
+            edge_inset: 16.0,
+            drift_speed: 30.0,
+            bob_amplitude: 3.0,
+            bob_period: 1.2,
+            gun_max: 4,
+            drone_max: 2,
+            drone_offset: 14.0,
+            speed_max: 2,
+            ward_invulnerable_seconds: 1.0,
+            ward_push: 8.0,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
 pub struct ScoreTuning {
     pub formation_bonus_per_enemy: u64,
+    pub maxed_power_up: u64,
+    pub bomb_cancel: u64,
 }
 
 impl Default for ScoreTuning {
     fn default() -> Self {
         Self {
             formation_bonus_per_enemy: 100,
+            maxed_power_up: 1000,
+            bomb_cancel: 10,
         }
     }
 }

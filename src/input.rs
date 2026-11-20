@@ -39,6 +39,15 @@ pub struct Controls {
 }
 
 impl Controls {
+    /// Controls with these buttons just pressed, for tests.
+    #[cfg(test)]
+    pub fn pressing(buttons: &[Button]) -> Self {
+        Self {
+            held: buttons.iter().fold(0, |held, b| held | bit(*b)),
+            previous: 0,
+        }
+    }
+
     pub fn held(&self, button: Button) -> bool {
         self.held & bit(button) != 0
     }

@@ -58,3 +58,19 @@ after `Timeline`; movement and AI run before `Move`.
   Hero, so the flow can be tested. In the browser, `?invincible&time_scale=8`
   on the URL overrides both, so a smoke test can play a whole Stage
   unattended.
+
+## Added for Cabinet 1 (#7)
+
+- **`Hurt { target, damage }`:** every source of damage (shots, bombs)
+  goes through this message. The kit turns it into flashes, explosions,
+  `ScoreGained` and `EnemyDestroyed { entity, at, score }`.
+- **`Immune`:** an enemy with it takes no damage, but it still uses up shots.
+- **`Shield { charges, invulnerable_seconds }`:** on the Hero, each charge
+  absorbs one hit and sends `ShieldAbsorbed { from }`.
+- **`HeroStruck { from }`:** names what hit the Hero (None for the K key).
+- **`HitStop(seconds)`:** on the Hero, it freezes the Stage after a hit
+  before the life is lost. Gate Cabinet systems with `kit::stage_live`, so
+  they freeze too.
+- **`TerrainHitbox`:** a second, larger box on the Hero, used only against
+  `Layer::Terrain`.
+- **`Layer::ShotBlocker`:** stops enemy shots and nothing else (drones).

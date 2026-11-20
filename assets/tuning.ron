@@ -89,6 +89,25 @@
             arc_gate: (hp: 40, score: 600, arc_width: 4.0, on_seconds: 1.2, off_seconds: 0.8,
                        telegraph_seconds: 0.3),
         ),
-        score: (formation_bonus_per_enemy: 100),
+        hero: (
+            hitbox: (4.0, 4.0), terrain_hitbox: (12.0, 6.0),
+            speed: 100.0, speed_step: 20.0, edge_margin: 4.0,
+            start: (-110.0, 0.0), entry_from_x: -176.0, entry_seconds: 1.0,
+            respawn_invulnerable_seconds: 2.0, hit_stop_seconds: 0.15,
+        ),
+        shot: (
+            fire_interval: 0.1, speed: 360.0, damage: 1, size: (8.0, 2.0),
+            twin_spacing: 6.0, spread_degrees: 10.0,
+            lance_size: (12.0, 3.0), lance_damage: 2,
+            tail_every: 2, max_on_screen: 96,
+        ),
+        bomb: (starting: 2, max: 4, ring_speed: 420.0, damage: 12, invulnerable_seconds: 1.0),
+        power_up: (
+            size: (10.0, 10.0), pickup_box: (14.0, 14.0), edge_inset: 16.0,
+            drift_speed: 30.0, bob_amplitude: 3.0, bob_period: 1.2,
+            gun_max: 4, drone_max: 2, drone_offset: 14.0, speed_max: 2,
+            ward_invulnerable_seconds: 1.0, ward_push: 8.0,
+        ),
+        score: (formation_bonus_per_enemy: 100, maxed_power_up: 1000, bomb_cancel: 10),
     ),
 )

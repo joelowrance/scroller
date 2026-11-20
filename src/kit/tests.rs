@@ -245,3 +245,101 @@ fn pickups_are_collected_by_the_hero() {
         .collect();
     assert_eq!(kinds, ["spread"]);
 }
+
+#[test]
+fn a_shield_charge_absorbs_one_hit() {
+    let mut app = app(0.0, quiet_tuning());
+    let hero = spawn_hero(&mut app, Vec2::ZERO);
+    app.world_mut().entity_mut(hero).insert(Shield {
+        charges: 1,
+        invulnerable_seconds: 1.0,
+    });
+    let shot = spawn_shot(&mut app, Layer::EnemyShot, Vec2::ZERO);
+    app.update();
+    assert_eq!(app.world().resource::<Log>().lives_lost, 0);
+    assert_eq!(app.world().get::<Shield>(hero).unwrap().charges, 0);
+    assert_eq!(app.world().get::<Invulnerable>(hero).unwrap().0, 1.0);
+    let absorbed = app.world().resource::<Messages<ShieldAbsorbed>>();
+    let from: Vec<_> = absorbed
+        .iter_current_update_messages()
+        .map(|m| m.from)
+        .collect();
+    assert_eq!(from, [Some(shot)]);
+
+    // Once spent and the invulnerability is over, the next hit costs a life.
+    app.world_mut().get_mut::<Invulnerable>(hero).unwrap().0 = 0.0;
+    spawn_shot(&mut app, Layer::EnemyShot, Vec2::ZERO);
+    app.update();
+    assert_eq!(app.world().resource::<Log>().lives_lost, 1);
+}
+
+#[test]
+fn hit_stop_freezes_the_stage_before_the_life_is_lost() {
+    let mut app = app(0.05, quiet_tuning());
+    let hero = spawn_hero(&mut app, Vec2::ZERO);
+    app.world_mut().entity_mut(hero).insert(HitStop(0.15));
+    app.update(); // first frame has no delta
+    spawn_shot(&mut app, Layer::EnemyShot, Vec2::ZERO);
+    app.update(); // hit: the freeze starts
+    let frozen_at = app.world().resource::<StageRun>().cursor.position;
+    app.update();
+    app.update();
+    assert_eq!(app.world().resource::<Log>().lives_lost, 0);
+    assert_eq!(
+        app.world().resource::<StageRun>().cursor.position,
+        frozen_at,
+        "the timeline doesn't move during a hit-stop"
+    );
+    app.update();
+    app.update();
+    assert_eq!(app.world().resource::<Log>().lives_lost, 1);
+    assert!(app.world().resource::<HitStopTimer>().0.is_none());
+}
+
+#[test]
+fn immune_enemies_use_up_shots_but_take_no_damage() {
+    let mut app = app(0.0, quiet_tuning());
+    spawn_hero(&mut app, Vec2::new(-100.0, 0.0));
+    let enemy = spawn_enemy(&mut app, Vec2::new(50.0, 0.0), 1, 100);
+    app.world_mut().entity_mut(enemy).insert(Immune);
+    let shot = spawn_shot(&mut app, Layer::HeroShot, Vec2::new(50.0, 0.0));
+    app.update();
+    assert!(!alive(&app, shot));
+    assert!(alive(&app, enemy));
+    assert_eq!(app.world().get::<Health>(enemy).unwrap().0, 1);
+}
+
+#[test]
+fn hurt_from_any_system_destroys_and_scores() {
+    let mut app = app(0.0, quiet_tuning());
+    spawn_hero(&mut app, Vec2::new(-100.0, 0.0));
+    let enemy = spawn_enemy(&mut app, Vec2::new(50.0, 0.0), 5, 300);
+    app.world_mut().write_message(Hurt {
+        target: enemy,
+        damage: 12,
+    });
+    app.update();
+    assert!(!alive(&app, enemy));
+    assert_eq!(app.world().resource::<Log>().score, [300]);
+}
+
+#[test]
+fn shot_blockers_stop_enemy_shots_only() {
+    let mut app = app(0.0, quiet_tuning());
+    spawn_hero(&mut app, Vec2::new(-100.0, 0.0));
+    app.world_mut().spawn((
+        Layer::ShotBlocker,
+        Hitbox::new(8.0, 8.0),
+        Transform::default(),
+    ));
+    let bullet = spawn_shot(&mut app, Layer::EnemyShot, Vec2::ZERO);
+    let own = spawn_shot(&mut app, Layer::HeroShot, Vec2::ZERO);
+    let enemy = spawn_enemy(&mut app, Vec2::ZERO, 9, 0);
+    app.update();
+    assert!(!alive(&app, bullet));
+    assert!(
+        !alive(&app, own),
+        "the Hero's shot hit the enemy, not the blocker"
+    );
+    assert!(alive(&app, enemy));
+}

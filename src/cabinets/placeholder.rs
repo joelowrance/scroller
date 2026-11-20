@@ -8,11 +8,11 @@ use bevy::prelude::*;
 
 use super::{CABINETS, Scroll};
 use crate::display::{HALF_H, HALF_W};
-use crate::flow::{Screen, gameplay_running};
+use crate::flow::Screen;
 use crate::input::{Button, Controls};
 use crate::kit::{
     DespawnOffscreen, Health, Hero, Hitbox, Invulnerable, KitSet, Layer, ScoreValue,
-    SpawnRequested, StageRun, StageTimeline, Velocity, projectile,
+    SpawnRequested, StageRun, StageTimeline, Velocity, projectile, stage_live,
 };
 use crate::run::Session;
 use crate::tuning::Tuning;
@@ -57,13 +57,9 @@ fn stage_timeline(scroll: Scroll) -> StageTimeline {
     StageTimeline::parse(text).expect("placeholder Stage file must be valid")
 }
 
-fn spawn_stage(mut commands: Commands, session: Res<Session>, tuning: Res<Tuning>) {
+fn spawn_stage(mut commands: Commands, session: Res<Session>) {
     let cabinet = &CABINETS[session.cabinet];
-    // Cabinet 1's debug enemy gallery runs on the placeholder until #7 lands.
-    let gallery = (session.cabinet == 0)
-        .then(|| super::side_shooter::enemies::gallery_timeline(&tuning))
-        .flatten();
-    let stage = StageRun::new(gallery.unwrap_or_else(|| stage_timeline(cabinet.scroll)));
+    let stage = StageRun::new(stage_timeline(cabinet.scroll));
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
@@ -259,23 +255,30 @@ fn update_progress(
     transform.translation.x = -PROGRESS_BAR_W / 2.0 + width / 2.0;
 }
 
+/// Cabinets without their own code yet use the placeholder.
+fn uses_placeholder(session: Option<Res<Session>>) -> bool {
+    session.is_some_and(|s| s.cabinet != super::side_shooter::CABINET)
+}
+
 pub struct PlaceholderCabinetPlugin;
 
 impl Plugin for PlaceholderCabinetPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(Screen::Playing), spawn_stage)
-            .add_systems(
-                Update,
-                (
-                    spawn_enemies.after(KitSet::Timeline),
-                    (scroll_stripes, move_and_fire, gunners_fire, update_progress)
-                        .after(spawn_enemies)
-                        .before(KitSet::Move),
-                )
-                    .run_if(in_state(Screen::Playing))
-                    .run_if(gameplay_running)
-                    .run_if(resource_exists::<StageRun>),
-            );
+        app.add_systems(
+            OnEnter(Screen::Playing),
+            spawn_stage.run_if(uses_placeholder),
+        )
+        .add_systems(
+            Update,
+            (
+                spawn_enemies.after(KitSet::Timeline),
+                (scroll_stripes, move_and_fire, gunners_fire, update_progress)
+                    .after(spawn_enemies)
+                    .before(KitSet::Move),
+            )
+                .run_if(uses_placeholder)
+                .run_if(stage_live),
+        );
     }
 }
 

@@ -1,0 +1,24 @@
+// Stand-in Stage for Cabinet 1 until #9 writes 1-1.ron and 1-2.ron: open
+// water with a Power-up of every kind drifting in along the Wren's starting
+// row, so it can be flown and powered up (and the smoke test can screenshot
+// it). Positions are canvas pixels; `at` is the scroll position.
+(
+    length: 1800.0,
+    speed: [(from: 0.0, speed: 30.0)],
+    restart_points: [
+        (at: 0.0, hero: (-110.0, 0.0)),
+        (at: 900.0, hero: (-110.0, 0.0)),
+    ],
+    spawns: [
+        (at: 15.0, kind: "power_up:G", pos: (170.0, 0.0)),
+        (at: 75.0, kind: "power_up:D", pos: (170.0, 0.0)),
+        (at: 135.0, kind: "power_up:G", pos: (170.0, 0.0)),
+        (at: 195.0, kind: "power_up:T", pos: (170.0, 0.0)),
+        (at: 255.0, kind: "power_up:S", pos: (170.0, 0.0)),
+        (at: 315.0, kind: "power_up:W", pos: (170.0, 0.0)),
+        (at: 375.0, kind: "power_up:G", pos: (170.0, 0.0)),
+        (at: 435.0, kind: "power_up:B", pos: (170.0, 0.0)),
+        (at: 495.0, kind: "power_up:D", pos: (170.0, 0.0)),
+        (at: 555.0, kind: "power_up:G", pos: (170.0, 0.0)),
+    ],
+)

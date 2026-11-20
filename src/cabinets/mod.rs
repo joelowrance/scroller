@@ -9,6 +9,8 @@
 
 use bevy::prelude::*;
 
+use crate::run::Session;
+
 mod placeholder;
 pub mod side_shooter;
 
@@ -57,6 +59,11 @@ pub const CABINETS: [CabinetInfo; CABINET_COUNT] = [
     },
 ];
 
+/// Run condition: the Session is in the given Cabinet.
+pub fn cabinet_is(index: usize) -> impl Fn(Option<Res<Session>>) -> bool + Clone {
+    move |session| session.is_some_and(|s| s.cabinet == index)
+}
+
 /// The Hero reached the end of the Stage.
 #[derive(Message, Default)]
 pub struct StageCleared;
@@ -77,7 +84,9 @@ impl Plugin for CabinetsPlugin {
         app.add_message::<StageCleared>()
             .add_message::<LifeLost>()
             .add_message::<ScoreGained>()
-            .add_plugins(placeholder::PlaceholderCabinetPlugin)
-            .add_plugins(side_shooter::SideShooterPlugin);
+            .add_plugins((
+                placeholder::PlaceholderCabinetPlugin,
+                side_shooter::SideShooterPlugin,
+            ));
     }
 }
