@@ -24,6 +24,10 @@ _Avoid_: Loading screen, Stage transition
 A pickup that improves the Hero's abilities for the rest of the current Cabinet.
 _Avoid_: Upgrade, item, buff
 
+**Formation**:
+A group of enemies that enter together; destroying every member earns a reward, such as a Power-up.
+_Avoid_: Wave, squad, group
+
 **Practice**:
 Playing a single previously cleared Cabinet outside a Run; it never touches the Save or the High Score Table.
 _Avoid_: Replay, free play, level select
