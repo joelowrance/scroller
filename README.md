@@ -85,6 +85,9 @@ SMOKE_SKIP_BUILD=1 ./scripts/smoke-web.sh               # test the existing dist
 ./scripts/smoke-web.sh http://joelowrance.com/scroller/ # test a deployed site
 ```
 
+CI runs it too, as the `smoke` job, on the web build from the `check` job. Its
+screenshots are attached to the run as the `smoke-screenshots` artifact.
+
 ## Where data is kept
 
 The Save, High Score Table and Practice unlocks are stored as JSON files in
