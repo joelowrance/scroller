@@ -1,15 +1,23 @@
-//! Cabinet 1's music: which song each Stage plays (docs/cabinets/1-side-shooter.md,
-//! "Sound and music"). The sound effects are sent where things happen.
+//! Cabinet 1's music and enemy sounds (docs/cabinets/1-side-shooter.md,
+//! "Sound and music").
+//!
+//! - Music: which song each Stage plays, here.
+//! - Enemy hits, explosions and shell pings: here, from the kit's messages.
+//! - The Wren's shots, Undertow, Ward and Power-ups, the Arc Gate hum and the
+//!   Hook warning: sent where they happen (`hero.rs`, `power_ups.rs`,
+//!   `enemies/mod.rs`). Lost and extra lives: `src/audio`, for every Cabinet.
+
+use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::audio::{Song, StageMusic};
+use super::CABINET;
+use super::enemies::{Enemy, Kind};
+use crate::audio::{PlaySfx, Sfx, Song, StageMusic};
+use crate::cabinets::cabinet_is;
 use crate::flow::Screen;
-use crate::kit::StageRun;
+use crate::kit::{EnemyDestroyed, Flash, Hurt, Immune, KitSet, StageRun};
 use crate::run::Session;
-
-/// Cabinet 1's index in the Run.
-const CABINET: usize = 0;
 
 /// Stage 2 switches to the climbing run-out music when this many seconds of
 /// scroll are left (the design's "last 20 s").
@@ -37,23 +45,75 @@ fn choose_stage_music(
     run: Option<Res<StageRun>>,
     mut music: ResMut<StageMusic>,
 ) {
-    if session.cabinet != CABINET {
-        return;
-    }
     let left = run.map_or(f32::INFINITY, |r| seconds_left(&r));
     music.set_if_neq(StageMusic(Some(stage_song(session.stage, left))));
+}
+
+/// The explosion for a destroyed enemy: big ones get the large one.
+pub fn explosion_for(kind: Kind) -> Sfx {
+    match kind {
+        Kind::Ferry | Kind::Lamplighter | Kind::ArcPylon => Sfx::ExplosionLarge,
+        _ => Sfx::ExplosionSmall,
+    }
+}
+
+/// Each live enemy's kind. [`EnemyDestroyed`] arrives as the enemy is being
+/// despawned, so its kind is remembered from when it spawned.
+#[derive(Resource, Default)]
+struct EnemyKinds(HashMap<Entity, Kind>);
+
+fn enemy_sounds(
+    mut kinds: ResMut<EnemyKinds>,
+    spawned: Query<(Entity, &Enemy), Added<Enemy>>,
+    mut gone: RemovedComponents<Enemy>,
+    mut hurts: MessageReader<Hurt>,
+    mut flashes: MessageReader<Flash>,
+    mut destroyed: MessageReader<EnemyDestroyed>,
+    shells: Query<(), (With<Enemy>, With<Immune>)>,
+    mut sfx: MessageWriter<PlaySfx>,
+) {
+    for (entity, enemy) in &spawned {
+        kinds.0.insert(entity, enemy.kind);
+    }
+    // A shot (or the Undertow) that can't hurt a closed shell glances off.
+    if hurts.read().any(|h| shells.contains(h.target)) {
+        sfx.write(PlaySfx(Sfx::ShellPing));
+    }
+    // The kit flashes an enemy that was hit and survived.
+    if flashes.read().count() > 0 {
+        sfx.write(PlaySfx(Sfx::EnemyHit));
+    }
+    for d in destroyed.read() {
+        let kind = kinds.0.get(&d.entity).copied().unwrap_or(Kind::Skiff);
+        sfx.write(PlaySfx(explosion_for(kind)));
+    }
+    // Forget enemies only after their EnemyDestroyed has been read.
+    for entity in gone.read() {
+        kinds.0.remove(&entity);
+    }
 }
 
 pub struct SoundPlugin;
 
 impl Plugin for SoundPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            choose_stage_music
-                .run_if(in_state(Screen::Playing))
-                .run_if(resource_exists::<Session>),
-        );
+        // Also set up by the audio plugin; repeated so the Cabinet runs
+        // (and its tests build) without it.
+        app.init_resource::<StageMusic>()
+            .add_message::<PlaySfx>()
+            .init_resource::<EnemyKinds>()
+            .add_systems(
+                Update,
+                (
+                    choose_stage_music.run_if(resource_exists::<Session>),
+                    enemy_sounds.after(KitSet::Resolve).before(KitSet::Effects),
+                )
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(cabinet_is(CABINET)),
+            )
+            .add_systems(OnExit(Screen::Playing), |mut kinds: ResMut<EnemyKinds>| {
+                kinds.0.clear();
+            });
     }
 }
 
@@ -68,6 +128,15 @@ mod tests {
         assert_eq!(stage_song(1, 60.0), Song::Foundry);
         assert_eq!(stage_song(1, 20.0), Song::FoundryClimb);
         assert_eq!(stage_song(1, 0.0), Song::FoundryClimb);
+    }
+
+    #[test]
+    fn big_enemies_explode_large() {
+        assert_eq!(explosion_for(Kind::Ferry), Sfx::ExplosionLarge);
+        assert_eq!(explosion_for(Kind::Lamplighter), Sfx::ExplosionLarge);
+        assert_eq!(explosion_for(Kind::ArcPylon), Sfx::ExplosionLarge);
+        assert_eq!(explosion_for(Kind::Skiff), Sfx::ExplosionSmall);
+        assert_eq!(explosion_for(Kind::Mote), Sfx::ExplosionSmall);
     }
 
     #[test]

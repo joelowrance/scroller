@@ -260,3 +260,97 @@ fn a_bombed_formation_drops_its_power_up() {
         .count();
     assert_eq!(drops, 1);
 }
+
+/// The sounds asked for since the last call.
+fn sounds(app: &mut App) -> Vec<crate::audio::Sfx> {
+    let mut messages = app
+        .world_mut()
+        .resource_mut::<Messages<crate::audio::PlaySfx>>();
+    messages.drain().map(|m| m.0).collect()
+}
+
+fn spawn_enemy(app: &mut App, kind: &str, at: Vec2) -> Entity {
+    use super::enemies::Enemy;
+    app.world_mut().write_message(SpawnRequested::new(kind, at));
+    app.update();
+    let mut q = app.world_mut().query_filtered::<Entity, With<Enemy>>();
+    q.iter(app.world()).last().expect("enemy spawned")
+}
+
+#[test]
+fn the_wren_and_its_power_ups_make_their_sounds() {
+    use crate::audio::Sfx;
+    use crate::input::Button;
+
+    let mut app = app();
+    sounds(&mut app);
+    *app.world_mut().resource_mut::<Controls>() = Controls::pressing(&[Button::A]);
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::Shot));
+    app.world_mut().resource_mut::<PowerUps>().gun = 4;
+    app.update();
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::Lance));
+    *app.world_mut().resource_mut::<Controls>() = Controls::pressing(&[Button::B]);
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::Undertow));
+    *app.world_mut().resource_mut::<Controls>() = Controls::default();
+
+    // A Drone is new; a fifth Gun is a medal.
+    for (power_up, expected) in [
+        (PowerUp::Drone, Sfx::PowerUpDrone),
+        (PowerUp::Gun, Sfx::Medal),
+    ] {
+        let at = wren_at(&mut app);
+        app.world_mut().write_message(SpawnRequested::new(
+            power_up.kind(),
+            at + Vec2::new(10.0, 0.0),
+        ));
+        app.update();
+        app.update();
+        assert!(sounds(&mut app).contains(&expected), "{power_up:?}");
+    }
+}
+
+#[test]
+fn enemies_spark_ping_and_explode_by_size() {
+    use crate::audio::Sfx;
+    use crate::kit::Hurt;
+
+    let mut app = app();
+    let lamplighter = spawn_enemy(&mut app, "lamplighter", Vec2::new(100.0, 40.0));
+    sounds(&mut app);
+    app.world_mut().write_message(Hurt {
+        target: lamplighter,
+        damage: 1,
+    });
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::EnemyHit));
+    app.world_mut().write_message(Hurt {
+        target: lamplighter,
+        damage: 999,
+    });
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::ExplosionLarge));
+
+    let clam = spawn_enemy(&mut app, "clam", Vec2::new(100.0, -40.0));
+    sounds(&mut app);
+    app.world_mut().write_message(Hurt {
+        target: clam,
+        damage: 1,
+    });
+    app.update();
+    assert!(
+        sounds(&mut app).contains(&Sfx::ShellPing),
+        "a closed Clam pings"
+    );
+
+    let skiff = spawn_enemy(&mut app, "skiff", Vec2::new(100.0, 0.0));
+    sounds(&mut app);
+    app.world_mut().write_message(Hurt {
+        target: skiff,
+        damage: 999,
+    });
+    app.update();
+    assert!(sounds(&mut app).contains(&Sfx::ExplosionSmall));
+}
