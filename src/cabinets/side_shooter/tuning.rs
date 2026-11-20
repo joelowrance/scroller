@@ -170,6 +170,8 @@ tuning_struct!(Hook {
     turn_x: f32 = 110.0,
     turn_radius: f32 = 14.0,
     charge_speed: f32 = 170.0,
+    charge_steer_speed: f32 = 85.0,
+    pair_spread: f32 = 0.5,
 });
 
 tuning_struct!(Ferry {

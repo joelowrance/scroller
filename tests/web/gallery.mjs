@@ -61,7 +61,7 @@ const start = Date.now();
 for (const [at, name] of moments) {
   const due = start + (at * 1000) / SCALE;
   await wait(Math.max(0, due - Date.now()));
-  await page.screenshot({ path: `${out}/${String(at).padStart(5, "0")}-${name}.png` });
+  await page.screenshot({ path: `${out}/${at.toFixed(1).padStart(5, "0")}-${name}.png` });
 }
 await browser.close();
 if (errors.length) {

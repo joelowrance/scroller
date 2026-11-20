@@ -449,7 +449,7 @@ impl Hook {
             }
             HookPhase::Charge { row } => {
                 pos.x -= h.charge_speed * ctx.dt;
-                let max = h.charge_speed * 0.5 * ctx.dt;
+                let max = h.charge_steer_speed * ctx.dt;
                 pos.y += (*row - pos.y).clamp(-max, max);
             }
         }

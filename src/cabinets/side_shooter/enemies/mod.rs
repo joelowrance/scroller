@@ -177,7 +177,7 @@ pub fn layout(
                     // Alternate above and below, a little wider each pair.
                     let pair = (i / 2) as f32;
                     let side = if i % 2 == 0 { 1.0 } else { -1.0 };
-                    let offset = side * t.hook.pass_offset * (1.0 + pair * 0.5);
+                    let offset = side * t.hook.pass_offset * (1.0 + pair * t.hook.pair_spread);
                     let hook = brain::Hook::new(hero_y, offset, t);
                     (Vec2::new(brain::HOOK_WAIT_X, hook.row), Brain::Hook(hook))
                 })

@@ -376,11 +376,14 @@ left edge for 0.75 s (`hook.warning_seconds: 0.75`) at the row where each Hook
 will appear. It then **enters from behind** and flies right at 150 px/s
 (`hook.speed: 150.0`) along a row 50 px above or below the Hero
 (`hook.pass_offset: 50.0`; one of the pair above, one below; larger
-Formations add pairs half an offset further out). The row is
+Formations add pairs further out, each by half an offset more,
+`hook.pair_spread: 0.5`). The row is
 clamped to stay at least 12 px clear of terrain and the play-area edges
 (`hook.terrain_clearance: 12.0`). It U-turns at x = +110 (`hook.turn_x: 110.0`) on a half-circle of radius 14 px
-(`hook.turn_radius: 14.0`) toward the Hero's side, and then charges straight left along the Hero's current row at 170 px/s
-(`hook.charge_speed: 170.0`). It has no bullets. It rams. Drones don't stop
+(`hook.turn_radius: 14.0`) toward the Hero's side, and then charges straight left at 170 px/s (`hook.charge_speed: 170.0`),
+sliding vertically at up to 85 px/s (`hook.charge_steer_speed: 85.0`) onto
+the row the Hero was on when the turn ended. The slide is what makes a Hook
+dodgeable: move off that row and it can't follow. It has no bullets. It rams. Drones don't stop
 it. It is what makes the Tail Power-up worth having.
 
 Stage authoring rule: Hooks only appear where the corridor is at least 120 px
@@ -627,7 +630,7 @@ side_shooter: (
                       shots: 2, shot_speed: 100.0, fire_interval: 1.2, exit_speed: 80.0),
         hook: (hp: 2, score: 200, formation_size: 2, warning_seconds: 0.75, speed: 150.0,
                pass_offset: 50.0, terrain_clearance: 12.0, turn_x: 110.0, turn_radius: 14.0,
-               charge_speed: 170.0),
+               charge_speed: 170.0, charge_steer_speed: 85.0, pair_spread: 0.5),
         ferry: (hp: 400, hp_stage2: 640, score: 2000, speed: 25.0, hold_x: 60.0,
                 hold_seconds: 15.0, sink_speed: 20.0,
                 launch_count: 2, first_launch_delay: 1.0, launch_interval: 3.0,
