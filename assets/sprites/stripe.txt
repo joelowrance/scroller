@@ -1,0 +1,8 @@
+# Background streaks for the placeholder Cabinet: far, middle and near.
+# One frame per depth; format in README.md.
+
+....1111....
+
+..22222222..
+
+333333333333

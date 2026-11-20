@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 
 use crate::run::Session;
+use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
 mod placeholder;
 pub mod side_shooter;
@@ -25,7 +26,7 @@ pub enum Scroll {
 pub struct CabinetInfo {
     pub genre: &'static str,
     pub scroll: Scroll,
-    /// Background colour of the Cabinet's palette.
+    /// Background colour of the Cabinet's palette (`sprites::palette`).
     pub backdrop: Color,
     /// Highlight colour of the Cabinet's palette.
     pub accent: Color,
@@ -36,26 +37,26 @@ pub const CABINETS: [CabinetInfo; CABINET_COUNT] = [
     CabinetInfo {
         genre: "SIDE-SCROLLING SHOOTER",
         scroll: Scroll::Sideways,
-        backdrop: Color::srgb(0.02, 0.02, 0.10),
-        accent: Color::srgb(0.30, 0.85, 1.00),
+        backdrop: PALETTES[0].color(BACKDROP),
+        accent: PALETTES[0].color(ACCENT),
     },
     CabinetInfo {
         genre: "VERTICAL SHOOTER",
         scroll: Scroll::Upward,
-        backdrop: Color::srgb(0.08, 0.00, 0.10),
-        accent: Color::srgb(1.00, 0.40, 0.80),
+        backdrop: PALETTES[1].color(BACKDROP),
+        accent: PALETTES[1].color(ACCENT),
     },
     CabinetInfo {
         genre: "RUN-AND-GUN PLATFORMER",
         scroll: Scroll::Sideways,
-        backdrop: Color::srgb(0.10, 0.05, 0.00),
-        accent: Color::srgb(1.00, 0.75, 0.20),
+        backdrop: PALETTES[2].color(BACKDROP),
+        accent: PALETTES[2].color(ACCENT),
     },
     CabinetInfo {
         genre: "VERTICAL CLIMBER",
         scroll: Scroll::Upward,
-        backdrop: Color::srgb(0.00, 0.08, 0.03),
-        accent: Color::srgb(0.40, 1.00, 0.50),
+        backdrop: PALETTES[3].color(BACKDROP),
+        accent: PALETTES[3].color(ACCENT),
     },
 ];
 

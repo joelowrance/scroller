@@ -22,7 +22,8 @@ pub struct Tuning {
     pub attract_panel_seconds: f32,
     /// Length of a Cabinet Transition (placeholder until each is built).
     pub transition_seconds: f32,
-    /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage).
+    /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage,
+    /// F2: sprite sheet).
     pub debug_keys: bool,
     /// Debug aid (needs `debug_keys`): nothing can hit the Hero.
     pub invincible_hero: bool,

@@ -12,6 +12,8 @@ fps-log = []
 # No Bevy audio: sound is synthesized in src/audio and played through rodio
 # directly, so the output device opens only after the first input (web autoplay).
 bevy = { version = "0.20.1", default-features = false, features = ["2d"] }
+# Decodes PNGs that override generated sprites (already a Bevy dependency).
+png = "0.18.1"
 ron = "0.12.3"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
