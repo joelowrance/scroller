@@ -17,7 +17,9 @@
 //!   it, a Formation of more than one pays the Formation bonus instead.
 //! - `fires`: Gulls only, the Stage 2 variant that shoots.
 //! - `ceiling`: Barnacles only, mounted upside down.
-//! - `floor_y` / `ceiling_y`: Arc Gates only, the pylons' centres.
+//! - `floor_y` / `ceiling_y`: Arc Gates only, the pylons' centres. Both are
+//!   expected; a missing one logs a warning and falls back to
+//!   [`ARC_DEFAULT_FLOOR_Y`] / [`ARC_DEFAULT_CEILING_Y`].
 //!
 //! `pos` is the Formation's lead: the tip of a Skiff V, the head of a Gull
 //! snake, the centre of a Mote cloud. Hooks ignore it and come from behind,
@@ -109,6 +111,21 @@ pub struct SpawnParams {
     pub floor_y: Option<f32>,
     #[serde(deserialize_with = "present")]
     pub ceiling_y: Option<f32>,
+}
+
+/// Where an Arc Gate's pylons go when a Stage file leaves out
+/// `floor_y` / `ceiling_y` (a warning is logged): just inside the play area.
+pub const ARC_DEFAULT_FLOOR_Y: f32 = -100.0;
+pub const ARC_DEFAULT_CEILING_Y: f32 = 92.0;
+
+impl SpawnParams {
+    /// The centres of an Arc Gate's floor and ceiling pylons.
+    pub fn pylon_ys(&self) -> (f32, f32) {
+        (
+            self.floor_y.unwrap_or(ARC_DEFAULT_FLOOR_Y),
+            self.ceiling_y.unwrap_or(ARC_DEFAULT_CEILING_Y),
+        )
+    }
 }
 
 /// Reads an optional param written plainly (`"size": 5`, not `Some(5)`).
@@ -215,8 +232,7 @@ pub fn layout(
             Brain::Barnacle(brain::Barnacle::new(params.ceiling, t)),
         )],
         Kind::ArcPylon => {
-            let floor = params.floor_y.unwrap_or(-100.0);
-            let ceiling = params.ceiling_y.unwrap_or(92.0);
+            let (floor, ceiling) = params.pylon_ys();
             vec![
                 (Vec2::new(lead.x, floor), Brain::Drift),
                 (Vec2::new(lead.x, ceiling), Brain::Drift),
@@ -327,6 +343,12 @@ fn spawn_requested(
             }
             letter
         });
+        if kind == Kind::ArcPylon && (params.floor_y.is_none() || params.ceiling_y.is_none()) {
+            warn!(
+                "arc_gate at x = {} has no floor_y/ceiling_y; using {ARC_DEFAULT_FLOOR_Y}/{ARC_DEFAULT_CEILING_Y}",
+                request.pos.x
+            );
+        }
         let members = layout(kind, request.pos, &params, hero, t);
         let mut spawned = Vec::new();
         for (i, (at, brain)) in members.into_iter().enumerate() {
@@ -383,8 +405,7 @@ fn spawn_arc(
     params: &SpawnParams,
     pylons: [Entity; 2],
 ) {
-    let floor = params.floor_y.unwrap_or(-100.0);
-    let ceiling = params.ceiling_y.unwrap_or(92.0);
+    let (floor, ceiling) = params.pylon_ys();
     let half_pylon = look::size(Kind::ArcPylon).y / 2.0;
     let gap = (ceiling - floor - 2.0 * half_pylon).max(1.0);
     let width = tuning.side_shooter.enemies.arc_gate.arc_width;
@@ -412,7 +433,13 @@ fn think(
     session: Res<Session>,
     stage: Res<StageRun>,
     hero: Option<Single<&Transform, (With<Hero>, Without<Enemy>)>>,
-    mut enemies: Query<(Entity, &mut Enemy, &mut EnemyBrain, &mut Transform)>,
+    mut enemies: Query<(
+        Entity,
+        &mut Enemy,
+        &mut EnemyBrain,
+        &mut Transform,
+        Has<Immune>,
+    )>,
     bullets: Query<(), With<EnemyBullet>>,
 ) {
     let tt = &tuning.side_shooter;
@@ -430,7 +457,7 @@ fn think(
         1.0
     };
     let mut live_bullets = bullets.iter().count();
-    for (entity, mut enemy, mut brain, mut transform) in &mut enemies {
+    for (entity, mut enemy, mut brain, mut transform, immune) in &mut enemies {
         let mut at = transform.translation.truncate();
         let out: Out = brain.0.step(&mut at, &ctx, &tt.enemies);
         transform.translation.x = at.x;
@@ -443,16 +470,19 @@ fn think(
             commands.entity(entity).try_despawn();
             continue;
         }
+        // A Clam is immune while shut; change it only as the shell moves.
         if let Brain::Clam(clam) = &brain.0 {
-            if clam.is_open(&tt.enemies) {
+            let open = clam.is_open(&tt.enemies);
+            if open && immune {
                 commands.entity(entity).remove::<Immune>();
-            } else {
+            } else if !open && !immune {
                 commands.entity(entity).insert(Immune);
             }
         }
+        let (offset_x, offset_y) = tt.enemies.ferry.launch_offset;
         for i in 0..out.launch {
             let spread = i as f32 - (out.launch as f32 - 1.0) / 2.0;
-            let from = at + Vec2::new(-12.0, spread * 10.0);
+            let from = at + Vec2::new(offset_x, spread * offset_y);
             spawn_enemy(
                 &mut commands,
                 &tuning,
@@ -487,7 +517,7 @@ fn think(
                         velocity * speed_scale,
                         Vec2::new(w, h),
                         look::BULLET,
-                        12.0,
+                        rules.bullet_lifetime,
                     ),
                     EnemyBullet,
                 ))
@@ -555,9 +585,22 @@ fn run_arcs(
     }
 }
 
+/// Points each Barnacle's barrel the way its brain is aiming.
+fn aim_barrels(
+    enemies: Query<&EnemyBrain>,
+    mut barrels: Query<(&ChildOf, &mut Transform), With<look::Barrel>>,
+) {
+    for (parent, mut transform) in &mut barrels {
+        if let Ok(EnemyBrain(Brain::Barnacle(b))) = enemies.get(parent.parent()) {
+            look::aim_barrel(&mut transform, b.barrel);
+        }
+    }
+}
+
 fn run_chevrons(
     mut commands: Commands,
     time: Res<Time>,
+    tuning: Res<Tuning>,
     mut chevrons: Query<(Entity, &mut Chevron, &mut Visibility)>,
 ) {
     for (entity, mut chevron, mut visibility) in &mut chevrons {
@@ -565,7 +608,8 @@ fn run_chevrons(
         if chevron.0 <= 0.0 {
             commands.entity(entity).try_despawn();
         } else {
-            let on = ((chevron.0 * 8.0) as u32).is_multiple_of(2);
+            let toggles_per_second = 2.0 * tuning.side_shooter.enemies.hook.chevron_blink_hz;
+            let on = ((chevron.0 * toggles_per_second) as u32).is_multiple_of(2);
             visibility.set_if_neq(if on {
                 Visibility::Inherited
             } else {
@@ -648,7 +692,14 @@ impl Plugin for EnemiesPlugin {
         app.add_systems(
             Update,
             (
-                (spawn_requested, think, show_cores, run_arcs, run_chevrons)
+                (
+                    spawn_requested,
+                    think,
+                    show_cores,
+                    aim_barrels,
+                    run_arcs,
+                    run_chevrons,
+                )
                     .chain()
                     .after(KitSet::Timeline)
                     .before(KitSet::Move),

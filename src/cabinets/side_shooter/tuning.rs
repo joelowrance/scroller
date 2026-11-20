@@ -51,6 +51,8 @@ pub struct EnemyRules {
     pub min_fire_distance: f32,
     pub max_bullets: usize,
     pub no_spawn_radius: f32,
+    /// Seconds before an enemy bullet that is still on screen is removed.
+    pub bullet_lifetime: f32,
 }
 
 impl Default for EnemyRules {
@@ -63,6 +65,7 @@ impl Default for EnemyRules {
             min_fire_distance: 40.0,
             max_bullets: 40,
             no_spawn_radius: 48.0,
+            bullet_lifetime: 12.0,
         }
     }
 }
@@ -287,6 +290,7 @@ tuning_struct!(Lamplighter {
     score: u64 = 500,
     speed: f32 = 80.0,
     brake_distance: f32 = 24.0,
+    brake_floor: f32 = 0.15,
     stop_x: f32 = 100.0,
     hover_seconds: f32 = 3.0,
     bob_amplitude: f32 = 2.0,
@@ -303,6 +307,7 @@ tuning_struct!(Hook {
     score: u64 = 200,
     formation_size: u32 = 2,
     warning_seconds: f32 = 0.75,
+    chevron_blink_hz: f32 = 4.0,
     speed: f32 = 150.0,
     pass_offset: f32 = 50.0,
     terrain_clearance: f32 = 12.0,
@@ -322,6 +327,7 @@ tuning_struct!(Ferry {
     hold_seconds: f32 = 15.0,
     sink_speed: f32 = 20.0,
     launch_count: u32 = 2,
+    launch_offset: (f32, f32) = (-12.0, 10.0),
     first_launch_delay: f32 = 1.0,
     launch_interval: f32 = 3.0,
     ring_count: u32 = 8,

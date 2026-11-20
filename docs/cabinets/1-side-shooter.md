@@ -274,11 +274,13 @@ Practice starts from this default.
 ## Enemies
 
 All are original machines of the Static. Enemies face left. "Aimed" means aimed
-at the Hero's position at the moment of firing, with no leading.
+at the Hero's position at the moment of firing, with no leading. The
+Barnacle is the exception: it fires along its barrel (see below).
 
 - Enemy bullets are 5×5 Signal dots with a Foam core
   (`side_shooter.enemy.bullet_size: (5.0, 5.0)`), with a 2×2 hitbox
-  (`side_shooter.enemy.bullet_hitbox: (2.0, 2.0)`).
+  (`side_shooter.enemy.bullet_hitbox: (2.0, 2.0)`). A bullet still on screen
+  after 12 s is removed (`side_shooter.enemy.bullet_lifetime: 12.0`).
 - An enemy's hitbox is its sprite shrunk by 1 px on each side
   (`side_shooter.enemy.hitbox_inset: 1.0`).
 - In Stage 2 every enemy bullet speed is multiplied by 1.15
@@ -356,7 +358,8 @@ teaches the player that hugging the bottom isn't free.
 
 A squat craft with a lamp on its nose. It comes in from the right at 80 px/s
 (`lamplighter.speed: 80.0`), brakes over its last 24 px
-(`lamplighter.brake_distance: 24.0`) to stop at x = +100
+(`lamplighter.brake_distance: 24.0`), never slower than 15% of that speed
+(`lamplighter.brake_floor: 0.15`) so it always arrives, to stop at x = +100
 (`lamplighter.stop_x: 100.0`), and hovers for 3.0 s
 (`lamplighter.hover_seconds: 3.0`), bobbing 2 px (`lamplighter.bob_amplitude: 2.0`) every 1.5 s
 (`lamplighter.bob_period: 1.5`).
@@ -372,7 +375,8 @@ Hero's half of the screen. It's the first enemy worth focusing fire on.
 ### 5. Hook: the ambush from behind
 
 A hooked blade, in pairs (`hook.formation_size: 2`). A chevron blinks on the
-left edge for 0.75 s (`hook.warning_seconds: 0.75`) at the row where each Hook
+left edge for 0.75 s (`hook.warning_seconds: 0.75`), 4 times a second
+(`hook.chevron_blink_hz: 4.0`), at the row where each Hook
 will appear. It then **enters from behind** and flies right at 150 px/s
 (`hook.speed: 150.0`) along a row 50 px above or below the Hero
 (`hook.pass_offset: 50.0`; one of the pair above, one below; larger
@@ -397,7 +401,9 @@ centre at x = +60 (`ferry.hold_x: 60.0`), about 5 s after appearing. It holds
 there for up to 15 s (`ferry.hold_seconds: 15.0`) and then sinks off the
 bottom at 20 px/s (`ferry.sink_speed: 20.0`), taking its Power-up with it.
 
-- It launches 2 Skiffs from its deck (`ferry.launch_count: 2`) 1.0 s after
+- It launches 2 Skiffs from its deck (`ferry.launch_count: 2`), 12 px ahead
+  of its centre and 10 px apart vertically
+  (`ferry.launch_offset: (-12.0, 10.0)`), 1.0 s after
   appearing (`ferry.first_launch_delay: 1.0`), then every 3.0 s
   (`ferry.launch_interval: 3.0`).
 - It fires a ring of 8 bullets (`ferry.ring_count: 8`) at 70 px/s
@@ -416,9 +422,10 @@ Ferry is a set piece. One appears near the end of each Stage half.
 
 A dome cannon fixed to the floor or ceiling terrain and scrolling with it. Its
 barrel tracks the Hero at 120°/s (`barnacle.turn_rate: 120.0`). It flashes for
-0.3 s (`barnacle.telegraph_seconds: 0.3`) and then fires one aimed shot at
-110 px/s (`barnacle.shot_speed: 110.0`) every 1.6 s
-(`barnacle.fire_interval: 1.6`). **It never fires backward:** once the Hero has
+0.3 s (`barnacle.telegraph_seconds: 0.3`) and then fires one shot **along its
+barrel**, not straight at the Hero, at 110 px/s (`barnacle.shot_speed: 110.0`) every 1.6 s
+(`barnacle.fire_interval: 1.6`). Because the barrel lags, a Hero who moves
+fast across its face makes it miss. **It never fires backward:** once the Hero has
 passed it, it falls silent. You can deal with a Barnacle by killing it or by
 getting past it.
 
@@ -449,8 +456,12 @@ Static itself: the swarm the Wren is chasing.
 Two pylons, one on the floor and one on the ceiling, with a 4 px wide electric
 arc between them (`arc_gate.arc_width: 4.0`). The arc is live for 1.2 s
 (`arc_gate.on_seconds: 1.2`) and off for 0.8 s (`arc_gate.off_seconds: 0.8`).
-It flickers for 0.3 s before it switches on
-(`arc_gate.telegraph_seconds: 0.3`). Touching the live arc is a hit, and the live arc stops Hero shots.
+It flickers faint Foam for 0.3 s before it switches on
+(`arc_gate.telegraph_seconds: 0.3`) and is solid Foam while live. Foam, not
+Spark, because Spark is the Hero's colour.
+A Stage file places the pylons with `floor_y` and `ceiling_y` on the spawn
+entry. Both are expected; if one is missing the game logs a warning and uses
+-100 / 92, just inside the play area. Touching the live arc is a hit, and the live arc stops Hero shots.
 Destroying either pylon (40 HP, 600 points each) kills the arc for good.
 Pylons sit against the walls, so killing one means flying close to the floor
 or ceiling. That's quick at high power and a long, risky job at gun 1, where
