@@ -17,6 +17,7 @@ pub mod enemies;
 pub mod hero;
 pub mod palette;
 pub mod power_ups;
+pub mod sound;
 pub mod tuning;
 
 use power_ups::{PowerUp, PowerUps};
@@ -73,7 +74,7 @@ pub struct SideShooterPlugin;
 
 impl Plugin for SideShooterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(enemies::EnemiesPlugin)
+        app.add_plugins((enemies::EnemiesPlugin, sound::SoundPlugin))
             .add_systems(
                 OnEnter(Screen::Playing),
                 spawn_stage.run_if(cabinet_is(CABINET)),

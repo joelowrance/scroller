@@ -53,6 +53,7 @@ fn app() -> App {
         .add_message::<ScoreGained>()
         .add_message::<LifeLost>()
         .add_message::<StageCleared>()
+        .add_message::<PlaySfx>()
         .add_plugins((KitPlugin, EnemiesPlugin))
         .add_systems(Last, collect)
         .insert_resource(StageRun::new(

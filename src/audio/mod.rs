@@ -5,9 +5,11 @@
 //! buffers once at start-up.
 //!
 //! - Play a sound effect: write a [`PlaySfx`] message.
-//! - Music follows the screen (see [`song_for_screen`]). While a Stage is
+//! - Music follows the screen (see [`song_for_screen`]); the Stage Card after a
+//!   cleared Stage plays the [`Song::StageClear`] sting. While a Stage is
 //!   playing, the song is [`StageMusic`], which the Cabinet sets (for example
 //!   in `OnEnter(Screen::Playing)`); it is cleared when the Stage ends.
+//! - Lost lives and extra lives make their sounds here, for every Cabinet.
 //! - **M** mutes. The master volume and mute are stored with the high scores.
 //! - Music and gameplay sounds stop while a Stage is paused.
 //! - On the web, nothing plays until the first input (browser autoplay rules).
@@ -19,42 +21,79 @@ use bevy::platform::time::Instant;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::flow::{Paused, Screen};
+use crate::cabinets::LifeLost;
+use crate::flow::{CardReason, Paused, Screen};
 use crate::input::Controls;
+use crate::run::Session;
 use crate::storage::{self, AUDIO_KEY};
 
 mod music;
 mod output;
 mod synth;
 
-use output::{Output, StopHandle};
+use output::{Output, Play, StopHandle};
 
 const SFX_RON: &str = include_str!("../../assets/audio/sfx.ron");
 const MUSIC_RON: &str = include_str!("../../assets/audio/music.ron");
 
-/// Every sound effect. Each needs an entry in `assets/audio/sfx.ron`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
-pub enum Sfx {
-    Shot,
-    Explosion,
-    Hit,
-    Pickup,
-    ExtraLife,
+/// Music sits under the effects: its mix is scaled by this.
+const MUSIC_GAIN: f32 = 0.6;
+
+/// Declares the [`Sfx`] enum and its `ALL` list from one list of names.
+macro_rules! sfx_list {
+    ($($(#[$doc:meta])* $name:ident,)*) => {
+        /// Every sound effect. Each needs an entry in `assets/audio/sfx.ron`.
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
+        pub enum Sfx {
+            $($(#[$doc])* $name,)*
+        }
+
+        impl Sfx {
+            pub const ALL: &[Sfx] = &[$(Sfx::$name,)*];
+        }
+    };
+}
+
+sfx_list! {
+    // Everywhere.
     MenuMove,
     MenuSelect,
+    /// The Hero lost a life (played here on [`LifeLost`]).
+    LifeLost,
+    /// The Run earned an extra life (played here when lives go up).
+    ExtraLife,
+    // Cabinet 1: the Wren.
+    /// A volley; plays up to 10 times a second, so it is a quiet tick.
+    Shot,
+    /// A volley at gun level 4.
+    Lance,
+    /// The Undertow bomb.
+    Undertow,
+    /// Power-up chirps: the same rise with a different top note each.
+    PowerUpGun,
+    PowerUpDrone,
+    PowerUpTail,
+    PowerUpSpeed,
+    PowerUpWard,
+    PowerUpBomb,
+    /// A Power-up picked up at its maximum.
+    Medal,
+    /// The Ward absorbed a hit.
+    WardBreak,
+    // Cabinet 1: enemies.
+    /// A shot hit an enemy without killing it.
+    EnemyHit,
+    ExplosionSmall,
+    ExplosionLarge,
+    /// A shot glanced off a closed Clam.
+    ShellPing,
+    /// An Arc Gate's arc switched on.
+    ArcHum,
+    /// The chevron warning before a Hook.
+    HookWarning,
 }
 
 impl Sfx {
-    pub const ALL: [Sfx; 7] = [
-        Sfx::Shot,
-        Sfx::Explosion,
-        Sfx::Hit,
-        Sfx::Pickup,
-        Sfx::ExtraLife,
-        Sfx::MenuMove,
-        Sfx::MenuSelect,
-    ];
-
     /// Menu sounds keep playing over the pause screen.
     fn pausable(self) -> bool {
         !matches!(self, Sfx::MenuMove | Sfx::MenuSelect)
@@ -65,10 +104,24 @@ impl Sfx {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 pub enum Song {
     Title,
+    /// Cabinet 1, Stage 1.
+    LowTide,
+    /// Cabinet 1, Stage 2.
+    Foundry,
+    /// Cabinet 1, Stage 2's run-out up the shaft: rising sequences.
+    FoundryClimb,
+    /// A one-shot sting on the Stage Card after a Stage is cleared.
+    StageClear,
 }
 
 impl Song {
-    pub const ALL: [Song; 1] = [Song::Title];
+    pub const ALL: [Song; 5] = [
+        Song::Title,
+        Song::LowTide,
+        Song::Foundry,
+        Song::FoundryClimb,
+        Song::StageClear,
+    ];
 }
 
 /// Plays a sound effect.
@@ -85,10 +138,15 @@ pub struct StageMusic(pub Option<Song>);
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
 struct WantedMusic(Option<Song>);
 
-/// The song each screen outside a Stage plays.
-pub fn song_for_screen(screen: Screen) -> Option<Song> {
+/// The song each screen outside a Stage plays. The Stage Card's depends on
+/// why it is showing.
+pub fn song_for_screen(screen: Screen, card: Option<CardReason>) -> Option<Song> {
     match screen {
         Screen::Title | Screen::PracticeSelect => Some(Song::Title),
+        Screen::StageCard if card == Some(CardReason::StageCleared) => Some(Song::StageClear),
+        // A Cabinet's last Stage goes straight to the Transition; the sting
+        // opens it until each Transition has its own music.
+        Screen::CabinetTransition => Some(Song::StageClear),
         _ => None,
     }
 }
@@ -124,7 +182,8 @@ impl AudioSettings {
 #[derive(Resource)]
 pub struct AudioBank {
     sfx: HashMap<Sfx, Arc<[f32]>>,
-    songs: HashMap<Song, Arc<[f32]>>,
+    /// Each song with whether it loops.
+    songs: HashMap<Song, (Arc<[f32]>, bool)>,
 }
 
 impl AudioBank {
@@ -132,7 +191,7 @@ impl AudioBank {
         let defs: HashMap<Sfx, Vec<synth::Tone>> =
             ron::from_str(SFX_RON).map_err(|e| format!("assets/audio/sfx.ron: {e}"))?;
         let mut sfx = HashMap::new();
-        for id in Sfx::ALL {
+        for &id in Sfx::ALL {
             let tones = defs
                 .get(&id)
                 .ok_or_else(|| format!("assets/audio/sfx.ron: no {id:?}"))?;
@@ -149,7 +208,7 @@ impl AudioBank {
             let samples = def
                 .render()
                 .map_err(|e| format!("assets/audio/music.ron: {id:?}: {e}"))?;
-            songs.insert(id, samples.into());
+            songs.insert(id, (samples.into(), def.looping));
         }
         Ok(Self { sfx, songs })
     }
@@ -196,11 +255,12 @@ fn apply_pause(paused: Res<Paused>, screen: Res<State<Screen>>, output: Res<Outp
 fn choose_music(
     screen: Res<State<Screen>>,
     stage: Res<StageMusic>,
+    card: Option<Res<CardReason>>,
     mut wanted: ResMut<WantedMusic>,
 ) {
     let song = match screen.get() {
         Screen::Playing => stage.0,
-        other => song_for_screen(*other),
+        other => song_for_screen(*other, card.map(|c| *c)),
     };
     wanted.set_if_neq(WantedMusic(song));
 }
@@ -222,17 +282,56 @@ fn play_music(
         stop.stop();
     }
     if let Some(song) = music.0 {
+        let (samples, looping) = &bank.songs[&song];
+        let play = Play {
+            looping: *looping,
+            pausable: true,
+            gain: MUSIC_GAIN,
+        };
         // Without a device yet, `now` stays empty and this retries next frame.
-        now.0 = output
-            .play(&bank.songs[&song], true, true)
-            .map(|stop| (song, stop));
+        now.0 = output.play(samples, play).map(|stop| (song, stop));
     }
 }
 
+/// Plays each requested sound once per frame, however many times it was
+/// asked for (a Hook pair, several enemies dying together).
 fn play_sfx(mut requests: MessageReader<PlaySfx>, bank: Res<AudioBank>, output: Res<Output>) {
+    let mut seen = Vec::new();
     for PlaySfx(sfx) in requests.read() {
-        output.play(&bank.sfx[sfx], false, sfx.pausable());
+        if seen.contains(sfx) {
+            continue;
+        }
+        seen.push(*sfx);
+        let play = Play {
+            looping: false,
+            pausable: sfx.pausable(),
+            gain: 1.0,
+        };
+        output.play(&bank.sfx[sfx], play);
     }
+}
+
+/// Lost and extra lives sound the same in every Cabinet, so they are played
+/// here rather than by each Cabinet. Lives are only watched during a Stage,
+/// so a new Run's fresh lives don't sound like an extra life.
+fn life_sounds(
+    mut lost: MessageReader<LifeLost>,
+    screen: Res<State<Screen>>,
+    session: Option<Res<Session>>,
+    mut last_lives: Local<Option<u32>>,
+    mut sfx: MessageWriter<PlaySfx>,
+) {
+    if lost.read().count() > 0 {
+        sfx.write(PlaySfx(Sfx::LifeLost));
+    }
+    let playing = *screen.get() == Screen::Playing;
+    let lives = session.filter(|_| playing).map(|s| s.lives);
+    if let (Some(before), Some(now)) = (*last_lives, lives)
+        && now > before
+    {
+        sfx.write(PlaySfx(Sfx::ExtraLife));
+    }
+    *last_lives = lives;
 }
 
 pub struct AudioPlugin;
@@ -252,6 +351,7 @@ impl Plugin for AudioPlugin {
             .init_resource::<NowPlaying>()
             .add_message::<PlaySfx>()
             .add_systems(OnExit(Screen::Playing), clear_stage_music)
+            .add_systems(Update, life_sounds.before(play_sfx))
             .add_systems(
                 Update,
                 (
@@ -276,10 +376,26 @@ mod tests {
     fn embedded_audio_renders() {
         let bank = AudioBank::render().unwrap();
         for id in Sfx::ALL {
-            let len = bank.sfx[&id].len();
+            let len = bank.sfx[id].len();
             assert!(len > 0 && len < synth::SAMPLE_RATE as usize * 2, "{id:?}");
         }
-        assert!(!bank.songs[&Song::Title].is_empty());
+        for id in Song::ALL {
+            assert!(!bank.songs[&id].0.is_empty(), "{id:?}");
+        }
+    }
+
+    #[test]
+    fn no_rendered_buffer_clips() {
+        let bank = AudioBank::render().unwrap();
+        let buffers = bank
+            .sfx
+            .iter()
+            .map(|(id, s)| (format!("{id:?}"), s))
+            .chain(bank.songs.iter().map(|(id, (s, _))| (format!("{id:?}"), s)));
+        for (name, samples) in buffers {
+            let peak = samples.iter().fold(0.0f32, |m, s| m.max(s.abs()));
+            assert!(peak <= synth::MAX_PEAK, "{name} peaks at {peak}");
+        }
     }
 
     #[test]
@@ -291,14 +407,29 @@ mod tests {
     }
 
     #[test]
-    fn title_song_loops_on_whole_rows() {
+    fn songs_loop_on_whole_rows_and_the_sting_does_not_loop() {
         let defs: HashMap<Song, music::SongDef> = ron::from_str(MUSIC_RON).unwrap();
-        let title = &defs[&Song::Title];
         let bank = AudioBank::render().unwrap();
-        assert_eq!(
-            bank.songs[&Song::Title].len(),
-            title.rows().unwrap() * title.samples_per_row()
-        );
+        for id in Song::ALL {
+            let def = &defs[&id];
+            let (samples, looping) = &bank.songs[&id];
+            assert_eq!(*looping, id != Song::StageClear, "{id:?}");
+            if *looping {
+                let rows = def.rows().unwrap() * def.samples_per_row();
+                assert_eq!(samples.len(), rows, "{id:?}");
+            }
+        }
+        let sting = bank.songs[&Song::StageClear].0.len() as f32 / synth::SAMPLE_RATE as f32;
+        assert!((1.0..4.0).contains(&sting), "sting lasts {sting} s");
+    }
+
+    #[test]
+    fn stage_tracks_are_near_their_design_tempo() {
+        let defs: HashMap<Song, music::SongDef> = ron::from_str(MUSIC_RON).unwrap();
+        // docs/cabinets/1-side-shooter.md: about 150 and 160 BPM.
+        assert_eq!(defs[&Song::LowTide].bpm, 150.0);
+        assert_eq!(defs[&Song::Foundry].bpm, 160.0);
+        assert_eq!(defs[&Song::FoundryClimb].bpm, 160.0);
     }
 
     /// Writes every sound to `target/audio-preview/*.wav` for listening:
@@ -309,11 +440,11 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target/audio-preview");
         std::fs::create_dir_all(&dir).unwrap();
         let bank = AudioBank::render().unwrap();
-        let named = bank
-            .sfx
-            .iter()
-            .map(|(id, s)| (format!("{id:?}"), s))
-            .chain(bank.songs.iter().map(|(id, s)| (format!("song-{id:?}"), s)));
+        let named = bank.sfx.iter().map(|(id, s)| (format!("{id:?}"), s)).chain(
+            bank.songs
+                .iter()
+                .map(|(id, (s, _))| (format!("song-{id:?}"), s)),
+        );
         for (name, samples) in named {
             let clipped = samples.iter().filter(|s| s.abs() >= 1.0).count();
             let peak = samples.iter().fold(0.0f32, |m, s| m.max(s.abs()));
@@ -397,6 +528,68 @@ mod tests {
         go(&mut app, Screen::StageCard);
         assert_eq!(wanted(&app), None);
         assert_eq!(app.world().resource::<StageMusic>().0, None);
+    }
+
+    #[test]
+    fn the_stage_card_stings_only_after_a_clear() {
+        let mut app = music_app();
+        app.update();
+        app.insert_resource(CardReason::NewRun);
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
+        go(&mut app, Screen::Playing);
+        app.insert_resource(CardReason::StageCleared);
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), Some(Song::StageClear));
+        // A Cabinet's last Stage: the sting opens the Transition instead.
+        go(&mut app, Screen::Playing);
+        go(&mut app, Screen::CabinetTransition);
+        assert_eq!(wanted(&app), Some(Song::StageClear));
+        app.insert_resource(CardReason::AfterTransition);
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
+    }
+
+    fn life_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(bevy::state::app::StatesPlugin)
+            .init_state::<Screen>()
+            .add_message::<LifeLost>()
+            .add_message::<PlaySfx>()
+            .add_systems(Update, life_sounds);
+        app
+    }
+
+    fn played(app: &mut App) -> Vec<Sfx> {
+        let mut messages = app.world_mut().resource_mut::<Messages<PlaySfx>>();
+        messages.drain().map(|PlaySfx(s)| s).collect()
+    }
+
+    #[test]
+    fn lives_lost_and_gained_make_their_sounds() {
+        let mut app = life_app();
+        let tuning = crate::tuning::Tuning::default();
+        app.insert_resource(Session::new_run(&tuning));
+        go(&mut app, Screen::Playing);
+        assert_eq!(played(&mut app), []);
+
+        app.world_mut().write_message(LifeLost);
+        app.update();
+        assert_eq!(played(&mut app), [Sfx::LifeLost]);
+
+        app.world_mut().resource_mut::<Session>().lives += 1;
+        app.update();
+        assert_eq!(played(&mut app), [Sfx::ExtraLife]);
+        app.update();
+        assert_eq!(played(&mut app), []);
+
+        // Game Over, then a new Run with fresh lives: not an extra life.
+        app.world_mut().resource_mut::<Session>().lives = 0;
+        go(&mut app, Screen::GameOver);
+        app.insert_resource(Session::new_run(&tuning));
+        go(&mut app, Screen::StageCard);
+        go(&mut app, Screen::Playing);
+        assert_eq!(played(&mut app), []);
     }
 
     #[test]

@@ -28,6 +28,7 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::{Screen, gameplay_running};
@@ -319,6 +320,7 @@ fn spawn_requested(
     session: Res<Session>,
     hero: Option<Single<&Transform, With<Hero>>>,
     mut requests: MessageReader<SpawnRequested>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let hero = hero.map(|h| h.translation.truncate());
     let stage2 = session.stage == 1;
@@ -366,6 +368,7 @@ fn spawn_requested(
             ) {
                 spawned.push(e);
                 if kind == Kind::Hook {
+                    sfx.write(PlaySfx(Sfx::HookWarning));
                     commands.spawn((
                         Chevron(t.hook.warning_seconds),
                         look::chevron(),
@@ -557,6 +560,7 @@ fn run_arcs(
     time: Res<Time>,
     tuning: Res<Tuning>,
     stage: Res<StageRun>,
+    mut sfx: MessageWriter<PlaySfx>,
     mut arcs: Query<(
         Entity,
         &mut ArcBeam,
@@ -579,6 +583,10 @@ fn run_arcs(
         // Only a live arc touches anything: it hurts the Hero and stops shots.
         if live && !has_layer {
             commands.entity(entity).insert(Layer::Enemy);
+            // Hum only where the player can see the gate.
+            if transform.translation.x < HALF_W {
+                sfx.write(PlaySfx(Sfx::ArcHum));
+            }
         } else if !live && has_layer {
             commands.entity(entity).remove::<Layer>();
         }

@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use super::palette;
 use super::tuning::{SideShooterTuning, vec2};
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
@@ -46,6 +47,18 @@ impl PowerUp {
         PowerUp::Ward,
         PowerUp::Bomb,
     ];
+
+    /// The pickup chirp: the same rise, a different top note per type.
+    pub fn sfx(self) -> Sfx {
+        match self {
+            PowerUp::Gun => Sfx::PowerUpGun,
+            PowerUp::Drone => Sfx::PowerUpDrone,
+            PowerUp::Tail => Sfx::PowerUpTail,
+            PowerUp::Speed => Sfx::PowerUpSpeed,
+            PowerUp::Ward => Sfx::PowerUpWard,
+            PowerUp::Bomb => Sfx::PowerUpBomb,
+        }
+    }
 
     pub fn letter(self) -> char {
         match self {
@@ -253,6 +266,7 @@ pub(super) fn collect_capsules(
     mut collected: MessageReader<PickupCollected>,
     mut power_ups: ResMut<PowerUps>,
     mut score: MessageWriter<ScoreGained>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.side_shooter;
     for pickup in collected.read() {
@@ -261,6 +275,9 @@ pub(super) fn collect_capsules(
         };
         if power_ups.collect(power_up, t) == Collected::Medal {
             score.write(ScoreGained(t.score.maxed_power_up));
+            sfx.write(PlaySfx(Sfx::Medal));
+        } else {
+            sfx.write(PlaySfx(power_up.sfx()));
         }
     }
 }

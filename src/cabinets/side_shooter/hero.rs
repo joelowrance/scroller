@@ -11,6 +11,7 @@ use bevy::prelude::*;
 use super::palette;
 use super::power_ups::{PLAY_TOP, PowerUps};
 use super::tuning::{SideShooterTuning, vec2};
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
@@ -286,6 +287,7 @@ pub(super) fn fire(
     power: Res<PowerUps>,
     mut wren: Single<(&mut Gun, &Transform, Has<Entry>), With<Wren>>,
     shots: Query<&Layer>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.side_shooter;
     let (gun, transform, entering) = &mut *wren;
@@ -307,6 +309,9 @@ pub(super) fn fire(
     if alive + volley.len() > t.shot.max_on_screen {
         return;
     }
+    // Lances (gun level 4) deal more than a plain shot and sound heavier.
+    let lance = volley.iter().any(|s| s.damage > t.shot.damage);
+    sfx.write(PlaySfx(if lance { Sfx::Lance } else { Sfx::Shot }));
     let at = transform.translation.truncate();
     for shot in volley {
         let from = at + shot.offset;
@@ -394,10 +399,12 @@ pub(super) fn ward_absorbed(
     mut wren: Single<&mut Transform, With<Wren>>,
     hitters: Query<(&Layer, &Transform), Without<Wren>>,
     mut explode: MessageWriter<Explode>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.side_shooter;
     for hit in absorbed.read() {
         power.ward = false;
+        sfx.write(PlaySfx(Sfx::WardBreak));
         let at = wren.translation.truncate();
         explode.write(Explode {
             at,
@@ -445,12 +452,14 @@ pub(super) fn bomb(
     mut power: ResMut<PowerUps>,
     mut wren: Single<(&Transform, &mut Invulnerable), (With<Wren>, Without<Entry>)>,
     rings: Query<(), With<Undertow>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.side_shooter;
     if !controls.just_pressed(Button::B) || power.bombs == 0 || !rings.is_empty() {
         return;
     }
     power.bombs -= 1;
+    sfx.write(PlaySfx(Sfx::Undertow));
     let (transform, invulnerable) = &mut *wren;
     invulnerable.0 = invulnerable.0.max(t.bomb.invulnerable_seconds);
     let at = transform.translation.truncate();

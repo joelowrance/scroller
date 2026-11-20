@@ -184,14 +184,23 @@ pub fn render_tones(tones: &[Tone]) -> Vec<f32> {
     for tone in tones {
         tone.mix_into(&mut out, samples_for(tone.at), false);
     }
-    clamp(&mut out);
+    normalize(&mut out);
     out
 }
 
-/// Keeps samples within -1..=1 so loud mixes clip instead of wrapping.
-pub fn clamp(samples: &mut [f32]) {
-    for s in samples {
-        *s = s.clamp(-1.0, 1.0);
+/// The loudest a rendered buffer may be. Leaves headroom below 1.0 so no
+/// buffer is ever flat-topped; the output bus limits the final mix.
+pub const MAX_PEAK: f32 = 0.95;
+
+/// Scales a buffer down, if needed, so its peak is at most [`MAX_PEAK`].
+/// Quieter buffers are left as they are.
+pub fn normalize(samples: &mut [f32]) {
+    let peak = samples.iter().fold(0.0f32, |m, s| m.max(s.abs()));
+    if peak > MAX_PEAK {
+        let k = MAX_PEAK / peak;
+        for s in samples {
+            *s *= k;
+        }
     }
 }
 
@@ -280,6 +289,17 @@ mod tests {
         let samples = render_tones(&[tone]);
         assert!(samples.iter().any(|s| *s > 0.1));
         assert!(samples.iter().any(|s| *s < -0.1));
+    }
+
+    #[test]
+    fn loud_buffers_are_scaled_not_clipped() {
+        let mut loud = vec![0.5, -1.9, 1.2];
+        normalize(&mut loud);
+        assert_eq!(loud[1], -MAX_PEAK);
+        assert!((loud[0] / loud[2] - 0.5 / 1.2).abs() < 1e-6, "shape kept");
+        let mut quiet = vec![0.2, -0.4];
+        normalize(&mut quiet);
+        assert_eq!(quiet, [0.2, -0.4]);
     }
 
     #[test]
