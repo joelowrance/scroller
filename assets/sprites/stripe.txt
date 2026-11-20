@@ -1,8 +1,9 @@
 # Background streaks for the placeholder Cabinet: far, middle and near.
-# One frame per depth, in background colours only. Format in README.md.
+# One frame per depth. A background sprite: roles 1, 2, 3 and 8 only (see
+# README.md). Format in README.md.
 
 ....2222....
 
 ..33333333..
 
-444444444444
+333333333333

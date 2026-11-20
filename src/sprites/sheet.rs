@@ -16,6 +16,12 @@ pub struct SpriteSource {
     pub png: Option<&'static [u8]>,
 }
 
+/// Sprites drawn as background or terrain. They may use only the background
+/// roles, so nothing behind the action is mistaken for the Hero, an enemy or
+/// a bullet (docs/cabinets/1-side-shooter.md, "Palette"). Add terrain here.
+#[cfg_attr(not(test), allow(dead_code))]
+pub const BACKGROUND_SPRITES: &[&str] = &["stripe"];
+
 /// Every sprite under `assets/sprites/`, sorted by name.
 pub const SOURCES: &[SpriteSource] = include!(concat!(env!("OUT_DIR"), "/sprite_sources.rs"));
 
@@ -188,7 +194,18 @@ impl Baked {
 /// Builds a sprite. A PNG wins over the text grid; the grid (if any) still
 /// says how many frames the PNG holds. A broken PNG falls back to the grid.
 pub fn build(source: &SpriteSource, palettes: &[Palette]) -> Result<Baked, String> {
-    let grid = source.text.map(parse).transpose()?;
+    let grid = match source.text.map(parse).transpose() {
+        Ok(grid) => grid,
+        // A PNG can stand on its own; it needs the grid only to count frames.
+        Err(err) if source.png.is_some() => {
+            warn!(
+                "{}.txt ignored, using {}.png as one frame: {err}",
+                source.name, source.name
+            );
+            None
+        }
+        Err(err) => return Err(err),
+    };
     if let Some(png) = source.png {
         let frames = grid.as_ref().map_or(1, |g| g.frames.len() as u32);
         match decode_png(png, frames) {
@@ -307,6 +324,33 @@ mod tests {
             build(&broken, &PALETTES).unwrap(),
             Baked::PerPalette(_)
         ));
+    }
+
+    #[test]
+    fn a_broken_grid_still_lets_its_png_win() {
+        let png = encode_png(2, 2, &[7; 2 * 2 * 4]);
+        let png: &'static [u8] = Box::leak(png.into_boxed_slice());
+        let source = SpriteSource {
+            name: "c",
+            text: Some("1x\n"),
+            png: Some(png),
+        };
+        assert!(matches!(
+            build(&source, &PALETTES).unwrap(),
+            Baked::Override(_)
+        ));
+    }
+
+    #[test]
+    fn background_sprites_use_only_background_roles() {
+        use super::super::palette::BACKGROUND_ROLES;
+        for name in BACKGROUND_SPRITES {
+            let source = SOURCES.iter().find(|s| s.name == *name).expect(name);
+            let grid = parse(source.text.expect(name)).unwrap();
+            for role in grid.frames.iter().flatten().flatten() {
+                assert!(BACKGROUND_ROLES.contains(role), "{name} uses role {role}");
+            }
+        }
     }
 
     #[test]

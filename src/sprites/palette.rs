@@ -35,6 +35,10 @@ mod roles {
 }
 pub use roles::*;
 
+/// Roles that backgrounds and terrain may use (backdrop, shade, fill, extra).
+#[cfg_attr(not(test), allow(dead_code))]
+pub const BACKGROUND_ROLES: [u8; 4] = [BACKDROP, SHADE, FILL, EXTRA];
+
 #[derive(Clone, Copy, Debug)]
 pub struct Palette {
     pub colors: [Color; PALETTE_SIZE],
@@ -90,10 +94,13 @@ mod tests {
         let doc = include_str!("../../docs/cabinets/1-side-shooter.md");
         for role in 1..=PALETTE_SIZE as u8 {
             let hex = PALETTES[0].color(role).to_srgba().to_hex().to_uppercase();
-            assert!(doc.contains(&format!("| {role} |")), "role {role} in doc");
+            let row = doc
+                .lines()
+                .find(|l| l.starts_with(&format!("| {role} |")))
+                .unwrap_or_else(|| panic!("no palette row {role} in the doc"));
             assert!(
-                doc.contains(&format!("`{hex}`")),
-                "role {role} {hex} in doc"
+                row.contains(&format!("`{hex}`")),
+                "row {role} should be {hex}: {row}"
             );
         }
     }
