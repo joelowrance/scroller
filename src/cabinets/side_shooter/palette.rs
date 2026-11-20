@@ -1,23 +1,25 @@
-//! Cabinet 1's palette, from `docs/cabinets/1-side-shooter.md`.
+//! Cabinet 1's colours by their design-doc names
+//! (`docs/cabinets/1-side-shooter.md`). The palette itself is defined once,
+//! in `sprites::palette`.
 
 // Backgrounds and enemies (#8, #9) use the rest.
 #![allow(dead_code)]
 
 use bevy::prelude::Color;
 
-const fn hex(rgb: u32) -> Color {
-    Color::srgb(
-        ((rgb >> 16) & 0xFF) as f32 / 255.0,
-        ((rgb >> 8) & 0xFF) as f32 / 255.0,
-        (rgb & 0xFF) as f32 / 255.0,
-    )
+use crate::sprites::palette::{
+    ACCENT, BACKDROP, BRIGHT, DANGER, EXTRA, FILL, PALETTES, SHADE, WARM,
+};
+
+const fn role(role: u8) -> Color {
+    PALETTES[0].color(role)
 }
 
-pub const NIGHT: Color = hex(0x05051A);
-pub const SLATE: Color = hex(0x23305E);
-pub const SEA: Color = hex(0x2E7A8C);
-pub const SPARK: Color = hex(0x4DD9FF);
-pub const FOAM: Color = hex(0xF4F4F0);
-pub const EMBER: Color = hex(0xFFB43C);
-pub const SIGNAL: Color = hex(0xFF3C78);
-pub const RUST: Color = hex(0x8A3A22);
+pub const NIGHT: Color = role(BACKDROP);
+pub const SLATE: Color = role(SHADE);
+pub const SEA: Color = role(FILL);
+pub const SPARK: Color = role(ACCENT);
+pub const FOAM: Color = role(BRIGHT);
+pub const EMBER: Color = role(WARM);
+pub const SIGNAL: Color = role(DANGER);
+pub const RUST: Color = role(EXTRA);

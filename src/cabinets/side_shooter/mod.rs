@@ -10,6 +10,7 @@ use super::cabinet_is;
 use crate::flow::Screen;
 use crate::kit::{KitSet, SpawnRequested, StageRun, StageTimeline, stage_live};
 use crate::run::Session;
+use crate::sprites::Sprites;
 use crate::tuning::Tuning;
 
 pub mod enemies;
@@ -34,11 +35,16 @@ fn stage_timeline(tuning: &Tuning) -> StageTimeline {
     })
 }
 
-fn spawn_stage(mut commands: Commands, tuning: Res<Tuning>, session: Res<Session>) {
+fn spawn_stage(
+    mut commands: Commands,
+    tuning: Res<Tuning>,
+    session: Res<Session>,
+    sprites: Res<Sprites>,
+) {
     let t = &tuning.side_shooter;
     let power = PowerUps::from_session(&session.power_ups, t);
     commands.insert_resource(StageRun::new(stage_timeline(&tuning)));
-    hero::spawn_wren(&mut commands, t, &power);
+    hero::spawn_wren(&mut commands, &sprites, t, &power);
     commands.insert_resource(power);
 }
 
@@ -96,13 +102,7 @@ impl Plugin for SideShooterPlugin {
                         .chain()
                         .after(KitSet::Resolve)
                         .before(KitSet::Effects),
-                    (
-                        hero::drones_blink,
-                        hero::flicker_engine,
-                        hero::show_bombs,
-                        save_power_ups,
-                    )
-                        .after(KitSet::Effects),
+                    (hero::drones_blink, hero::show_bombs, save_power_ups).after(KitSet::Effects),
                 )
                     .run_if(cabinet_is(CABINET))
                     .run_if(stage_live),
