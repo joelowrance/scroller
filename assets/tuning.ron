@@ -109,6 +109,8 @@
             gun_max: 4, drone_max: 2, drone_offset: 14.0, speed_max: 2,
             ward_invulnerable_seconds: 1.0, ward_push: 8.0,
         ),
-        score: (formation_bonus_per_enemy: 100, maxed_power_up: 1000, bomb_cancel: 10),
+        terrain: (tile_size: 8.0, min_gap: 72.0, hook_min_gap: 120.0),
+        score: (formation_bonus_per_enemy: 100, maxed_power_up: 1000, bomb_cancel: 10,
+                stage_clear: 3000, no_miss: 5000),
     ),
 )

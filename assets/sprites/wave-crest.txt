@@ -1,0 +1,9 @@
+#! background
+# A Stage 1-1 wave crest along the top of the sea strip, tiled every 16 px.
+# A background sprite: roles 1, 2, 3 and 8 only. Format in README.md.
+
+.....222........
+...2233322......
+.22333333322....
+2333333333332222
+3333333333333333

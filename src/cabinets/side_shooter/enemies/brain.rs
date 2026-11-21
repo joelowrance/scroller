@@ -198,6 +198,8 @@ pub struct Gull {
     pub entry_x: f32,
     pub base_y: f32,
     pub fires: bool,
+    /// Flies the wave upside down (opposite phase), so two snakes cross.
+    pub flip: bool,
     fired: bool,
 }
 
@@ -207,15 +209,22 @@ impl Gull {
             entry_x,
             base_y,
             fires,
+            flip: false,
             fired: false,
         }
+    }
+
+    pub fn flipped(mut self, flip: bool) -> Self {
+        self.flip = flip;
+        self
     }
 
     fn step(&mut self, pos: &mut Vec2, ctx: &Ctx, t: &EnemyTypes) -> Out {
         let g = &t.gull;
         pos.x -= g.speed * ctx.dt;
         let wavelength = (g.speed * g.period).max(1.0);
-        pos.y = self.base_y + g.amplitude * (TAU * (self.entry_x - pos.x) / wavelength).sin();
+        let amplitude = if self.flip { -g.amplitude } else { g.amplitude };
+        pos.y = self.base_y + amplitude * (TAU * (self.entry_x - pos.x) / wavelength).sin();
         let mut out = Out::default();
         if self.fires && !self.fired && pos.x <= g.fire_x {
             self.fired = true;
@@ -394,6 +403,9 @@ pub struct Hook {
     /// The row it flies along on its pass.
     pub row: f32,
     pub phase: HookPhase,
+    /// The floor and ceiling it must keep clear of (terrain or the play-area
+    /// edges).
+    pub bounds: (f32, f32),
 }
 
 /// x where a Hook waits during its warning, just off the left edge.
@@ -403,12 +415,22 @@ impl Hook {
     /// A Hook that passes `offset` px above (positive) or below the Hero's row,
     /// kept clear of the play-area edges.
     pub fn new(hero_y: f32, offset: f32, t: &EnemyTypes) -> Self {
+        let bounds = (PLAY_BOTTOM, PLAY_TOP);
         Self {
-            row: clamp_row(hero_y + offset, t),
+            row: clamp_row(hero_y + offset, bounds, t),
             phase: HookPhase::Warn {
                 left: t.hook.warning_seconds,
             },
+            bounds,
         }
+    }
+
+    /// Keeps the Hook clear of a floor and ceiling (Stage 2 terrain) as
+    /// well. A turn that would not fit is made on the open side.
+    pub fn within(mut self, floor: f32, ceiling: f32, t: &EnemyTypes) -> Self {
+        self.bounds = (floor.max(PLAY_BOTTOM), ceiling.min(PLAY_TOP));
+        self.row = clamp_row(self.row, self.bounds, t);
+        self
     }
 
     fn step(&mut self, pos: &mut Vec2, ctx: &Ctx, t: &EnemyTypes) -> Out {
@@ -427,8 +449,16 @@ impl Hook {
                 if pos.x >= h.turn_x {
                     // Turn toward the Hero's side of the row.
                     let hero_y = ctx.hero.map_or(0.0, |hero| hero.y);
-                    let side = if hero_y >= self.row { 1.0 } else { -1.0 };
                     let r = h.turn_radius.max(1.0);
+                    let c = h.terrain_clearance;
+                    let room_up = self.bounds.1 - c - self.row;
+                    let room_down = self.row - (self.bounds.0 + c);
+                    let side = match hero_y >= self.row {
+                        true if room_up < 2.0 * r && room_down > room_up => -1.0,
+                        false if room_down < 2.0 * r && room_up > room_down => 1.0,
+                        true => 1.0,
+                        false => -1.0,
+                    };
                     self.phase = HookPhase::Turn {
                         angle: 0.0,
                         centre: Vec2::new(h.turn_x, self.row + side * r),
@@ -445,7 +475,7 @@ impl Hook {
                 *angle = (*angle + h.speed / r * ctx.dt).min(PI);
                 *pos = *centre + Vec2::new(angle.sin(), -*side * angle.cos()) * r;
                 if *angle >= PI {
-                    let row = clamp_row(ctx.hero.map_or(pos.y, |hero| hero.y), t);
+                    let row = clamp_row(ctx.hero.map_or(pos.y, |hero| hero.y), self.bounds, t);
                     self.phase = HookPhase::Charge { row };
                 }
             }
@@ -459,10 +489,15 @@ impl Hook {
     }
 }
 
-/// Keeps a Hook's row `terrain_clearance` px inside the play area.
-fn clamp_row(y: f32, t: &EnemyTypes) -> f32 {
+/// Keeps a Hook's row `terrain_clearance` px inside its floor and ceiling.
+fn clamp_row(y: f32, (floor, ceiling): (f32, f32), t: &EnemyTypes) -> f32 {
     let c = t.hook.terrain_clearance;
-    y.clamp(PLAY_BOTTOM + c, PLAY_TOP - c)
+    let (low, high) = (floor + c, ceiling - c);
+    if low > high {
+        (low + high) / 2.0
+    } else {
+        y.clamp(low, high)
+    }
 }
 
 // --- Ferry -----------------------------------------------------------------
@@ -782,6 +817,23 @@ mod tests {
         run(&mut tail, &mut b, None, 2.0 + t.gull.period / 2.0);
         // Both are at the same x now, so on the same height.
         assert!(close(a.x, b.x, 0.5) && close(a.y, b.y, 0.5), "{a} {b}");
+    }
+
+    #[test]
+    fn a_flipped_snake_crosses_a_plain_one() {
+        let t = types();
+        let mut plain = Brain::Gull(Gull::new(176.0, 20.0, false));
+        let mut flipped = Brain::Gull(Gull::new(176.0, -20.0, false).flipped(true));
+        let (mut a, mut b) = (Vec2::new(176.0, 20.0), Vec2::new(176.0, -20.0));
+        let mut above = Vec::new();
+        for _ in 0..(t.gull.period * 1.5 / DT) as usize {
+            plain.step(&mut a, &ctx(None), &t);
+            flipped.step(&mut b, &ctx(None), &t);
+            above.push(a.y > b.y);
+        }
+        // The plain snake starts above, then the two swap sides.
+        assert!(above[0]);
+        assert!(above.iter().any(|&x| !x), "they never cross");
     }
 
     #[test]

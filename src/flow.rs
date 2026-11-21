@@ -176,6 +176,11 @@ fn on_stage_cleared(
     }
 }
 
+/// The flow's reaction to a Stage's messages: score, lives and clearing.
+/// Systems that add points when a Stage clears run before it.
+#[derive(SystemSet, Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct FlowSet;
+
 pub struct FlowPlugin;
 
 impl Plugin for FlowPlugin {
@@ -191,6 +196,7 @@ impl Plugin for FlowPlugin {
                 Update,
                 (on_score, on_life_lost, on_stage_cleared)
                     .chain()
+                    .in_set(FlowSet)
                     .run_if(in_state(Screen::Playing)),
             );
     }

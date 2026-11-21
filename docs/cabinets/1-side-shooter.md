@@ -522,7 +522,9 @@ or two drones.
   (`side_shooter.terrain.tile_size: 8.0`; Slate with Rust seams).
 - **What's new:**
   - **Terrain walls.** Touching terrain costs a life (or the Ward). Floor and
-    ceiling heights are set per 8 px column in the Stage file. The corridor is
+    ceiling heights are keys in the Stage file (`terrain: [(at, floor,
+    ceiling)]`), joined by straight ramps and snapped to the 8 px tile grid
+    measured from the play-area edges. The corridor is
     never less than 72 px tall (`side_shooter.terrain.min_gap: 72.0`), checked
     against the 12×6 terrain hitbox. Where Hooks appear it is at least 120 px.
   - New enemies: Barnacles on the terrain, Clams, Mote clouds, Arc Gates.
@@ -544,17 +546,17 @@ or two drones.
 | 0:52 | breathe | Wide chamber, gantries in the background. |
 | 1:00 | calm | **Restart Point.** |
 | 1:04 | teach | First Mote cloud, open space → **S**. |
-| 1:16 | test | The corridor narrows to 96 px. Barnacles plus a Lamplighter. Scroll 26 px/s. |
+| 1:16 | test | The corridor narrows to 100 px (the nearest the tile grid allows to 96). Barnacles plus a Lamplighter. Scroll 26 px/s. |
 | 1:30 | teach | First Arc Gate, alone, in a straight corridor. |
 | 1:40 | test | Two Arc Gates 80 px apart with a Mote cloud → **G**. |
 | 1:52 | breathe | The corridor opens out. |
 | 2:00 | calm | **Restart Point.** |
-| 2:04 | twist | Hooks from behind in a 128 px corridor (the Tail pays off) → **W**. |
-| 2:16 | test | Clams set into ceiling alcoves, firing Gulls through the gaps. |
+| 2:04 | twist | Hooks from behind in a 132 px corridor (the Tail pays off) → **W**. |
+| 2:16 | test | Clams high in an open hall (the ceiling lifts away), firing Gulls below. |
 | 2:30 | set piece | **Ferry** in the great furnace hall, with Barnacles on the floor → **D**. |
 | 2:50 | breathe | Short. Steam vents (scenery only). |
 | 2:55 | calm | **Restart Point.** |
-| 2:58 | test | The gauntlet: a 72 px corridor with an Arc Gate, Barnacles, then a Mote cloud → **B**. |
+| 2:58 | test | The gauntlet: a 76 px corridor (the narrowest in the Stage) with an Arc Gate, Barnacles, then a Mote cloud → **B**. |
 | 3:20 | run-out | Scroll rises to 40 px/s. The ceiling lifts away and the terrain ramps up into a vertical shaft full of rising Motes (no collision, scenery). |
 | 3:42 | end | The scroll ends at the shaft. Stage clear, then the Cabinet Transition (the Wren banks upward). |
 
@@ -714,7 +716,5 @@ side_shooter: (
   speed. Snapping what is drawn to the pixel grid is the camera's job.
 - **Angled shots are drawn along their path,** but their hitbox stays
   axis-aligned (8×2). At 10° the difference is under a pixel.
-- **The Stage-clear and no-miss bonuses are left to #9,** which owns the end
-  of the Stage. Cabinet 1 plays a stand-in Stage
-  (`assets/stages/side-shooter-stand-in.ron`) until #9 adds `1-1.ron` and
-  `1-2.ron`.
+- **The Stage-clear and no-miss bonuses are paid by the Stages module (#9),**
+  which owns the end of the Stage.
