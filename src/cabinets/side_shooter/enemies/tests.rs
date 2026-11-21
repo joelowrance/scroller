@@ -349,3 +349,23 @@ fn layouts_follow_the_tuning() {
     let buoy = layout(Kind::Bellbuoy, lead, &p, None, &t);
     assert_eq!(buoy[0].0.y, t.bellbuoy.wave_y);
 }
+
+#[test]
+fn enemies_off_screen_hold_their_fire() {
+    let mut app = app();
+    // A Ferry on screen past its grace period, then lifted just above the
+    // screen before its first ring (due at 2.0 s).
+    request(&mut app, "ferry", Vec2::new(60.0, 40.0), "{}");
+    for _ in 0..(1.0 / DT) as usize {
+        app.update();
+    }
+    let mut bullets = app.world_mut().query_filtered::<(), With<EnemyBullet>>();
+    for _ in 0..(2.0 / DT) as usize {
+        for (entity, _, _) in enemies(&mut app) {
+            let mut e = app.world_mut().entity_mut(entity);
+            e.get_mut::<Transform>().unwrap().translation.y = crate::display::HALF_H + 20.0;
+        }
+        app.update();
+    }
+    assert_eq!(bullets.iter(app.world()).count(), 0);
+}
