@@ -65,15 +65,21 @@ from time-to-kill targets. These change or are added for a platformer:
    enemy weak points and warning marks. Hero shots stay Ember dashes, as in
    both ship Cabinets.
 3. **The same time to react as Cabinet 1.**
-   - The Hero mostly stands around x = −40 and enemies fire from about
-     x = +100, so a typical shot travels about 140 px.
-   - So no enemy bullet in Stage 1 is faster than 70 px/s (2.0 s). In Stage 2
-     the cap is 80 px/s.
+   - The Hero stands at the push line (x = −16) or behind it, and enemies
+     fire from about x = +100, so a typical shot travels at least 116 px.
+   - So no enemy bullet in Stage 1 is faster than 60 px/s (1.9 s over
+     116 px). In Stage 2 the cap is 70 px/s.
    - On foot the Hero dodges by jumping and crouching, which commits you for
      longer than steering a ship. That is why these caps are lower than
      Cabinet 2's.
+   - **Shots under gravity are exempt** (the Dropper's canister, the
+     Hauler's lobs). They speed up as they fall, but they are never aimed
+     at the Hero and are always telegraphed. For them the cap applies to the
+     launch speed and to any bullets they burst into.
 4. **High and low are different threats.** Shots come at one of two
-   heights: chest height (crouch under it) and ankle height (jump over it).
+   heights: chest height, 14 px above the shooter's feet (crouch under it;
+   `run_and_gun.enemy.chest_height: 14.0`), and ankle height, 4 px
+   (jump over it; `run_and_gun.enemy.ankle_height: 4.0`).
    Each shooter always uses the same height, and its sprite shows which:
    high shooters have their Ice eye at the top and low shooters at the bottom.
 5. **The screen only moves forward, and only when the Hero pushes it.** The
@@ -182,7 +188,8 @@ What those numbers give (the Terrain test computes them from the keys):
 
 - **Full jump:** 48 px high (6 tiles), 0.40 s up and 0.33 s down, so 0.73 s
   in the air and **52 px across** at run speed.
-- **Tap jump:** about 20 px high.
+- **Tap jump:** with A released after 0.1 s, about 25 px high. Released on
+  the first frame, about 8 px.
 - Falling is faster than rising, so the jump feels snappy, not floaty.
 - A jump starts only when A is **pressed**. Holding A doesn't jump again on
   landing, so a held button never surprises the player.
@@ -196,16 +203,18 @@ nothing.
   Up with left or right aims 45° up that way. In the air, Down aims straight
   down, and Down with a direction aims 45° down. **Down on the ground
   crouches** instead.
-- **Facing** follows the last left/right input. Firing doesn't lock it, so
-  the Hero can run away while shooting backward only by turning. That keeps
-  the genre's "commit to a side" feel.
+- **Facing** follows the last left/right input, and firing doesn't lock it.
+  So you can't run one way while shooting the other. That keeps the genre's
+  "commit to a side" feel.
 - **Crouching:** hold Down on the ground. The Hero can't walk while
-  crouching, and fires forward at knee height (6 px above the ground). Chest
-  shots pass overhead.
+  crouching, and fires forward at knee height, 6 px above the ground
+  (`run_and_gun.shot.crouch_muzzle: (8.0, 6.0)`). Chest shots pass
+  overhead.
 - Hero shots are 6×2 Ember dashes (`run_and_gun.shot.size: (6.0, 2.0)`)
   at 300 px/s (`run_and_gun.shot.speed: 300.0`), 1 damage each
   (`run_and_gun.shot.damage: 1`). They come from the muzzle, 8 px in front
-  of the Hero at chest height (`run_and_gun.shot.muzzle: (8.0, 4.0)`), and
+  of the Hero at chest height, 14 px above its feet
+  (`run_and_gun.shot.muzzle: (8.0, 14.0)`), and
   despawn off screen or when they hit solid terrain.
 - **Shot cap:** 64 (`run_and_gun.shot.max_on_screen: 64`). As in Cabinet 1,
   a volley that would go over the cap is skipped whole.
@@ -284,8 +293,12 @@ Why these five:
 
 ### Damage budget
 
-"Large" here means a target 24 px or more tall within about 100 px of the
-Hero, where the ±12° shots spread to ±21 px and all three connect.
+"Large" here means a target 24 px or more tall within about 50 px of the
+Hero. There the ±12° shots spread to ±10.5 px around chest height (3.5 to
+24.5 px above the feet), so all three connect. Further out, the low shot hits
+the ground and the high one passes over a walker, so against walkers at
+range gun 3 is worth 12, and gun 4 is worth 24. The spread mainly pays
+against flyers, ledges and targets close up.
 
 | Power | Narrow DPS | Large DPS | With Flare (bunched or dug-in targets) |
 |---|---|---|---|
@@ -315,8 +328,8 @@ shared language from Cabinets 1 and 2.
 | Small | Tick, Burrower | about 0.5 s at typical power | 6, 6 | 0.5 s at narrow 12 |
 | Timing lock | Sentry | dies inside one 1.4 s opening at typical power | 14 | 1.2 s at narrow 12; needs two openings at gun 1 |
 | Gunner | Dropper, Turret | 1.5–2 s, so it gets a burst off | 20, 24 | Dropper 1.7 s and Turret 2.0 s at narrow 12 |
-| Power check | Hauler | about 1.5 s at typical, 5 s at gun 2 | 54 | 1.5 s at large 36, 4.5 s at gun 2 |
-| Set piece | Strider | about 6–10 s at typical, inside its Standoff | 300 (core) | 6.3 s at large 48, 8.3 s at large 36 |
+| Power check | Hauler | about 2 s at typical power up close, 3–4 s at range or at gun 2 | 40 | 1.7 s at gun 3 within 50 px (24 connects past the plough), 3.3 s at gun 2 or at range |
+| Set piece | Strider | about 10 s at typical, well inside its 25 s Standoff | 120 (core) | 10 s at gun 2–3 (only the centre shot hits its core), 5 s at gun 4 |
 
 ### Losing a life
 
@@ -376,8 +389,15 @@ ledges: [
     (`run_and_gun.terrain.max_step: 40.0`);
   - any gap with a rise must fit the jump arc with 8 px to spare, at both the
     take-off and the landing;
-  - a Restart Point stands on solid ground at least 48 px from any pit edge;
-  - no pit in the first 64 px after a Restart Point or a Standoff's edges.
+  - a Restart Point stands on solid ground at least 48 px from any pit edge
+    (`run_and_gun.terrain.restart_pit_clearance: 48.0`) and any hazard
+    (`run_and_gun.terrain.restart_hazard_clearance: 48.0`);
+  - there is no pit within 64 px after a Restart Point, or either side of a
+    Standoff's position (`run_and_gun.terrain.pit_free_run: 64.0`).
+
+  These three clearances are **Stage-check constants**: only `stage_checks.rs`
+  reads them, not gameplay. They are keyed under `terrain` anyway so that the
+  doc, the checks and the tuning file agree.
 - **Hazards** are spawn entries, not terrain (see the enemy list): crushers,
   arc floors and conveyors.
 
@@ -425,9 +445,9 @@ and stand on the ground or a ledge; flyers have Iron hulls.
   (`run_and_gun.enemy.hitbox_inset: 1.0`).
 - **Touching an enemy** costs a life. The Hero doesn't stomp: in this
   Cabinet, the gun is the answer.
-- In Stage 2 every enemy bullet speed is multiplied by 1.14
-  (`run_and_gun.stage2_bullet_speed_scale: 1.14`). The fastest results are
-  the Sentry, Turret and Strider at 79.8 px/s, under rule 3's 80 px/s.
+- In Stage 2 every enemy bullet speed is multiplied by 1.15
+  (`run_and_gun.stage2_bullet_speed_scale: 1.15`), as in Cabinet 2. The
+  fastest result is 69 px/s (every 60 px/s shooter), under rule 3's 70.
 - Walkers never walk into a pit or off a ledge's end. They turn at the edge,
   except the Skitter, which is built to jump small gaps (see below).
 
@@ -441,9 +461,11 @@ General fairness rules, as in Cabinet 1 with this Cabinet's directions:
 - At most 32 enemy bullets at once (`run_and_gun.enemy.max_bullets: 32`).
 - Nothing spawns on screen within 48 px of the Hero
   (`run_and_gun.enemy.no_spawn_radius: 48.0`).
-- Every shot is either chest height (14 px above the shooter's feet), ankle
-  height (4 px), or aimed. Aimed shots only come from enemies above the
-  Hero's head or more than 64 px away, so they can be read in time.
+- Every shot is chest height, ankle height (rule 4), aimed, or under
+  gravity. Aimed shots only come from enemies above the Hero's head (the
+  top of `hero.body`) or more than 64 px away
+  (`run_and_gun.enemy.aimed_min_distance: 64.0`), so they can be read in
+  time.
 
 | # | Name | Kind | Stage | Sprite | HP | Score | Default Formation |
 |---|---|---|---|---|---|---|---|
@@ -453,10 +475,10 @@ General fairness rules, as in Cabinet 1 with this Cabinet's directions:
 | 4 | Sentry | walker | 1, 2 | 14×18 (up), 14×8 (down) | 14 | 500 | single |
 | 5 | Burrower | walker | 1, 2 | 12×12 | 6 | 300 | single |
 | 6 | Dropper | flyer | 1, 2 | 24×12 | 20 | 400 | single |
-| 7 | Hauler | walker | 1, 2 | 24×24 | 54 | 800 | single |
+| 7 | Hauler | walker | 1, 2 | 24×24 | 40 | 800 | single |
 | 8 | Turret | fixed | 2 | 12×12 | 24 | 400 | single |
 | 9 | Mote | flyer | 2 | 4×4 | 1 | 50 | cloud of 8 |
-| 10 | Strider | walker | 2 | 32×48 | 300 (core) | 5,000 | single |
+| 10 | Strider | walker | 2 | 32×48 | 120 (core) | 5,000 | single |
 
 HP and score keys: `<name>.hp`, `<name>.score`. Default Formation size:
 `<name>.formation_size` (1 when not listed).
@@ -471,7 +493,8 @@ apart (`skitter.spacing: 16.0`), runs along the ground toward the Hero at
 60 px/s (`skitter.speed: 60.0`).
 
 - It **hops gaps** up to 24 px wide (`skitter.max_hop: 24.0`) with a small
-  20 px jump, and turns back at anything wider.
+  20 px jump (`skitter.hop_height: 20.0`), and turns back at anything
+  wider.
 - It doesn't fire. It rams. A line from the right is the first lesson: hold
   B and stand your ground. Lines from behind (with the chevron) teach turning
   around.
@@ -519,7 +542,7 @@ A gun post behind a sloped shield, planted on the ground or a ledge.
 - **Up:** for 1.4 s (`sentry.up_seconds: 1.4`) it stands 14×18 and can be
   hurt. It fires 2 shots (`sentry.burst: 2`), 0.25 s apart
   (`sentry.burst_interval: 0.25`), at **chest height**, toward the Hero's side
-  at 70 px/s (`sentry.shot_speed: 70.0`).
+  at 60 px/s (`sentry.shot_speed: 60.0`).
 - A crouching Hero is under the shots. A Hero beside it, closer than
   `min_fire_distance`, gets no shots at all.
 - Its cycle starts when it is fully on screen, so its first opening comes
@@ -533,17 +556,19 @@ it takes two openings, which is the push to grab G.
 An Ice eye in loose ground. It can be seen as a slight bump with an eye
 before it moves.
 
-- It waits buried (`Immune`) until the Hero is within 72 px
+- It waits buried until the Hero is within 72 px
   (`burrower.wake_distance: 72.0`).
 - Then dust spurts from the spot for 0.4 s (`burrower.telegraph_seconds:
   0.4`), and it rises to 12×12, out of the ground.
 - Risen, it fires one shot at **ankle height** along the ground, toward the
-  Hero, at 65 px/s (`burrower.shot_speed: 65.0`), every 1.6 s
+  Hero, at 60 px/s (`burrower.shot_speed: 60.0`), every 1.6 s
   (`burrower.fire_interval: 1.6`).
 - After 3.2 s risen (`burrower.up_seconds: 3.2`) it sinks again for 2.0 s
   (`burrower.down_seconds: 2.0`), then repeats.
-- **A Flare burst reaches it while it is buried**, so a Flare player can dig
-  it out before it wakes.
+- **Buried, it is not `Immune`, but it is out of reach.** Its hitbox sits
+  below the ground's surface, and ground stops shots. A Flare burst is an
+  area, not a shot, so a burst on the ground within 12 px reaches it. A
+  Flare player can dig it out before it wakes.
 
 Ankle shots are jumped. With the Sentry, this is the "high and low" pair
 (rule 4).
@@ -558,7 +583,7 @@ A wide, slow flying barge with a hatch underneath.
 - Every 1.5 s (`dropper.fire_interval: 1.5`), its hatch glows Ice for 0.4 s
   (`dropper.telegraph_seconds: 0.4`). It then drops a canister that falls
   under 600 px/s² of gravity (`dropper.canister_gravity: 600.0`).
-- The canister is an enemy bullet (8×8). When it hits ground it bursts into
+- The canister is an enemy bullet, 8×8 (`dropper.canister_size: (8.0, 8.0)`). When it hits ground it bursts into
   2 bullets along the ground, one each way, at ankle height at 60 px/s
   (`dropper.burst_speed: 60.0`).
 - It doesn't drop while it is within 24 px of the Hero's x
@@ -574,12 +599,16 @@ A broad, slow armoured crawler with a plough on its front.
 
 - It walks toward the Hero at 20 px/s (`hauler.speed: 20.0`) and turns at
   edges.
-- **Its plough is armour.** Shots that hit the front 8 px of its facing side
-  spark off (`hauler.plough_depth: 8.0`). That part is `Immune`, but its
-  Ice core on top is not. Angled shots from gun 3 and flares on top hit
-  the core, as do shots from a ledge above or a jump.
-  - In practice: gun 2 has to jump and shoot down (4.5 s). Gun 3 hits it
-    straight on with its angled shots (1.5 s).
+- **Its plough is armour.** The plough covers the lower 10 px of its front
+  (`hauler.plough_height: 10.0`). It is a separate `Immune` part, and shots
+  that hit it spark off. Above the plough, its Ice core fills the upper
+  front, from 10 to 24 px.
+  - Chest-height shots (14 px) go over the plough and hit the core.
+    Crouching shots (6 px) and the low ±12° shot hit the plough. The
+    lesson: stand up and face it while its lobs come down.
+  - Damage that connects: gun 2 at any range, 12 DPS (3.3 s). Gun 3 within
+    about 50 px, the centre and high shots, 24 DPS (1.7 s); at range, 12.
+    Gun 4 within 50 px, 36 (1.1 s); at range, 24 (1.7 s).
 - Every 2.4 s (`hauler.fire_interval: 2.4`) it flashes for 0.4 s
   (`hauler.telegraph_seconds: 0.4`) and lobs 3 bullets in a fan up and
   forward (`hauler.fan_count: 3`, `hauler.fan_degrees: 50.0`) at 60 px/s
@@ -587,6 +616,8 @@ A broad, slow armoured crawler with a plough on its front.
   (`hauler.shot_gravity: 120.0`).
 - It is big enough to block the way: it has to be killed or jumped over (it
   is 24 px tall, half the jump).
+- Its lobs launch at 60 px/s and speed up as they fall (rule 3's gravity
+  exemption).
 
 ### 8. Turret: the wall gun (Stage 2)
 
@@ -595,10 +626,10 @@ A ball mount fixed to a wall, a ceiling or the underside of a gantry.
 - It turns to track the Hero at 90°/s (`turret.turn_rate: 90.0`), only
   across the half facing away from its mount.
 - Every 2.0 s (`turret.fire_interval: 2.0`) it flashes for 0.35 s
-  (`turret.telegraph_seconds: 0.35`) and fires one **aimed** shot at 70 px/s
-  (`turret.shot_speed: 70.0`).
-- It is always placed above the Hero's head height or more than 64 px away
-  (the aimed-shot rule). Stage checks test the placement.
+  (`turret.telegraph_seconds: 0.35`) and fires one **aimed** shot at 60 px/s
+  (`turret.shot_speed: 60.0`).
+- It is always placed above the Hero's head height or more than
+  `aimed_min_distance` away (the aimed-shot rule). Stage checks test the placement.
 - Turrets are where the Flare and the angled shots pay off: they sit in
   places straight shots can't reach.
 
@@ -620,30 +651,46 @@ A tall two-legged walker, the biggest thing in the Cabinet. It is not a boss
 (DESIGN.md): it is a Standoff's main wave, and the Standoff's timer runs
 under it.
 
-- **Parts:** two legs (Ochre, `Immune`) and a cab on top, 32×20, with an Ice
-  core. The core is the only part that takes damage: 300 HP
-  (`strider.hp: 300`).
+- **Parts:** two legs (Ochre) and a cab on top, 32×20. The cab carries an
+  Ice core, 16×12, slung underneath between the legs. It spans 10 to 22 px
+  above the ground (`strider.core_height: 16.0`, its centre), with the gun
+  in it.
+  - The core is the only part that takes damage: 120 HP (`strider.hp: 120`).
+  - The legs and the cab hurt on touch, but they don't stop shots.
+  - Chest-height shots hit the core from any distance. Crouching shots pass
+    under it.
 - **Walk:** it strides in from the right at 16 px/s (`strider.speed: 16.0`)
   to x = +72 (`strider.hold_x: 72.0`), then paces back and forth within
   40 px of that (`strider.pace_range: 40.0`).
-- **Stomp:** every 4.0 s (`strider.stomp_interval: 4.0`), it raises a leg
-  (0.6 s telegraph, `strider.stomp_telegraph_seconds: 0.6`) and stamps. A
-  shockwave 8 px tall (`strider.wave_height: 8.0`) runs along the ground
-  both ways at 90 px/s (`strider.wave_speed: 90.0`). Jump it. A shockwave is
-  a hazard, not a bullet: it doesn't count toward the bullet cap, and the
-  40 px rule doesn't apply. It travels only along the ground it starts on.
-- **Gun:** between stomps, the cab fires a fan of 5 at chest height and
-  above (`strider.fan_count: 5`, `strider.fan_degrees: 40.0`) at 70 px/s
-  (`strider.shot_speed: 70.0`), every 2.5 s (`strider.fire_interval: 2.5`),
-  with a 0.4 s glow first (`strider.telegraph_seconds: 0.4`). The lowest
-  shot of the fan is at chest height, so crouching passes under all five.
-- **The two threats alternate,** so there is always one answer at a time:
-  jump the wave, crouch under the fan.
-- **Time to kill:** the cab is 20 px tall, so angled shots partly miss. #19
-  measures the real time with the Hero standing 100 px away; the target is
-  under 10 s at typical power (Gun 3: 36 large DPS, about 8.3 s) and about
-  6 s at perfect. Its Standoff has a 25 s timer. If the timer runs out, the
-  Strider walks off to the right: no points, no drop.
+- **One cycle every 4.0 s** (`strider.cycle_seconds: 4.0`): a stomp, then
+  a fan. Both run on this one clock, so they can never coincide.
+- **Stomp.** It raises a leg for 0.6 s (the telegraph,
+  `strider.stomp_telegraph_seconds: 0.6`) and stamps. A shockwave 8 px tall
+  (`strider.wave_height: 8.0`) runs along the ground both ways at 90 px/s
+  (`strider.wave_speed: 90.0`) and fades after 120 px
+  (`strider.wave_range: 120.0`), 1.33 s after the stamp. Jump it.
+  - A shockwave is a hazard, not a bullet. It doesn't count toward the
+    bullet cap, and the 40 px rule doesn't apply.
+  - It travels only along the ground it starts on.
+- **Fan.** 2.2 s after the stamp (`strider.fan_delay: 2.2`), the core fires
+  a fan of 5 (`strider.fan_count: 5`) at 60 px/s
+  (`strider.shot_speed: 60.0`).
+  - The fan spreads from level to 40° upward (`strider.fan_degrees: 40.0`).
+    It leaves the core's gun at chest height, so the lowest shot flies level
+    at chest height and crouching passes under all five.
+  - The core glows for the last 0.4 s before the fan
+    (`strider.telegraph_seconds: 0.4`). The glow starts 1.8 s after the
+    stamp, at least 0.47 s after the wave has faded.
+- **One answer at a time.** At distance d ≤ 120 px from the Hero:
+  - this stamp's wave arrives at d / 90 s (at most 1.33 s);
+  - the fan arrives at 2.2 + d / 60 s;
+  - the next stamp's wave arrives at 4.0 + d / 90 s.
+  - So the wave and the fan reach the Hero at least 1.1 s apart, longer than
+    a full jump (0.73 s). Beyond 120 px there is no wave.
+- **Time to kill:** only the centre shot hits the 12 px core, at any range.
+  That is 12 DPS at gun 2–3 (10 s) and 24 at gun 4 (5 s). Its Standoff has a
+  25 s timer. If the timer runs out, the Strider walks off to the right: no
+  points, no drop.
 
 ### Hazards
 
@@ -654,13 +701,14 @@ they have no Foam outline (see Palette).
 |---|---|---|---|
 | **Pit** | 1, 2 | A gap in the ground. Falling in costs a life (see Losing a life). | (terrain) |
 | **Crumbling ledge** | 1, 2 | A ledge that shakes and falls 0.5 s after the Hero lands on it, and comes back 3.0 s later. | `run_and_gun.terrain.crumble_seconds`, `crumble_respawn_seconds` |
-| **Crusher** | 2 | A press hanging over the ground, 24 px wide. It rises for 1.6 s (`crusher.up_seconds: 1.6`), its light blinks for 0.5 s (`crusher.telegraph_seconds: 0.5`), and it slams down in 0.15 s (`crusher.slam_seconds: 0.15`), staying down for 0.6 s (`crusher.down_seconds: 0.6`). Under it as it slams is a hit. A Crusher's slam also kills enemies (no points). | `run_and_gun.hazards.crusher.*` |
+| **Crusher** | 2 | A press hanging over the ground, a 24×32 sprite (sprite file). It rises for 1.6 s (`crusher.up_seconds: 1.6`), its light blinks for 0.5 s (`crusher.telegraph_seconds: 0.5`), and it slams down in 0.15 s (`crusher.slam_seconds: 0.15`), staying down for 0.6 s (`crusher.down_seconds: 0.6`). Under it as it slams is a hit. A Crusher's slam also kills enemies (no points). | `run_and_gun.hazards.crusher.*` |
 | **Arc floor** | 2 | A ground strip, 32–64 px long, live for 1.0 s (`arc_floor.on_seconds: 1.0`) and off for 1.4 s (`arc_floor.off_seconds: 1.4`). It crackles for 0.4 s before switching on (`arc_floor.telegraph_seconds: 0.4`). Standing on it while live is a hit. Jump it or wait. Its light is the Arc Gate's (Cabinet 1) flicker, in this Cabinet's colours. | `run_and_gun.hazards.arc_floor.*` |
 | **Conveyor** | 2 | A ground strip that carries anything on it at 24 px/s (`conveyor.speed: 24.0`), in the direction its spawn entry gives. It doesn't hurt. A conveyor toward the left slows the advance, and one toward a Crusher sets the timing. | `run_and_gun.hazards.conveyor.speed` |
 
 Crushers and arc floors take their phase from the spawn entry's `offset`
 param (seconds), so a row of them can be set to ripple. A Restart Point is
-never within 48 px of one.
+never within 48 px of one (`run_and_gun.terrain.restart_hazard_clearance`,
+below).
 
 ## Stage 1: Wreckfall
 
@@ -718,7 +766,7 @@ typical player finishes at gun 3 with one or two of the others.
     ledges), and machine halls with Crushers, arc floors and conveyors.
 - **What's new:**
   - Turrets, Motes, the Strider and the three Stage 2 hazards.
-  - Bullets 14% faster.
+  - Bullets 15% faster.
   - Shorter breathers (about 4 s).
 - **Scroll:** at most 44 px/s, slowing to 32 px/s through the Crusher Hall
   (scroll 4,312 to 5,528) so its timing can be read (Stage file).
@@ -879,7 +927,7 @@ These numbers follow Cabinets 1 and 2, which haven't been played yet. When
 #12 or #17 changes the matching number there, check it here too, or record
 why not:
 
-- The reaction-time rule behind the bullet caps (70 and 80 px/s).
+- The reaction-time rule behind the bullet caps (60 and 70 px/s).
 - The fire rate (8 and 12 volleys/s here, from Cabinet 1's 10) and the Ward.
 - Losing one gun level per life, and the rewind replaying Power-ups.
 - The role HP and time-to-kill targets.
@@ -895,7 +943,7 @@ For #19 to copy. The values are the ones above.
 
 ```ron
 run_and_gun: (
-    stage2_bullet_speed_scale: 1.14,
+    stage2_bullet_speed_scale: 1.15,
     debug_autopilot: false,
     camera: (push_x: -16.0, max_x: 64.0),
     hero: (
@@ -911,7 +959,8 @@ run_and_gun: (
     ),
     shot: (
         fire_interval: 0.125, fire_interval_fast: 0.083, speed: 300.0, damage: 1,
-        size: (6.0, 2.0), muzzle: (8.0, 4.0), spread_degrees: 12.0,
+        size: (6.0, 2.0), muzzle: (8.0, 14.0), crouch_muzzle: (8.0, 6.0),
+        spread_degrees: 12.0,
         bolt_size: (10.0, 3.0), bolt_damage: 2, max_on_screen: 64,
     ),
     flare: (interval: 0.8, size: (4.0, 4.0), launch: (110.0, 160.0),
@@ -922,38 +971,43 @@ run_and_gun: (
         ward_invulnerable_seconds: 1.0,
     ),
     terrain: (tile_size: 8.0, max_gap: 40.0, max_step: 40.0, crumble_seconds: 0.5,
-              crumble_respawn_seconds: 3.0),
+              crumble_respawn_seconds: 3.0,
+              // Stage-check constants (read by stage_checks.rs only):
+              restart_pit_clearance: 48.0, restart_hazard_clearance: 48.0,
+              pit_free_run: 64.0),
     enemy: (
         bullet_size: (5.0, 5.0), bullet_hitbox: (2.0, 2.0), hitbox_inset: 1.0,
         fire_grace_seconds: 0.5, min_fire_distance: 40.0, max_bullets: 32,
         no_spawn_radius: 48.0, bullet_lifetime: 10.0, behind_warning_seconds: 0.75,
+        chest_height: 14.0, ankle_height: 4.0, aimed_min_distance: 64.0,
     ),
     enemies: (
         skitter: (hp: 2, score: 100, formation_size: 4, spacing: 16.0, speed: 60.0,
-                  max_hop: 24.0),
+                  max_hop: 24.0, hop_height: 20.0),
         tick: (hp: 6, score: 200, formation_size: 2, hop_height: 24.0, hop_length: 32.0,
                rest_seconds: 0.6, stagger: 0.3, telegraph_seconds: 0.25),
         kite: (hp: 2, score: 150, formation_size: 3, spacing_seconds: 0.4, cruise_y: 80.0,
                speed: 70.0, dive_window: 40.0, telegraph_seconds: 0.3, dive_floor: 14.0,
                dive_speed: 130.0),
         sentry: (hp: 14, score: 500, down_seconds: 1.8, telegraph_seconds: 0.3,
-                 up_seconds: 1.4, burst: 2, burst_interval: 0.25, shot_speed: 70.0),
+                 up_seconds: 1.4, burst: 2, burst_interval: 0.25, shot_speed: 60.0),
         burrower: (hp: 6, score: 300, wake_distance: 72.0, telegraph_seconds: 0.4,
-                   shot_speed: 65.0, fire_interval: 1.6, up_seconds: 3.2, down_seconds: 2.0),
+                   shot_speed: 60.0, fire_interval: 1.6, up_seconds: 3.2, down_seconds: 2.0),
         dropper: (hp: 20, score: 400, cruise_y: 72.0, speed: 40.0, fire_interval: 1.5,
                   telegraph_seconds: 0.4, canister_gravity: 600.0, burst_speed: 60.0,
-                  no_drop_window: 24.0),
-        hauler: (hp: 54, score: 800, speed: 20.0, plough_depth: 8.0, fire_interval: 2.4,
+                  no_drop_window: 24.0, canister_size: (8.0, 8.0)),
+        hauler: (hp: 40, score: 800, speed: 20.0, plough_height: 10.0, fire_interval: 2.4,
                  telegraph_seconds: 0.4, fan_count: 3, fan_degrees: 50.0, shot_speed: 60.0,
                  shot_gravity: 120.0),
         turret: (hp: 24, score: 400, turn_rate: 90.0, fire_interval: 2.0,
-                 telegraph_seconds: 0.35, shot_speed: 70.0),
+                 telegraph_seconds: 0.35, shot_speed: 60.0),
         mote: (hp: 1, score: 50, formation_size: 8, cloud_radius: 32.0, speed: 55.0,
                turn_rate: 90.0, lifetime: 8.0),
-        strider: (hp: 300, score: 5000, speed: 16.0, hold_x: 72.0, pace_range: 40.0,
-                  stomp_interval: 4.0, stomp_telegraph_seconds: 0.6, wave_height: 8.0,
-                  wave_speed: 90.0, fan_count: 5, fan_degrees: 40.0, shot_speed: 70.0,
-                  fire_interval: 2.5, telegraph_seconds: 0.4),
+        strider: (hp: 120, score: 5000, speed: 16.0, hold_x: 72.0, pace_range: 40.0,
+                  core_height: 16.0, cycle_seconds: 4.0, wave_range: 120.0, fan_delay: 2.2,
+                  stomp_telegraph_seconds: 0.6, wave_height: 8.0,
+                  wave_speed: 90.0, fan_count: 5, fan_degrees: 40.0, shot_speed: 60.0,
+                  telegraph_seconds: 0.4),
     ),
     hazards: (
         crusher: (up_seconds: 1.6, telegraph_seconds: 0.5, slam_seconds: 0.15,
