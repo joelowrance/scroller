@@ -15,7 +15,6 @@ use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 mod placeholder;
 pub mod shooter;
 pub mod side_shooter;
-pub mod vertical_shooter;
 #[cfg(test)]
 mod stage_checks;
 pub mod vertical_shooter;

@@ -78,7 +78,7 @@ fn the_wren_flies_up_to_its_start() {
 #[test]
 fn the_wren_moves_at_its_speed_and_stays_on_screen() {
     let mut app = app();
-    // Nothing from the stand-in Stage may knock it back down meanwhile.
+    // Nothing from the Stage may knock it back down meanwhile.
     let mut q = app
         .world_mut()
         .query_filtered::<&mut Invulnerable, With<Wren>>();
@@ -307,7 +307,9 @@ fn the_frame_between_cabinets_is_safe() {
     let session = Session::new_run(&tuning);
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, StatesPlugin))
-        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(100)))
+        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+            100,
+        )))
         .insert_resource(tuning)
         .insert_resource(session)
         .init_resource::<Paused>()
@@ -328,6 +330,50 @@ fn the_frame_between_cabinets_is_safe() {
     }
     app.world_mut().resource_mut::<Session>().cabinet = CABINET;
     for _ in 0..5 {
+        app.update();
+    }
+}
+
+/// The whole enemy gallery, played through while firing, runs without
+/// errors (every enemy, the Pods and the Rockets in play together).
+#[test]
+fn the_gallery_plays_through_while_firing() {
+    let mut tuning = Tuning {
+        debug_keys: true,
+        ..Tuning::default()
+    };
+    tuning.vertical_shooter.enemy_gallery = true;
+    tuning.invincible_hero = true;
+    tuning.time_scale = 1.0;
+    let mut session = Session::new_run(&tuning);
+    session.cabinet = CABINET;
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, StatesPlugin))
+        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f32(1.0 / 30.0)))
+        .insert_resource(tuning)
+        .insert_resource(session)
+        .init_resource::<Paused>()
+        .init_resource::<Sprites>()
+        .init_resource::<Controls>()
+        .init_resource::<ButtonInput<KeyCode>>()
+        .init_state::<Screen>()
+        .add_message::<ScoreGained>()
+        .add_message::<LifeLost>()
+        .add_message::<StageCleared>()
+        .add_plugins((KitPlugin, VerticalShooterPlugin));
+    app.world_mut().spawn((GameCamera, Transform::default()));
+    app.world_mut()
+        .resource_mut::<NextState<Screen>>()
+        .set(Screen::Playing);
+    app.update();
+    press(&mut app, &[Button::A]);
+    // The gallery is 3000 px at 30 px/s.
+    for frame in 0..30 * 100 {
+        if frame % 300 == 150 {
+            press(&mut app, &[Button::A, Button::B]);
+        } else {
+            press(&mut app, &[Button::A]);
+        }
         app.update();
     }
 }

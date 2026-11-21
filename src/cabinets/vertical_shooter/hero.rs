@@ -13,6 +13,7 @@ use bevy::prelude::*;
 use super::palette;
 use super::power_ups::PowerUps;
 use super::tuning::{VerticalShooterTuning, vec2};
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::cabinets::shooter::pattern::turn_toward;
 use crate::cabinets::side_shooter::power_ups::PLAY_TOP;
@@ -150,13 +151,13 @@ pub fn clamp_to_play_area(at: Vec2, t: &VerticalShooterTuning) -> Vec2 {
     )
 }
 
-/// A Dusk shadow of `size`, offset onto the ground below its owner, whose
-/// z is `owner_z` (so the shadow lands under the ground targets at z 2–3).
-pub fn shadow(size: Vec2, owner_z: f32, t: &VerticalShooterTuning) -> impl Bundle {
+/// A shadow sprite offset onto the ground below its owner, whose z is
+/// `owner_z` (so the shadow lands under the ground targets at z 2–3).
+pub fn shadow(sprite: Sprite, owner_z: f32, t: &VerticalShooterTuning) -> impl Bundle {
     let offset = vec2(t.look.shadow_offset);
     (
         Shadow,
-        Sprite::from_color(palette::DUSK.with_alpha(0.85), size),
+        sprite,
         Transform::from_xyz(offset.x, offset.y, 1.5 - owner_z),
     )
 }
@@ -172,7 +173,12 @@ fn wren_visual(sprites: &Sprites, t: &VerticalShooterTuning) -> impl Bundle {
                 SpriteAnimation::looping([0, 1], ENGINE_FLICKER_SECONDS),
                 Transform::from_rotation(Quat::from_rotation_z(FRAC_PI_2)),
             ),
-            shadow(Vec2::new(8.0, 12.0), 5.0, t),
+            (
+                Shadow,
+                sprites.shadow("hero", 0, palette::DUSK.with_alpha(0.85)),
+                Transform::from_xyz(t.look.shadow_offset.0, t.look.shadow_offset.1, 1.5 - 5.0,)
+                    .with_rotation(Quat::from_rotation_z(FRAC_PI_2)),
+            ),
             (ward_visual(), Visibility::Hidden, WardGlow),
         ],
     )
@@ -198,17 +204,15 @@ fn ward_visual() -> impl Bundle {
     )
 }
 
-/// A Pod: a small Orchid block with a Foam muzzle. Swap for a #15 sprite.
-fn pod_visual(t: &VerticalShooterTuning) -> impl Bundle {
+/// A Pod: #15's `c2_pod` sprite with its shadow.
+fn pod_visual(sprites: &Sprites, t: &VerticalShooterTuning) -> impl Bundle {
     (
-        Sprite::from_color(palette::ORCHID, POD_SIZE),
-        children![
-            (
-                Sprite::from_color(palette::FOAM, Vec2::splat(2.0)),
-                Transform::from_xyz(0.0, 2.0, 0.1),
-            ),
-            shadow(Vec2::splat(6.0), 5.0, t),
-        ],
+        sprites.sprite("c2_pod", CABINET),
+        children![shadow(
+            sprites.shadow("c2_pod", 0, palette::DUSK.with_alpha(0.85)),
+            5.0,
+            t
+        )],
     )
 }
 
@@ -329,10 +333,12 @@ pub(super) fn fire(
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
+    sprites: Res<Sprites>,
     power: Res<PowerUps>,
     mut wren: Single<(&mut Gun, &Transform, Has<Entry>), With<Wren>>,
     shots: Query<&Layer>,
     ground: Query<(Entity, &Layer, &Transform), Without<Wren>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.vertical_shooter;
     let (gun, transform, entering) = &mut *wren;
@@ -354,7 +360,8 @@ pub(super) fn fire(
             .map(|(e, _, tr)| (e, tr.translation.truncate()));
         if let Some(target) = nearest_ground_target(at, targets) {
             gun.rocket_cooldown = (gun.rocket_cooldown + t.rocket.interval).max(0.0);
-            launch_rockets(&mut commands, at, target, t);
+            launch_rockets(&mut commands, &sprites, at, target, t);
+            sfx.write(PlaySfx(Sfx::RocketLaunch));
         }
     }
 
@@ -367,6 +374,11 @@ pub(super) fn fire(
     if alive + volley.len() > t.shot.max_on_screen {
         return;
     }
+    sfx.write(PlaySfx(if power.gun >= 4 {
+        Sfx::Lance
+    } else {
+        Sfx::Shot
+    }));
     for shot in volley {
         let from = at + shot.offset;
         commands
@@ -388,7 +400,13 @@ pub(super) fn fire(
     }
 }
 
-fn launch_rockets(commands: &mut Commands, at: Vec2, target: Entity, t: &VerticalShooterTuning) {
+fn launch_rockets(
+    commands: &mut Commands,
+    sprites: &Sprites,
+    at: Vec2,
+    target: Entity,
+    t: &VerticalShooterTuning,
+) {
     let r = &t.rocket;
     let size = vec2(r.size);
     let (ox, oy) = r.launch_offset;
@@ -406,6 +424,7 @@ fn launch_rockets(commands: &mut Commands, at: Vec2, target: Entity, t: &Vertica
                 4.0,
             ))
             .insert((
+                sprites.sprite("rocket", CABINET),
                 Rocket {
                     target: Some(target),
                     heading: FRAC_PI_2,
@@ -458,6 +477,7 @@ pub(super) fn steer_rockets(
 pub(super) fn sync_equipment(
     mut commands: Commands,
     tuning: Res<Tuning>,
+    sprites: Res<Sprites>,
     power: Res<PowerUps>,
     mut wren: Single<(&Transform, &mut Shield), With<Wren>>,
     mut glow: Single<&mut Visibility, With<WardGlow>>,
@@ -482,7 +502,7 @@ pub(super) fn sync_equipment(
         if !have[slot as usize] {
             let pos = at + pod_offset(slot, t);
             commands.spawn((
-                pod_visual(t),
+                pod_visual(&sprites, t),
                 Transform::from_translation(pos.extend(5.0)),
                 Pod(slot),
                 Layer::ShotBlocker,
@@ -518,9 +538,11 @@ pub(super) fn ward_absorbed(
     mut power: ResMut<PowerUps>,
     wren: Single<&Transform, With<Wren>>,
     mut explode: MessageWriter<Explode>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     for _ in absorbed.read() {
         power.ward = false;
+        sfx.write(PlaySfx(Sfx::WardBreak));
         explode.write(Explode {
             at: wren.translation.truncate(),
             color: palette::ORCHID,
@@ -561,12 +583,14 @@ pub(super) fn bomb(
     mut power: ResMut<PowerUps>,
     mut wren: Single<(&Transform, &mut Invulnerable), (With<Wren>, Without<Entry>)>,
     squalls: Query<(), With<Squall>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.vertical_shooter;
     if !controls.just_pressed(Button::B) || power.bombs == 0 || !squalls.is_empty() {
         return;
     }
     power.bombs -= 1;
+    sfx.write(PlaySfx(Sfx::Squall));
     let (transform, invulnerable) = &mut *wren;
     invulnerable.0 = invulnerable.0.max(t.bomb.invulnerable_seconds);
     let row = transform.translation.y;
