@@ -261,6 +261,45 @@ fn a_bombed_formation_drops_its_power_up() {
     assert_eq!(drops, 1);
 }
 
+/// Issue #50: a Formation with no drop, wiped out by the Undertow, pays the
+/// Formation bonus (it would count bombed members as escaped otherwise).
+#[test]
+fn a_bombed_formation_pays_the_formation_bonus() {
+    use crate::input::Button;
+
+    let mut app = app();
+    let wren = wren_at(&mut app);
+    let mut request = SpawnRequested::new("skiff", wren + Vec2::new(90.0, 0.0));
+    request.params = ron::from_str(r#"{"size": 3}"#).unwrap();
+    app.world_mut().write_message(request);
+    app.update();
+    app.world_mut()
+        .resource_mut::<Messages<ScoreGained>>()
+        .clear();
+    *app.world_mut().resource_mut::<Controls>() = Controls::pressing(&[Button::B]);
+    let mut points = Vec::new();
+    for frame in 0..5 {
+        app.update();
+        if frame == 0 {
+            *app.world_mut().resource_mut::<Controls>() = Controls::default();
+        }
+        let mut messages = app.world_mut().resource_mut::<Messages<ScoreGained>>();
+        points.extend(messages.drain().map(|s| s.0));
+    }
+    let mut enemies = app.world_mut().query::<&super::enemies::Enemy>();
+    assert_eq!(enemies.iter(app.world()).count(), 0, "all three bombed");
+    let per = app
+        .world()
+        .resource::<Tuning>()
+        .side_shooter
+        .score
+        .formation_bonus_per_enemy;
+    assert!(
+        points.contains(&(3 * per)),
+        "the bonus for 3 members is paid: {points:?}"
+    );
+}
+
 /// The sounds asked for since the last call.
 fn sounds(app: &mut App) -> Vec<crate::audio::Sfx> {
     let mut messages = app
