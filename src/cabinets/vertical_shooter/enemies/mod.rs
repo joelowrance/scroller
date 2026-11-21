@@ -29,6 +29,7 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::cabinets::shooter::formation::{Formation, Member, Reward};
 use crate::display::HALF_H;
@@ -38,6 +39,7 @@ use crate::kit::{
     ScoreValue, SpawnRequested, StageRestarted, StageRun, StageTimeline, projectile,
 };
 use crate::run::Session;
+use crate::sprites::Sprites;
 use crate::tuning::Tuning;
 
 use super::power_ups::PowerUp;
@@ -311,8 +313,10 @@ fn hp_and_score(kind: Kind, stage2: bool, t: &EnemyTypes) -> (u32, u64) {
 }
 
 /// Spawns one enemy, unless it would appear on screen too close to the Hero.
+#[allow(clippy::too_many_arguments)]
 fn spawn_enemy(
     commands: &mut Commands,
+    sprites: &Sprites,
     tuning: &VerticalShooterTuning,
     stage2: bool,
     hero: Option<Vec2>,
@@ -353,7 +357,7 @@ fn spawn_enemy(
     if matches!(kind, Kind::Silo | Kind::LoomCore) {
         entity.insert(Immune);
     }
-    look::body(&mut entity, kind, tuning);
+    look::body(&mut entity, kind, sprites, tuning);
     Some(entity.id())
 }
 
@@ -375,8 +379,10 @@ fn spawn_requested(
     mut commands: Commands,
     tuning: Res<Tuning>,
     session: Res<Session>,
+    sprites: Res<Sprites>,
     hero: Option<Single<&Transform, With<Hero>>>,
     mut requests: MessageReader<SpawnRequested>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let hero = hero.map(|h| h.translation.truncate());
     let stage2 = session.stage == 1;
@@ -403,12 +409,14 @@ fn spawn_requested(
         }
         let mut spawned = Vec::new();
         for (at, brain) in members {
-            if let Some(e) = spawn_enemy(&mut commands, tt, stage2, hero, kind, at, brain) {
+            if let Some(e) = spawn_enemy(&mut commands, &sprites, tt, stage2, hero, kind, at, brain)
+            {
                 spawned.push(e);
                 if kind == Kind::Swift {
+                    sfx.write(PlaySfx(Sfx::SwiftWarning));
                     commands.spawn((
                         Chevron(t.swift.warning_seconds),
-                        look::chevron(),
+                        look::chevron(&sprites),
                         Transform::from_xyz(at.x, -HALF_H + 3.0, 30.0),
                         EnemyPart,
                         DespawnOnExit(Screen::Playing),
@@ -418,7 +426,7 @@ fn spawn_requested(
         }
         match (kind, &spawned[..]) {
             (Kind::LoomCore, &[core]) => {
-                spawn_shuttles(&mut commands, tt, stage2, core, request.pos)
+                spawn_shuttles(&mut commands, &sprites, tt, stage2, core, request.pos)
             }
             (Kind::TetherBalloon, &[left, right]) => {
                 spawn_line(&mut commands, tt, request.pos.y, &params, [left, right]);
@@ -444,6 +452,7 @@ fn spawn_requested(
 
 fn spawn_shuttles(
     commands: &mut Commands,
+    sprites: &Sprites,
     tuning: &VerticalShooterTuning,
     stage2: bool,
     core: Entity,
@@ -458,6 +467,7 @@ fn spawn_shuttles(
         // is ever near the top edge where a Loom appears).
         let e = spawn_enemy(
             commands,
+            sprites,
             tuning,
             stage2,
             None,
@@ -488,7 +498,7 @@ fn spawn_line(
     let width = tuning.enemies.tether.line_width;
     commands.spawn((
         TetherLine { age: 0.0, balloons },
-        Sprite::from_color(look::BULLET, Vec2::new(gap, width)),
+        Sprite::from_color(Color::WHITE, Vec2::new(gap, width)),
         Visibility::Hidden,
         Transform::from_xyz((left + right) / 2.0, y, 3.9),
         Hitbox::new(gap, width),
@@ -516,6 +526,31 @@ pub fn may_fire(
         && live_bullets + pattern <= rules.max_bullets
 }
 
+/// One enemy bullet: the shared sprite, with the small bullet hitbox.
+fn fire_bullet(
+    commands: &mut Commands,
+    sprites: &Sprites,
+    rules: &super::tuning::EnemyRules,
+    at: Vec2,
+    velocity: Vec2,
+) {
+    let (w, h) = rules.bullet_size;
+    let (hw, hh) = rules.bullet_hitbox;
+    commands
+        .spawn((
+            projectile(
+                Layer::EnemyShot,
+                at,
+                velocity,
+                Vec2::new(w, h),
+                Color::WHITE,
+                rules.bullet_lifetime,
+            ),
+            EnemyBullet,
+        ))
+        .insert((look::bullet(sprites), Hitbox::new(hw, hh)));
+}
+
 /// Steps every brain and fires what the fairness rules allow.
 #[allow(clippy::type_complexity, clippy::too_many_arguments)]
 fn think(
@@ -524,6 +559,7 @@ fn think(
     tuning: Res<Tuning>,
     session: Res<Session>,
     stage: Res<StageRun>,
+    sprites: Res<Sprites>,
     hero: Option<Single<&Transform, (With<Hero>, Without<Enemy>)>>,
     mut enemies: Query<(
         Entity,
@@ -535,6 +571,7 @@ fn think(
         Has<Immune>,
     )>,
     bullets: Query<(), With<EnemyBullet>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let tt = &tuning.vertical_shooter;
     let t = &tt.enemies;
@@ -567,9 +604,10 @@ fn think(
             Brain::Silo(silo) => {
                 let open = silo.open(t);
                 if open && immune {
-                    commands.entity(entity).remove::<Immune>();
+                    commands.entity(entity).try_remove::<Immune>();
+                    sfx.write(PlaySfx(Sfx::SiloClank));
                 } else if !open && !immune {
-                    commands.entity(entity).insert(Immune);
+                    commands.entity(entity).try_insert(Immune);
                 }
             }
             // A pod that has taken off is an air enemy from now on.
@@ -591,35 +629,22 @@ fn think(
             );
         if fires {
             live_bullets += out.shots.len();
-            let (w, h) = rules.bullet_size;
-            let (hw, hh) = rules.bullet_hitbox;
+            if enemy.kind == Kind::LoomCore {
+                sfx.write(PlaySfx(Sfx::LoomTick));
+            }
             for velocity in &out.shots {
-                commands
-                    .spawn((
-                        projectile(
-                            Layer::EnemyShot,
-                            at,
-                            *velocity * speed_scale,
-                            Vec2::new(w, h),
-                            look::BULLET,
-                            rules.bullet_lifetime,
-                        ),
-                        EnemyBullet,
-                    ))
-                    .insert(Hitbox::new(hw, hh))
-                    .with_children(|c| {
-                        c.spawn(look::bullet_core());
-                    });
+                fire_bullet(&mut commands, &sprites, rules, at, *velocity * speed_scale);
             }
         }
         if let Some(mark) = out.mark
             && may_fire(rules, at, enemy.on_screen, hero, 0, 0)
         {
+            sfx.write(PlaySfx(Sfx::FlakMark));
             commands.spawn((
                 Crosshair {
                     left: t.flak.warning_seconds,
                 },
-                look::crosshair(),
+                look::crosshair(&sprites),
                 Transform::from_translation(mark.extend(28.0)),
                 EnemyPart,
                 DespawnOnExit(Screen::Playing),
@@ -628,9 +653,21 @@ fn think(
         for _ in 0..out.launch {
             let (launched, brain) = match enemy.kind {
                 Kind::LoomShuttle => (Kind::Wisp, Brain::Wisp(Wisp::launched())),
-                _ => (Kind::RiserPod, Brain::RiserPod(RiserPod::default())),
+                _ => {
+                    sfx.write(PlaySfx(Sfx::RiserLaunch));
+                    (Kind::RiserPod, Brain::RiserPod(RiserPod::default()))
+                }
             };
-            spawn_enemy(&mut commands, tt, stage2, None, launched, at, brain);
+            spawn_enemy(
+                &mut commands,
+                &sprites,
+                tt,
+                stage2,
+                None,
+                launched,
+                at,
+                brain,
+            );
         }
         if out.despawn {
             commands.entity(entity).try_despawn();
@@ -662,10 +699,12 @@ fn open_looms(
     mut commands: Commands,
     mut cores: Query<(Entity, &LoomLink, &mut EnemyBrain), With<Immune>>,
     alive: Query<(), With<Enemy>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     for (entity, link, mut brain) in &mut cores {
         if link.shuttles.iter().all(|s| !alive.contains(*s)) {
-            commands.entity(entity).remove::<Immune>();
+            commands.entity(entity).try_remove::<Immune>();
+            sfx.write(PlaySfx(Sfx::LoomShieldBreak));
             if let Brain::LoomCore(core) = &mut brain.0 {
                 core.exposed = true;
             }
@@ -673,42 +712,56 @@ fn open_looms(
     }
 }
 
-/// Warning flashes on cores, the cores of Silos and Looms showing only when
-/// they can be hurt, Crawler turrets and Riser pod shadows.
+/// Each enemy's state frame, Swifts turned along their path, Crawler
+/// turrets, and Riser pod shadows sliding out as they climb.
 #[allow(clippy::type_complexity)]
 fn show_parts(
     tuning: Res<Tuning>,
-    enemies: Query<(&Enemy, &EnemyBrain, Has<Immune>)>,
-    mut cores: Query<
-        (&ChildOf, &mut Sprite, &mut Visibility),
-        (With<look::Core>, Without<look::Turret>),
+    mut enemies: Query<(
+        &Enemy,
+        &EnemyBrain,
+        Has<Immune>,
+        &mut Sprite,
+        &mut Transform,
+    )>,
+    mut turrets: Query<
+        (&ChildOf, &mut Transform, &mut Sprite),
+        (With<look::Turret>, Without<Enemy>),
     >,
-    mut turrets: Query<(&ChildOf, &mut Transform), (With<look::Turret>, Without<look::PodShadow>)>,
-    mut pod_shadows: Query<(&ChildOf, &mut Transform), With<look::PodShadow>>,
+    mut shadows: Query<
+        (&ChildOf, &mut Transform),
+        (
+            With<look::EnemyShadow>,
+            Without<Enemy>,
+            Without<look::Turret>,
+        ),
+    >,
 ) {
     let tt = &tuning.vertical_shooter;
     let t = &tt.enemies;
-    for (parent, mut sprite, mut visibility) in &mut cores {
-        let Ok((enemy, brain, immune)) = enemies.get(parent.parent()) else {
-            continue;
-        };
-        sprite.color = look::core_color(brain.0.telegraph(t), enemy.clock);
-        if matches!(enemy.kind, Kind::Silo | Kind::LoomCore) {
-            visibility.set_if_neq(if immune {
-                Visibility::Hidden
-            } else {
-                Visibility::Inherited
-            });
+    for (enemy, brain, immune, mut sprite, mut transform) in &mut enemies {
+        if let (Some(frame), Some(atlas)) = (
+            look::frame(enemy.kind, &brain.0, immune, t),
+            &mut sprite.texture_atlas,
+        ) {
+            atlas.index = frame;
+        }
+        if enemy.kind == Kind::Swift {
+            transform.rotation = Quat::from_rotation_z(look::swift_rotation(&brain.0));
         }
     }
-    for (parent, mut transform) in &mut turrets {
-        if let Ok((_, EnemyBrain(Brain::Crawler(c)), _)) = enemies.get(parent.parent()) {
+    for (parent, mut transform, mut sprite) in &mut turrets {
+        if let Ok((_, EnemyBrain(Brain::Crawler(c)), ..)) = enemies.get(parent.parent()) {
             look::aim_turret(&mut transform, c.turret);
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                // The turret flashes before each shot.
+                atlas.index = (!c.silent && c.timer < t.crawler.telegraph_seconds) as usize;
+            }
         }
     }
     let (sx, sy) = tt.look.shadow_offset;
-    for (parent, mut transform) in &mut pod_shadows {
-        if let Ok((_, EnemyBrain(Brain::RiserPod(pod)), _)) = enemies.get(parent.parent()) {
+    for (parent, mut transform) in &mut shadows {
+        if let Ok((_, EnemyBrain(Brain::RiserPod(pod)), ..)) = enemies.get(parent.parent()) {
             let f = pod.climb(t);
             transform.translation.x = (sx * f).round();
             transform.translation.y = (sy * f).round();
@@ -730,6 +783,7 @@ fn run_tether_lines(
         &mut Visibility,
         Has<Layer>,
     )>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let pulse = tether_pulse(&tuning.vertical_shooter.enemies);
     let dt = time.delta_secs();
@@ -742,9 +796,10 @@ fn run_tether_lines(
         visibility.set_if_neq(vis);
         // Only a live line touches anything: it hurts the Hero and stops shots.
         if live && !has_layer {
-            commands.entity(entity).insert(Layer::Enemy);
+            commands.entity(entity).try_insert(Layer::Enemy);
+            sfx.write(PlaySfx(Sfx::TetherHum));
         } else if !live && has_layer {
-            commands.entity(entity).remove::<Layer>();
+            commands.entity(entity).try_remove::<Layer>();
         }
     }
 }
@@ -779,9 +834,11 @@ fn run_crosshairs(
     time: Res<Time>,
     tuning: Res<Tuning>,
     session: Res<Session>,
+    sprites: Res<Sprites>,
     hero: Option<Single<&Transform, (With<Hero>, Without<Crosshair>)>>,
     mut crosshairs: Query<(Entity, &mut Crosshair, &Transform)>,
     bullets: Query<(), With<EnemyBullet>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let tt = &tuning.vertical_shooter;
     let f = &tt.enemies.flak;
@@ -801,6 +858,7 @@ fn run_crosshairs(
         commands.entity(entity).despawn();
         let at = transform.translation.truncate();
         let side = f.burst_radius * 2.0;
+        sfx.write(PlaySfx(Sfx::FlakBurst));
         commands.spawn((
             look::burst(f.burst_radius),
             Transform::from_translation(at.extend(27.0)),
@@ -815,25 +873,14 @@ fn run_crosshairs(
         let far = hero.is_none_or(|h| h.distance(at) >= rules.min_fire_distance);
         if far && live_bullets + n <= rules.max_bullets {
             live_bullets += n;
-            let (w, h) = rules.bullet_size;
-            let (hw, hh) = rules.bullet_hitbox;
             for d in crate::cabinets::shooter::pattern::ring(f.burst_count, 0.0) {
-                commands
-                    .spawn((
-                        projectile(
-                            Layer::EnemyShot,
-                            at,
-                            d * f.burst_speed * scale,
-                            Vec2::new(w, h),
-                            look::BULLET,
-                            rules.bullet_lifetime,
-                        ),
-                        EnemyBullet,
-                    ))
-                    .insert(Hitbox::new(hw, hh))
-                    .with_children(|c| {
-                        c.spawn(look::bullet_core());
-                    });
+                fire_bullet(
+                    &mut commands,
+                    &sprites,
+                    rules,
+                    at,
+                    d * f.burst_speed * scale,
+                );
             }
         }
     }

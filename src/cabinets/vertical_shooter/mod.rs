@@ -3,7 +3,7 @@
 //!
 //! This module owns the Wren nose up, its Power-ups and the Stage set-up.
 //! Enemies, the air and ground layers and Formations live in `enemies/`.
-//! The Stages, backgrounds and sounds are #15's.
+//! The Stages and scenery (`assets/stages/2-*.ron`) are #15's.
 
 use bevy::prelude::*;
 
@@ -18,6 +18,7 @@ pub mod enemies;
 pub mod hero;
 pub mod palette;
 pub mod power_ups;
+pub mod sound;
 pub mod tuning;
 
 use power_ups::{PowerUp, PowerUps};
@@ -25,14 +26,16 @@ use power_ups::{PowerUp, PowerUps};
 /// This Cabinet's place in the Run.
 pub const CABINET: usize = 1;
 
-/// Stand-in Stage used for both Stages until #15 writes `2-1.ron` and
-/// `2-2.ron`.
-const STAND_IN_STAGE: &str = include_str!("../../../assets/stages/vertical-shooter-stand-in.ron");
+/// The Stage files (#15): Cloudline and The Outer Yard.
+const STAGES: [&str; 2] = [
+    include_str!("../../../assets/stages/2-1.ron"),
+    include_str!("../../../assets/stages/2-2.ron"),
+];
 
-/// The debug enemy gallery when it is switched on, else the stand-in Stage.
-fn stage_timeline(tuning: &Tuning) -> StageTimeline {
+/// The debug enemy gallery when it is switched on, else the Session's Stage.
+fn stage_timeline(tuning: &Tuning, stage: usize) -> StageTimeline {
     enemies::gallery_timeline(tuning).unwrap_or_else(|| {
-        StageTimeline::parse(STAND_IN_STAGE).expect("Cabinet 2 Stage file must be valid")
+        StageTimeline::parse(STAGES[stage.min(1)]).expect("Cabinet 2 Stage files must be valid")
     })
 }
 
@@ -44,7 +47,7 @@ fn spawn_stage(
 ) {
     let t = &tuning.vertical_shooter;
     let power = PowerUps::from_session(&session.power_ups, t);
-    commands.insert_resource(StageRun::new(stage_timeline(&tuning)));
+    commands.insert_resource(StageRun::new(stage_timeline(&tuning, session.stage)));
     hero::spawn_wren(&mut commands, &sprites, t, &power);
     commands.insert_resource(power);
 }
@@ -79,7 +82,7 @@ pub struct VerticalShooterPlugin;
 
 impl Plugin for VerticalShooterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(enemies::EnemiesPlugin)
+        app.add_plugins((enemies::EnemiesPlugin, sound::SoundPlugin))
             .add_systems(
                 OnEnter(Screen::Playing),
                 spawn_stage.run_if(cabinet_is(CABINET)),

@@ -241,8 +241,11 @@ pub struct FontPlugin;
 impl Plugin for FontPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup_font)
-            .add_systems(PostUpdate, rebuild_text)
-            .add_systems(Update, blink);
+            // In Update, not PostUpdate: Bevy gives every new sprite its quad
+            // mesh in PostUpdate, and a glyph despawned there in the same
+            // frame (text changing on two frames running, such as the score
+            // during a fast kill streak) made that insert fail and panic.
+            .add_systems(Update, (rebuild_text, blink));
     }
 }
 

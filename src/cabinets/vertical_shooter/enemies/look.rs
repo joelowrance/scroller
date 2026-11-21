@@ -1,17 +1,21 @@
-//! How Cabinet 2's enemies look. Until #15's sprites land they are plain
-//! shapes in the Cabinet palette: a hull (Steel in the air, Clay on the
-//! ground) with a 1 px Foam outline and a Volt core, and a Dusk shadow under
-//! every air enemy. Swap [`body`] for real sprites later; nothing else draws
-//! enemies.
+//! How Cabinet 2's enemies look: #15's `c2_*` sprites in the Cabinet
+//! palette, a Dusk shadow under every air enemy, and the frame that shows
+//! each enemy's state (a Bellows vent glowing, a Silo opening, a Loom core's
+//! shield). Nothing else draws enemies.
+
+use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 
 use super::Kind;
-use crate::cabinets::vertical_shooter::hero::shadow;
+use super::brain::{Brain, SwiftPhase};
+use crate::cabinets::vertical_shooter::CABINET;
 use crate::cabinets::vertical_shooter::palette::*;
-use crate::cabinets::vertical_shooter::tuning::VerticalShooterTuning;
+use crate::cabinets::vertical_shooter::tuning::{EnemyTypes, VerticalShooterTuning, vec2};
+use crate::sprites::{SpriteAnimation, Sprites};
 
-/// The sprite size of each kind, from the design doc's enemy table.
+/// The sprite size of each kind, from the design doc's enemy table. Hitboxes
+/// come from these, not from the art.
 pub fn size(kind: Kind) -> Vec2 {
     let (w, h) = match kind {
         Kind::Wisp => (8.0, 8.0),
@@ -30,100 +34,104 @@ pub fn size(kind: Kind) -> Vec2 {
     Vec2::new(w, h)
 }
 
-/// The glowing core that lights up as a warning (and, on a Silo or a
-/// shielded Loom core, shows only while it can be hurt).
-#[derive(Component)]
-pub struct Core;
+/// The sprite in `assets/sprites/` for each kind.
+pub fn sprite_name(kind: Kind) -> &'static str {
+    match kind {
+        Kind::Wisp => "c2_wisp",
+        Kind::Swift => "c2_swift",
+        Kind::Bellows => "c2_bellows",
+        Kind::LoomCore => "c2_loom_core",
+        Kind::LoomShuttle => "c2_loom_shuttle",
+        Kind::Crawler => "c2_crawler",
+        Kind::Silo => "c2_silo",
+        Kind::RiserLauncher => "c2_riser",
+        Kind::RiserPod => "c2_riser_pod",
+        Kind::Flak => "c2_flak",
+        Kind::Mote => "c2_mote",
+        Kind::TetherBalloon => "c2_tether_balloon",
+    }
+}
 
 /// A Crawler's turret; turned each frame to match its brain.
 #[derive(Component)]
 pub struct Turret;
 
-const TURRET_SIZE: Vec2 = Vec2::new(6.0, 2.0);
-
-/// Places a turret so it sticks out from the hull's centre at `angle`
-/// (radians).
-pub fn aim_turret(transform: &mut Transform, angle: f32) {
-    let reach = Vec2::from_angle(angle) * TURRET_SIZE.x / 2.0;
-    transform.translation.x = reach.x;
-    transform.translation.y = reach.y;
-    transform.rotation = Quat::from_rotation_z(angle);
-}
-
-/// Draws an enemy of `kind` on `entity`: the hull as its own sprite (so kit
-/// hit flashes and explosions use the hull colour), with the outline behind
-/// it, the core in front, and a shadow under air enemies.
-pub fn body(entity: &mut EntityCommands, kind: Kind, t: &VerticalShooterTuning) {
-    let size = size(kind);
-    let ground = kind.on_ground();
-    let hull = if ground { CLAY } else { STEEL };
-    let inner = (size - 2.0).max(Vec2::ONE);
-    // Where the core sits, as a fraction of the half-size, and its size.
-    let (core_at, core_size) = match kind {
-        Kind::Wisp | Kind::Swift => (Vec2::new(0.0, -0.4), Vec2::new(2.0, 2.0)),
-        Kind::Bellows => (Vec2::new(0.0, -0.6), Vec2::new(4.0, 2.0)),
-        Kind::LoomCore => (Vec2::ZERO, Vec2::new(8.0, 8.0)),
-        Kind::LoomShuttle => (Vec2::new(0.0, -0.5), Vec2::new(4.0, 3.0)),
-        Kind::Mote | Kind::RiserPod => (Vec2::ZERO, Vec2::ONE * 2.0),
-        _ => (Vec2::ZERO, Vec2::new(4.0, 4.0)),
-    };
-    let core_pos = core_at * size / 2.0;
-    let hidden_core = matches!(kind, Kind::Silo | Kind::LoomCore);
-    entity
-        .insert(Sprite::from_color(hull, inner))
-        .with_children(|c| {
-            c.spawn((
-                Sprite::from_color(FOAM, size),
-                Transform::from_xyz(0.0, 0.0, -0.1),
-            ));
-            c.spawn((
-                Core,
-                Sprite::from_color(VOLT, core_size),
-                Transform::from_translation(core_pos.round().extend(0.1)),
-                if hidden_core {
-                    Visibility::Hidden
-                } else {
-                    Visibility::Inherited
-                },
-            ));
-            if kind == Kind::Crawler {
-                let mut transform = Transform::from_xyz(0.0, 0.0, 0.05);
-                aim_turret(&mut transform, -std::f32::consts::FRAC_PI_2);
-                c.spawn((Turret, Sprite::from_color(FOAM, TURRET_SIZE), transform));
-            }
-            if !ground {
-                c.spawn(shadow((size - 2.0).max(Vec2::ONE), kind.z(), t));
-            }
-            if kind == Kind::RiserPod {
-                // It starts on the pad; its shadow slides out as it climbs.
-                c.spawn(shadow(Vec2::splat(4.0), kind.z(), t))
-                    .insert(PodShadow);
-            }
-        });
-}
-
-/// A Riser pod's shadow, moved out as the pod climbs.
+/// An air enemy's shadow on the ground (a Riser pod's slides out as it
+/// climbs).
 #[derive(Component)]
-pub struct PodShadow;
+pub struct EnemyShadow;
 
-/// The colour of a core: Volt normally, flashing Foam while warning.
-pub fn core_color(warning: bool, clock: f32) -> Color {
-    if warning && ((clock * 20.0) as u32).is_multiple_of(2) {
-        FOAM
-    } else {
-        VOLT
+/// Kinds whose two frames just loop (a shimmer or flicker).
+fn shimmers(kind: Kind) -> bool {
+    matches!(kind, Kind::Wisp | Kind::Mote)
+}
+
+/// Draws an enemy of `kind` on `entity`: its sprite, a turret on a Crawler,
+/// and a shadow under anything that flies.
+pub fn body(entity: &mut EntityCommands, kind: Kind, sprites: &Sprites, t: &VerticalShooterTuning) {
+    let name = sprite_name(kind);
+    entity.insert(sprites.sprite(name, CABINET));
+    if shimmers(kind) {
+        entity.insert(SpriteAnimation::looping([0, 1], 0.12));
+    }
+    let offset = vec2(t.look.shadow_offset);
+    entity.with_children(|c| {
+        if kind == Kind::Crawler {
+            c.spawn((
+                Turret,
+                sprites.sprite("c2_crawler_turret", CABINET),
+                Transform::from_xyz(0.0, 0.0, 0.1),
+            ));
+        }
+        if !kind.on_ground() || kind == Kind::RiserPod {
+            // A pod starts on its pad, its shadow under it.
+            let at = if kind == Kind::RiserPod {
+                Vec2::ZERO
+            } else {
+                offset
+            };
+            c.spawn((
+                EnemyShadow,
+                sprites.shadow(name, 0, DUSK.with_alpha(0.85)),
+                Transform::from_xyz(at.x, at.y, 1.5 - kind.z()),
+            ));
+        }
+    });
+}
+
+/// The frame that shows an enemy's state this moment.
+pub fn frame(kind: Kind, brain: &Brain, immune: bool, t: &EnemyTypes) -> Option<usize> {
+    let warning = brain.telegraph(t);
+    Some(match (kind, brain) {
+        (Kind::Bellows | Kind::RiserPod, _) => warning as usize,
+        (Kind::LoomCore, _) => (!immune) as usize,
+        (Kind::Silo, Brain::Silo(silo)) if silo.open(t) => 2,
+        (Kind::Silo, _) => warning as usize,
+        _ => return None,
+    })
+}
+
+/// How a Swift is turned: nose up while it climbs, nose down once it dives.
+pub fn swift_rotation(brain: &Brain) -> f32 {
+    match brain {
+        Brain::Swift(s) => match s.phase {
+            SwiftPhase::Turn { angle, side, .. } => -side * angle,
+            SwiftPhase::Dive { .. } => std::f32::consts::PI,
+            _ => 0.0,
+        },
+        _ => 0.0,
     }
 }
 
-/// An enemy bullet: a Volt dot with a Foam centre.
-pub fn bullet_core() -> impl Bundle {
-    (
-        Sprite::from_color(FOAM, Vec2::ONE),
-        Transform::from_xyz(0.0, 0.0, 0.1),
-    )
+/// Turns a Crawler's turret (drawn barrel-up) to `angle` radians.
+pub fn aim_turret(transform: &mut Transform, angle: f32) {
+    transform.rotation = Quat::from_rotation_z(angle - FRAC_PI_2);
 }
 
-pub const BULLET: Color = VOLT;
+/// An enemy bullet: the shared `enemy_bullet` sprite in the Cabinet palette.
+pub fn bullet(sprites: &Sprites) -> Sprite {
+    sprites.sprite("enemy_bullet", CABINET)
+}
 
 /// The line between Tether balloons: solid Foam while live, a faint Foam
 /// flicker while it warns, otherwise nothing (no Hero colours on a hazard).
@@ -138,26 +146,15 @@ pub fn line_look(live: bool, warning: bool, clock: f32) -> (Color, Visibility) {
 }
 
 /// The chevron that warns of a Swift coming from below.
-pub fn chevron() -> impl Bundle {
-    Sprite::from_color(FOAM, Vec2::new(6.0, 4.0))
+pub fn chevron(sprites: &Sprites) -> Sprite {
+    sprites.sprite("chevron_up", CABINET)
 }
 
-/// A flak crosshair: four Volt ticks around the marked point.
-pub fn crosshair() -> impl Bundle {
-    let tick = |w: f32, h: f32, x: f32, y: f32| {
-        (
-            Sprite::from_color(VOLT, Vec2::new(w, h)),
-            Transform::from_xyz(x, y, 0.0),
-        )
-    };
+/// A flak crosshair, blinking.
+pub fn crosshair(sprites: &Sprites) -> impl Bundle {
     (
-        Visibility::default(),
-        children![
-            tick(1.0, 4.0, 0.0, 6.0),
-            tick(1.0, 4.0, 0.0, -6.0),
-            tick(4.0, 1.0, 6.0, 0.0),
-            tick(4.0, 1.0, -6.0, 0.0),
-        ],
+        sprites.sprite("c2_crosshair", CABINET),
+        SpriteAnimation::looping([0, 1], 0.1),
     )
 }
 

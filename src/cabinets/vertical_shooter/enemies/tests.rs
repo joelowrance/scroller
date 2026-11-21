@@ -7,6 +7,7 @@ use bevy::state::app::StatesPlugin;
 use bevy::time::TimeUpdateStrategy;
 
 use super::*;
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::{LifeLost, StageCleared};
 use crate::display::GameCamera;
 use crate::flow::Paused;
@@ -27,6 +28,7 @@ struct Log {
     score: Vec<u64>,
     spawns: Vec<(String, Vec2)>,
     lives_lost: usize,
+    sfx: Vec<Sfx>,
 }
 
 fn collect(
@@ -34,7 +36,9 @@ fn collect(
     mut score: MessageReader<ScoreGained>,
     mut spawns: MessageReader<SpawnRequested>,
     mut lost: MessageReader<LifeLost>,
+    mut sfx: MessageReader<PlaySfx>,
 ) {
+    log.sfx.extend(sfx.read().map(|s| s.0));
     log.score.extend(score.read().map(|s| s.0));
     log.spawns
         .extend(spawns.read().map(|s| (s.kind.clone(), s.pos)));
@@ -55,12 +59,15 @@ fn app() -> App {
         .insert_resource(session)
         .init_resource::<Paused>()
         .init_resource::<Log>()
+        .init_resource::<Sprites>()
+        // The Cabinet's Stage set-up adds this; the enemies wait for it.
+        .init_resource::<super::super::power_ups::PowerUps>()
         .init_resource::<ButtonInput<KeyCode>>()
         .insert_state(Screen::Playing)
         .add_message::<ScoreGained>()
         .add_message::<LifeLost>()
         .add_message::<StageCleared>()
-        .add_plugins((KitPlugin, EnemiesPlugin))
+        .add_plugins((KitPlugin, EnemiesPlugin, super::super::sound::SoundPlugin))
         .add_systems(Last, collect)
         .insert_resource(StageRun::new(
             StageTimeline::parse("(length: 100000.0, speed: [(from: 0.0, speed: 24.0)])").unwrap(),
@@ -430,4 +437,50 @@ fn the_gallery_stage_parses_and_names_only_known_kinds() {
             spawn.kind
         );
     }
+}
+
+#[test]
+fn enemy_events_play_their_sounds() {
+    let mut app = app();
+    request(&mut app, "swift", Vec2::ZERO, "{}");
+    request(&mut app, "loom", Vec2::new(0.0, 142.0), "{}");
+    request(&mut app, "riser", Vec2::new(-100.0, 80.0), "{}");
+    request(&mut app, "silo", Vec2::new(100.0, 100.0), "{}");
+    request(
+        &mut app,
+        "tether",
+        Vec2::new(0.0, 100.0),
+        r#"{"left_x": -148.0, "right_x": 148.0}"#,
+    );
+    app.update();
+    let shuttles: Vec<_> = of_kind(&mut app, Kind::LoomShuttle)
+        .iter()
+        .map(|s| s.0)
+        .collect();
+    for _ in 0..60 {
+        shoot(&mut app, &shuttles);
+    }
+    run(&mut app, 3.0);
+    let heard = &app.world().resource::<Log>().sfx;
+    for want in [
+        Sfx::SwiftWarning,
+        Sfx::ShuttleFall,
+        Sfx::LoomShieldBreak,
+        Sfx::LoomTick,
+        Sfx::RiserLaunch,
+        Sfx::SiloClank,
+        Sfx::TetherHum,
+        Sfx::EnemyHit,
+    ] {
+        assert!(heard.contains(&want), "no {want:?} in {heard:?}");
+    }
+}
+
+#[test]
+fn flak_plays_its_mark_and_burst() {
+    let mut app = app();
+    request(&mut app, "flak", Vec2::new(100.0, 100.0), "{}");
+    run(&mut app, 2.0);
+    let heard = &app.world().resource::<Log>().sfx;
+    assert!(heard.contains(&Sfx::FlakMark) && heard.contains(&Sfx::FlakBurst));
 }
