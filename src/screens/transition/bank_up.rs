@@ -12,7 +12,7 @@
 //! - [`RECOLOUR`]: the walls and the Wren take Cabinet 2's colours.
 //! - [`CLEAR`]: the Wren clears the shaft mouth. The shaft shrinks and falls
 //!   away as the camera pulls up and back, the streaks fade ([`STREAKS_OUT`]),
-//!   and the backdrop turns to Dusk. The Plum and Steel cloud sea fades in
+//!   and the backdrop turns to Dusk. The Plum and Steel cloud sea (#57's `c2_cloud_*`) fades in
 //!   below ([`SKY`]) with the Wren's Dusk shadow on it.
 //! - [`CAPTION_2`]: "CABINET 2 / VERTICAL SHOOTER" over the clouds, with the
 //!   Wren holding at Cabinet 2's start spot, (0, −80) on screen.
@@ -63,7 +63,9 @@ pub(super) const RECOLOUR: Span = Span(2.2, 3.2);
 pub(super) const CLEAR: Span = Span(2.6, 3.8);
 pub(super) const STREAKS_OUT: Span = Span(2.6, 3.4);
 pub(super) const SKY: Span = Span(2.8, 3.8);
-pub(super) const CAPTION_1: Span = Span(0.15, 2.0);
+// Gone before the turning walls reach the caption, so its plate never
+// cuts into them.
+pub(super) const CAPTION_1: Span = Span(0.15, 1.6);
 pub(super) const CAPTION_2: Span = Span(3.6, SECONDS);
 
 // The order the beats rely on, checked when compiling: the view goes
@@ -94,7 +96,9 @@ const BLOCK_COUNT: usize = 16;
 const FIELD: f32 = 210.0;
 const STREAK_COUNT: u32 = 72;
 const SCROLL_SPEED: f32 = 140.0;
-const CLOUD_COUNT: u32 = 24;
+const CLOUD_COUNT: u32 = 14;
+/// Cabinet 2's cloud-sea puffs (#57), far and near.
+const CLOUD_SPRITES: [&str; 2] = ["c2_cloud_a", "c2_cloud_b"];
 /// How fast the far and near cloud banks drift down, in pixels per second.
 const CLOUD_SPEED: [f32; 2] = [18.0, 30.0];
 const BANK_DEGREES: f32 = 40.0;
@@ -295,7 +299,7 @@ fn spawn(
         let (x, y) = (at.x, wrap(at.y, HALF_H + 16.0));
         commands.spawn((
             Part::Cloud { layer, y },
-            hidden(sprites.frame("transition_cloud", 1, layer)),
+            hidden(sprites.sprite(CLOUD_SPRITES[layer], 1)),
             Transform::from_xyz(x.round(), y.round(), 0.5 + layer as f32 * 0.1),
             DespawnOnExit(Screen::CabinetTransition),
         ));
