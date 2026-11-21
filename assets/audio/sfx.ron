@@ -156,4 +156,120 @@
         (at: 0.20, wave: Square(duty: 0.5), freq: 1480, gate: 0.07,
          env: (release: 0.02), volume: 0.20),
     ],
+
+    // ---------------------------------------------------------------- Cabinet 2
+    // (docs/cabinets/2-vertical-shooter.md). Shots, lances, the medal, enemy
+    // hits, explosions, sparks off shields (ShellPing), the Ward and lost
+    // lives reuse Cabinet 1's sounds.
+    // Power-ups new to Cabinet 2: the same rise, their own top notes.
+    PowerUpPod: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1480, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // F#6
+    ],
+    PowerUpRockets: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1245, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // D#6
+        (at: 0.08, wave: Noise, freq: 3000, gate: 0.10, slide: 12,
+         env: (decay: 0.1, sustain: 0.0, release: 0.02), volume: 0.12),
+    ],
+    // Rockets launch twice a second: a soft hiss.
+    RocketLaunch: [
+        (wave: Noise, freq: 5000, gate: 0.12, slide: 7,
+         env: (attack: 0.01, decay: 0.11, sustain: 0.0, release: 0.02), volume: 0.10),
+    ],
+    // The Squall: a low boom, then two sweeps (the edges) racing apart.
+    Squall: [
+        (wave: Triangle, freq: 65, gate: 0.3, slide: -5,
+         env: (decay: 0.3, sustain: 0.0, release: 0.05), volume: 0.50),
+        (wave: Noise, freq: 900, gate: 0.6, slide: 24,
+         env: (attack: 0.03, decay: 0.57, sustain: 0.0, release: 0.08), volume: 0.30),
+        (wave: Square(duty: 0.5), freq: 330, gate: 0.55, slide: 19,
+         vibrato: (depth: 0.4, rate: 18.0),
+         env: (decay: 0.55, sustain: 0.0, release: 0.05), volume: 0.10),
+        (wave: Square(duty: 0.5), freq: 330, gate: 0.55, slide: -12,
+         vibrato: (depth: 0.4, rate: 18.0),
+         env: (decay: 0.55, sustain: 0.0, release: 0.05), volume: 0.10),
+    ],
+    // The chevron under a Swift: two low-high blips (Cabinet 1's Hook beeps
+    // are flat; these rise, for "from below").
+    SwiftWarning: [
+        (at: 0.00, wave: Square(duty: 0.5), freq: 988, gate: 0.07, slide: 7,
+         env: (release: 0.02), volume: 0.20),
+        (at: 0.25, wave: Square(duty: 0.5), freq: 988, gate: 0.07, slide: 7,
+         env: (release: 0.02), volume: 0.20),
+    ],
+    // A Flak Battery marks the Hero: a sharp targeting beep.
+    FlakMark: [
+        (wave: Square(duty: 0.25), freq: 2093, gate: 0.05,
+         env: (release: 0.03), volume: 0.18),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 2093, gate: 0.05,
+         env: (release: 0.03), volume: 0.18),
+    ],
+    // The shell bursts at the mark: a hard crack.
+    FlakBurst: [
+        (wave: Noise, freq: 6000, gate: 0.18, slide: -18,
+         env: (decay: 0.18, sustain: 0.0, release: 0.03), volume: 0.45),
+        (wave: Triangle, freq: 140, gate: 0.12, slide: -12,
+         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.30),
+    ],
+    // A Riser throws a pod: a thump, then a whistle rising over the 1 s climb.
+    RiserLaunch: [
+        (wave: Triangle, freq: 110, gate: 0.12, slide: -12,
+         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.45),
+        (wave: Noise, freq: 1500, gate: 0.06,
+         env: (decay: 0.06, sustain: 0.0, release: 0.01), volume: 0.20),
+        (at: 0.05, wave: Square(duty: 0.5), freq: 700, gate: 0.95, slide: 19,
+         vibrato: (depth: 0.15, rate: 10.0),
+         env: (attack: 0.1, decay: 0.85, sustain: 0.3, release: 0.05), volume: 0.10),
+    ],
+    // A Loom's last shuttle goes: the shield shatters and the shuttles fall.
+    LoomShieldBreak: [
+        (wave: Noise, freq: 10000, gate: 0.2, slide: -12,
+         env: (decay: 0.2, sustain: 0.0, release: 0.04), volume: 0.35),
+        (wave: Square(duty: 0.125), freq: 1760, gate: 0.3, slide: -24,
+         vibrato: (depth: 0.6, rate: 22.0),
+         env: (decay: 0.3, sustain: 0.0, release: 0.04), volume: 0.18),
+    ],
+    // A destroyed shuttle falls away as wreckage: a long falling whine.
+    ShuttleFall: [
+        (wave: Square(duty: 0.25), freq: 1200, gate: 0.9, slide: -30,
+         env: (decay: 0.9, sustain: 0.2, release: 0.05), volume: 0.12),
+    ],
+    // The Loom's spiral: a soft tick per volley (every 0.3 s).
+    LoomTick: [
+        (wave: Square(duty: 0.125), freq: 3136, gate: 0.01,
+         env: (release: 0.02), volume: 0.08),
+    ],
+    // A Silo's hatch opening: a metal clank.
+    SiloClank: [
+        (wave: Square(duty: 0.5), freq: 180, gate: 0.05, slide: -5,
+         env: (decay: 0.05, sustain: 0.0, release: 0.02), volume: 0.30),
+        (wave: Noise, freq: 2500, gate: 0.04,
+         env: (decay: 0.04, sustain: 0.0, release: 0.01), volume: 0.25),
+        (at: 0.03, wave: Triangle, freq: 1568, gate: 0.01,
+         env: (release: 0.08), volume: 0.15),
+    ],
+    // A Tether's line goes live (1.2 s): a thin, high hum, unlike the low
+    // Arc Gate buzz.
+    TetherHum: [
+        (wave: Square(duty: 0.125), freq: 220, gate: 1.15,
+         vibrato: (depth: 0.25, rate: 24.0),
+         env: (attack: 0.03, release: 0.05), volume: 0.10),
+        (wave: Noise, freq: 800, gate: 1.15,
+         env: (attack: 0.03, release: 0.05), volume: 0.04),
+    ],
+    // The flak hit that ends Cabinet 2: the 2 -> 3 Transition's first sound.
+    FinalHit: [
+        (wave: Noise, freq: 4000, gate: 1.2, slide: -36,
+         env: (decay: 1.2, sustain: 0.0, release: 0.2), volume: 0.50),
+        (wave: Triangle, freq: 80, gate: 0.8, slide: -12,
+         env: (decay: 0.8, sustain: 0.0, release: 0.1), volume: 0.50),
+        (wave: Square(duty: 0.5), freq: 660, gate: 1.0, slide: -24,
+         vibrato: (depth: 1.0, rate: 16.0),
+         env: (decay: 1.0, sustain: 0.0, release: 0.1), volume: 0.18),
+    ],
 }
