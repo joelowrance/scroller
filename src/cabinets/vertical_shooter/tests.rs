@@ -349,7 +349,9 @@ fn the_gallery_plays_through_while_firing() {
     session.cabinet = CABINET;
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, StatesPlugin))
-        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f32(1.0 / 30.0)))
+        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f32(
+            1.0 / 30.0,
+        )))
         .insert_resource(tuning)
         .insert_resource(session)
         .init_resource::<Paused>()
