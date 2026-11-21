@@ -580,9 +580,21 @@ The Stage clear and no-miss bonuses are awarded at the end of the scroll,
 before the Stage Card, through `ScoreGained`. Score from a section replayed
 after a Restart Point counts normally.
 
-**Rough targets** (#11 measures the real ones): about 30–40k for a perfect
-Stage 1 and 40–50k for Stage 2. A decent player reaches the first extra life
-(20,000) late in Stage 1 and the second (70,000) during Cabinet 2.
+**Measured totals** (#11; the test
+`extra_lives_land_where_the_design_doc_says` recomputes them from the Stage
+files and tuning). A perfect Stage, bombed bullets left out:
+
+| | Enemies | Formation bonus | Clear + no miss | Core total | Every Power-up already maxed | Ferries left to launch every Skiff | Most |
+|---|---|---|---|---|---|---|---|
+| Stage 1 | 17,500 | 5,400 | 8,000 | 30,900 | +8,000 | +2,800 | 41,700 |
+| Stage 2 | 19,900 | 2,000 | 8,000 | 29,900 | +6,000 | +1,400 | 37,300 |
+
+Stage 2 comes in under the first rough target of 40–50k. It was left there,
+because the extra lives land where they should. A flawless Stage 1 earns 22,900
+before its clear bonus, so it passes the first extra life (20,000) near the
+end, and a decent player gets it with the clear bonus. The second (70,000) needs more than both core
+totals (60,800), so only a player squeezing out the extras gets it before
+Cabinet 2.
 
 ## Sound and music (for #10)
 

@@ -13,9 +13,12 @@ the whole Run, and losing the last life ends it for good. The game saves
 after every cleared Stage, so you can stop between Stages and pick up later.
 The domain language is defined in [GLOSSARY.md](GLOSSARY.md).
 
-**Status:** the framework is in place (screens, Run rules, Save, High Score
-Table, Practice, pause, tuning). Every Cabinet is currently a stand-in that
-scrolls and clears on a timer. The real Cabinets are next: see
+**Status:** Cabinet 1 (STATIC TIDE, the side-scrolling shooter) is
+complete: both Stages, its enemies, Power-ups, music and sound, and the
+Cabinet Transition into Cabinet 2. It is waiting for a human playtest
+([#12](https://github.com/joelowrance/scroller/issues/12)). Cabinet 2 is in
+progress; until its gameplay lands, it and Cabinets 3–4 play as stand-ins
+that scroll and clear on a timer. See
 [ROADMAP.md](ROADMAP.md) and the [issues](https://github.com/joelowrance/scroller/issues).
 The settled design is in [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -36,7 +39,7 @@ The settled design is in [docs/DESIGN.md](docs/DESIGN.md).
 **M** mutes the sound. The setting is kept with the high scores. In the browser,
 sound starts with the first key press or click.
 
-While the stand-in Cabinets are in place, developer keys are on: **K** loses a
+While the game is in development, developer keys are on: **K** loses a
 life, **P** adds 1000 points, **C** clears the Stage.
 
 ## Tuning

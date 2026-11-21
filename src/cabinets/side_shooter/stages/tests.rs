@@ -353,3 +353,88 @@ mod playthrough {
         }
     }
 }
+
+/// The most a perfect Stage can score, by source (bombed bullets left out:
+/// they depend on how much is on screen when the Undertow goes off).
+#[derive(Debug, Default)]
+struct ScoreBudget {
+    enemies: u64,
+    formation_bonus: u64,
+    /// Skiffs a Ferry launches if it is left alive until it sinks.
+    ferry_skiffs: u64,
+    /// Every Power-up picked up when already maxed.
+    maxed_power_ups: u64,
+    clear_and_no_miss: u64,
+}
+
+impl ScoreBudget {
+    fn total(&self) -> u64 {
+        self.enemies
+            + self.formation_bonus
+            + self.ferry_skiffs
+            + self.maxed_power_ups
+            + self.clear_and_no_miss
+    }
+}
+
+fn score_budget(stage: usize) -> ScoreBudget {
+    use crate::cabinets::side_shooter::enemies::{Kind, layout};
+    let tuning = Tuning::default();
+    let s = &tuning.side_shooter;
+    let t = &s.enemies;
+    let mut budget = ScoreBudget {
+        clear_and_no_miss: s.score.stage_clear + s.score.no_miss,
+        ..default()
+    };
+    for spawn in &timeline(stage).spawns {
+        let kind = kind_for(&spawn.kind).unwrap();
+        let params = params(spawn);
+        let pos = Vec2::from(spawn.pos);
+        let members = layout(kind, pos, &params, None, t).len() as u64;
+        let score = match kind {
+            Kind::Skiff => t.skiff.score,
+            Kind::Gull => t.gull.score,
+            Kind::Bellbuoy => t.bellbuoy.score,
+            Kind::Lamplighter => t.lamplighter.score,
+            Kind::Hook => t.hook.score,
+            Kind::Ferry => t.ferry.score,
+            Kind::Barnacle => t.barnacle.score,
+            Kind::Clam => t.clam.score,
+            Kind::Mote => t.mote.score,
+            Kind::ArcPylon => t.arc_gate.score,
+        };
+        budget.enemies += members * score;
+        if params.drop.is_some() {
+            budget.maxed_power_ups += s.score.maxed_power_up;
+        } else if members > 1 && kind != Kind::ArcPylon {
+            budget.formation_bonus += members * s.score.formation_bonus_per_enemy;
+        }
+        if kind == Kind::Ferry {
+            let f = &t.ferry;
+            let alive = (pos.x - f.hold_x) / f.speed + f.hold_seconds;
+            let launches = ((alive - f.first_launch_delay) / f.launch_interval).floor() as u64 + 1;
+            budget.ferry_skiffs += launches * u64::from(f.launch_count) * t.skiff.score;
+        }
+    }
+    budget
+}
+
+#[test]
+fn extra_lives_land_where_the_design_doc_says() {
+    let tuning = Tuning::default();
+    let [one, two] = [score_budget(0), score_budget(1)];
+    println!("Stage 1: {} = {one:?}", one.total());
+    println!("Stage 2: {} = {two:?}", two.total());
+    // The measured totals the design doc's Scoring section quotes.
+    assert!((35_000..=45_000).contains(&one.total()), "Stage 1");
+    assert!((32_000..=42_000).contains(&two.total()), "Stage 2");
+    // Without the extras (maxed Power-ups, Ferries milked for Skiffs), a
+    // flawless Stage 1 still passes the first extra life...
+    let core = |b: &ScoreBudget| b.enemies + b.formation_bonus + b.clear_and_no_miss;
+    assert!(core(&one) >= tuning.first_extra_life);
+    // ...and only a player squeezing out the extras gets the second one
+    // before Cabinet 2.
+    let second = tuning.first_extra_life + tuning.extra_life_every;
+    assert!(core(&one) + core(&two) < second);
+    assert!(one.total() + two.total() >= second);
+}

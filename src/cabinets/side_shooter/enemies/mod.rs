@@ -518,7 +518,10 @@ fn think(
         if out.shots.is_empty() {
             continue;
         }
-        let may_fire = enemy.on_screen >= rules.fire_grace_seconds
+        // Only from on screen: nothing fires at the Hero from where it can't
+        // be seen, even after its grace period.
+        let may_fire = on_screen(at)
+            && enemy.on_screen >= rules.fire_grace_seconds
             && hero.is_none_or(|h| h.distance(at) >= rules.min_fire_distance);
         if !may_fire {
             continue;
