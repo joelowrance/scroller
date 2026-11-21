@@ -379,3 +379,33 @@ fn the_gallery_plays_through_while_firing() {
         app.update();
     }
 }
+
+/// Review of #60: the Squall stops at the play area. A Swift waiting below
+/// the bottom edge during its warning hasn't appeared yet and survives.
+#[test]
+fn the_squall_spares_enemies_not_yet_on_screen() {
+    use super::enemies::brain::SWIFT_WAIT_Y;
+
+    let mut app = app();
+    assert_eq!(wren_at(&mut app).y, -80.0);
+    let waiting = spawn_target(&mut app, Layer::Enemy, Vec2::new(50.0, SWIFT_WAIT_Y), 2);
+    let above = spawn_target(&mut app, Layer::Enemy, Vec2::new(0.0, 142.0), 2);
+    let beside = spawn_target(&mut app, Layer::Enemy, Vec2::new(172.0, 60.0), 2);
+    let on_screen = spawn_target(&mut app, Layer::Enemy, Vec2::new(0.0, -110.0), 2);
+    press(&mut app, &[Button::B]);
+    app.update();
+    press(&mut app, &[]);
+    for _ in 0..10 {
+        app.update();
+    }
+    for e in [waiting, above, beside] {
+        assert_eq!(
+            app.world().get::<Health>(e).unwrap().0,
+            2,
+            "off screen: untouched"
+        );
+    }
+    assert!(app.world().get_entity(on_screen).is_err(), "on screen: hit");
+    let mut q = app.world_mut().query::<&hero::Squall>();
+    assert_eq!(q.iter(app.world()).count(), 0, "the Squall is done");
+}

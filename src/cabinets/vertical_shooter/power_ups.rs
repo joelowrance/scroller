@@ -133,7 +133,20 @@ impl PowerUps {
         if value.is_null() {
             return Self::fresh(t);
         }
-        serde_json::from_value(value.clone()).unwrap_or_else(|_| Self::fresh(t))
+        let read: Self = serde_json::from_value(value.clone()).unwrap_or_else(|_| Self::fresh(t));
+        read.clamped(t)
+    }
+
+    /// Keeps a read state inside the limits (a hand-edited Save, say).
+    fn clamped(self, t: &VerticalShooterTuning) -> Self {
+        let p = &t.power_up;
+        Self {
+            gun: self.gun.clamp(1, p.gun_max),
+            pods: self.pods.min(p.pod_max),
+            speed: self.speed.min(p.speed_max),
+            bombs: self.bombs.min(t.bomb.max),
+            ..self
+        }
     }
 
     pub fn to_json(self) -> serde_json::Value {
@@ -392,6 +405,13 @@ mod tests {
         let partial = serde_json::json!({"gun": 3, "drones": 2});
         let p = PowerUps::from_session(&partial, &t);
         assert_eq!((p.gun, p.pods, p.bombs), (3, 0, 2));
+        let wild = serde_json::json!({"gun": 9, "pods": 5, "speed": 7, "bombs": 99});
+        let p = PowerUps::from_session(&wild, &t);
+        assert_eq!(
+            (p.gun, p.pods, p.speed, p.bombs),
+            (4, 2, 2, 4),
+            "clamped to the maximums"
+        );
     }
 
     #[test]

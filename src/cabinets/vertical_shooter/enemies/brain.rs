@@ -569,18 +569,22 @@ pub struct Silo {
 }
 
 impl Silo {
+    /// Closed, then the warning flash, then open (doc: 2.4 s, 0.3 s, 1.2 s).
     fn cycle(t: &EnemyTypes) -> f32 {
-        (t.silo.closed_seconds + t.silo.open_seconds).max(0.01)
+        let s = &t.silo;
+        (s.closed_seconds + s.telegraph_seconds + s.open_seconds).max(0.01)
     }
 
     pub fn open(&self, t: &EnemyTypes) -> bool {
-        self.age > 0.0 && self.age.rem_euclid(Self::cycle(t)) >= t.silo.closed_seconds
+        let s = &t.silo;
+        self.age > 0.0
+            && self.age.rem_euclid(Self::cycle(t)) >= s.closed_seconds + s.telegraph_seconds
     }
 
     fn telegraph(&self, t: &EnemyTypes) -> bool {
         let s = &t.silo;
         let p = self.age.rem_euclid(Self::cycle(t));
-        self.age > 0.0 && p < s.closed_seconds && p >= s.closed_seconds - s.telegraph_seconds
+        self.age > 0.0 && p >= s.closed_seconds && p < s.closed_seconds + s.telegraph_seconds
     }
 
     fn step(&mut self, pos: &mut Vec2, ctx: &Ctx, t: &EnemyTypes) -> Out {

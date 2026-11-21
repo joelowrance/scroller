@@ -226,7 +226,10 @@ fn a_silo_is_immune_until_it_opens() {
         shoot(&mut app, &[silo]);
     }
     assert_eq!(app.world().get::<Health>(silo).unwrap().0, 16, "closed");
-    run(&mut app, 2.5);
+    // Closed 2.4 s, the flash 0.3 s, then open.
+    run(&mut app, 2.3);
+    assert!(app.world().get::<Immune>(silo).is_some(), "still flashing");
+    run(&mut app, 0.5);
     assert!(app.world().get::<Immune>(silo).is_none(), "open");
     shoot(&mut app, &[silo]);
     assert_eq!(app.world().get::<Health>(silo).unwrap().0, 15);

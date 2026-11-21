@@ -616,6 +616,27 @@ pub(super) fn bomb(
         });
 }
 
+/// The rows each Squall edge sweeps this frame (two frames' travel, so a
+/// bullet can't slip between frames), clamped to the play area. An edge
+/// that has reached its own boundary (the top of the play area, or the
+/// bottom of the screen) sweeps nothing more.
+pub fn squall_bands(up: f32, down: f32, step: f32) -> [Option<(f32, f32)>; 2] {
+    let top = PLAY_TOP;
+    let bottom = -HALF_H;
+    [
+        (up < top).then(|| ((up - step).max(bottom), (up + step).min(top))),
+        (down > bottom).then(|| ((down - step).max(bottom), (down + step).min(top))),
+    ]
+}
+
+/// Whether any part of a box is inside the play area.
+pub fn in_play_area(at: Vec2, half: Vec2) -> bool {
+    at.x + half.x > -HALF_W
+        && at.x - half.x < HALF_W
+        && at.y + half.y > -HALF_H
+        && at.y - half.y < PLAY_TOP
+}
+
 /// Whether a box at `at` with half-size `half` reaches into the band of
 /// rows between `lo` and `hi`.
 pub fn band_touches(lo: f32, hi: f32, at: Vec2, half: Vec2) -> bool {
@@ -639,19 +660,20 @@ pub(super) fn sweep_squall(
         // Each edge covers two frames' travel, so a bullet flying toward it
         // can't slip between this frame's line and the last.
         let step = t.bomb.band_speed * time.delta_secs();
-        let bands = [
-            (squall.up - step, squall.up + step),
-            (squall.down - step, squall.down + step),
-        ];
-        squall.up += step;
-        squall.down -= step;
+        let bands = squall_bands(squall.up, squall.down, step);
+        squall.up = (squall.up + step).min(PLAY_TOP);
+        squall.down = (squall.down - step).max(-HALF_H);
         let mut cancelled = 0;
         for (target, layer, at, hitbox) in &targets {
             let half = hitbox.map_or(Vec2::ZERO, |h| h.size / 2.0);
             let pos = at.translation.truncate();
-            if !bands
-                .iter()
-                .any(|&(lo, hi)| band_touches(lo, hi, pos, half))
+            // Nothing outside the play area is touched: enemies waiting
+            // below, above or beside the screen haven't appeared yet.
+            if !in_play_area(pos, half)
+                || !bands
+                    .iter()
+                    .flatten()
+                    .any(|&(lo, hi)| band_touches(lo, hi, pos, half))
             {
                 continue;
             }
@@ -676,7 +698,7 @@ pub(super) fn sweep_squall(
         if cancelled > 0 {
             score.write(ScoreGained(cancelled * t.score.bomb_cancel));
         }
-        if squall.up > HALF_H && squall.down < -HALF_H {
+        if squall.up >= PLAY_TOP && squall.down <= -HALF_H {
             commands.entity(entity).despawn();
         }
     }
@@ -790,6 +812,26 @@ mod tests {
             nearest_ground_target(from, targets[..1].iter().copied()),
             None
         );
+    }
+
+    #[test]
+    fn squall_edges_stop_at_their_own_boundary() {
+        let [up, down] = squall_bands(PLAY_TOP - 2.0, -HALF_H + 1.0, 7.0);
+        assert_eq!(up, Some((PLAY_TOP - 9.0, PLAY_TOP)));
+        assert_eq!(down, Some((-HALF_H, -HALF_H + 8.0)));
+        assert_eq!(squall_bands(PLAY_TOP, -HALF_H, 7.0), [None, None]);
+        assert!(!in_play_area(
+            Vec2::new(0.0, -HALF_H - 12.0),
+            Vec2::new(5.0, 6.0)
+        ));
+        assert!(!in_play_area(
+            Vec2::new(HALF_W + 12.0, 60.0),
+            Vec2::new(10.0, 8.0)
+        ));
+        assert!(in_play_area(
+            Vec2::new(0.0, -HALF_H - 2.0),
+            Vec2::new(5.0, 6.0)
+        ));
     }
 
     #[test]
