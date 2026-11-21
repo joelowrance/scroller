@@ -59,6 +59,12 @@ after `Timeline`; movement and AI run before `Move`.
   on the URL overrides both, so a smoke test can play a whole Stage
   unattended.
 
+- **`StageClock`** counts the game seconds and scroll progress of the
+  current Stage for every Cabinet, with its `designed` length from
+  `StageTimeline::duration`. With `debug_keys` on, the web build writes it to
+  localStorage as `scroller.debug.stage`, and `tests/web/stages.mjs` waits on
+  it to play any Cabinet's Stages unattended.
+
 ## Added for Cabinet 1 (#7)
 
 - **`Hurt { target, damage }`:** every source of damage (shots, bombs)

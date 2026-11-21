@@ -912,7 +912,8 @@ What #15 built, and the contract #14's code keeps with it.
   carry a `#! background` line, and a test holds them to Dusk, Plum, Steel
   and Clay.
 - **Unattended run:** `scripts/stages-web.sh 2` plays both Stages with the
-  invincible Hero and a faster clock, and fails unless each one clears.
+  invincible Hero and a faster clock, and fails unless each one clears in
+  about its designed time. `scripts/smoke-web.sh` runs it too.
 
 ## Revisit after the Cabinet 1 playtest
 

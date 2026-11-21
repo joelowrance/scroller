@@ -194,71 +194,13 @@ fn stage_bonus(
     score.write(ScoreGained(points));
 }
 
-/// Game seconds played in this Stage (stops while paused or in hit-stop).
-#[derive(Resource, Default, Clone, Copy, serde::Serialize)]
-pub struct StageClock {
-    pub stage: usize,
-    pub seconds: f32,
-    /// Fraction of the Stage scrolled, 0 to 1.
-    pub progress: f32,
-}
-
-fn tick_clock(
-    time: Res<Time>,
-    stage: Res<StageRun>,
-    session: Res<Session>,
-    mut clock: ResMut<StageClock>,
-) {
-    clock.stage = session.stage;
-    clock.seconds += time.delta_secs();
-    clock.progress = stage.progress();
-}
-
-/// Debug aid for the browser tests: the Stage's real progress, in
-/// localStorage as `scroller.debug.stage`, so a test can wait on the game
-/// rather than the wall clock (which a slow browser can't keep up with).
-#[cfg(target_arch = "wasm32")]
-fn report_clock(
-    tuning: Res<Tuning>,
-    real: Res<Time<Real>>,
-    clock: Res<StageClock>,
-    mut every: Local<f32>,
-) {
-    *every -= real.delta_secs();
-    if tuning.debug_keys && *every <= 0.0 {
-        *every = 0.2;
-        crate::storage::store("debug.stage", &*clock);
-    }
-}
-
-/// The final reading as the Stage ends. By then the Session may already be on
-/// the next Cabinet, so this one isn't gated on Cabinet 1.
-#[cfg(target_arch = "wasm32")]
-fn report_final_clock(mut commands: Commands, tuning: Res<Tuning>, clock: Res<StageClock>) {
-    if tuning.debug_keys {
-        crate::storage::store("debug.stage", &*clock);
-    }
-    commands.remove_resource::<StageClock>();
-}
-
 pub struct StagesPlugin;
 
 impl Plugin for StagesPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnEnter(Screen::Playing),
-            (spawn_stage, |mut commands: Commands| {
-                commands.insert_resource(StageClock::default());
-            })
-                .run_if(cabinet_is(CABINET)),
-        )
-        .add_systems(
-            Update,
-            tick_clock
-                .after(KitSet::Timeline)
-                .run_if(resource_exists::<StageClock>)
-                .run_if(cabinet_is(CABINET))
-                .run_if(stage_live),
+            spawn_stage.run_if(cabinet_is(CABINET)),
         )
         .add_systems(OnExit(Screen::Playing), |mut commands: Commands| {
             commands.remove_resource::<Terrain>();
@@ -284,17 +226,6 @@ impl Plugin for StagesPlugin {
             count_misses
                 .run_if(in_state(Screen::Playing))
                 .run_if(cabinet_is(CABINET)),
-        );
-        #[cfg(target_arch = "wasm32")]
-        app.add_systems(
-            Update,
-            report_clock
-                .run_if(resource_exists::<StageClock>)
-                .run_if(cabinet_is(CABINET)),
-        )
-        .add_systems(
-            OnExit(Screen::Playing),
-            report_final_clock.run_if(resource_exists::<StageClock>),
         );
     }
 }

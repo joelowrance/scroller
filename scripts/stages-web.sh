@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Plays both Stages of a Cabinet unattended in headless Chromium (invincible
-# Hero, faster clock) and screenshots them. Each run goes to a new folder,
-# target/stages/<timestamp>/.
+# Hero, faster clock) and screenshots them, as scripts/smoke-web.sh does for
+# every Cabinet. Each run goes to a new folder, target/stages/<timestamp>/.
 #
 #   scripts/stages-web.sh 2                   build dist/, serve it, play Cabinet 2
 #   SMOKE_SKIP_BUILD=1 scripts/stages-web.sh 2   use the existing dist/
@@ -29,4 +29,4 @@ for _ in $(seq 50); do
   curl -sf -o /dev/null "$url" && break
   sleep 0.1
 done
-node tests/web/cabinet-stages.mjs "$url" "$out" "$cabinet"
+node tests/web/stages.mjs "$url" "$out" "$cabinet"

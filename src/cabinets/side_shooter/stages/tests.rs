@@ -260,7 +260,10 @@ mod playthrough {
         }
         let done = app.world().resource::<Done>();
         assert!(done.cleared, "Stage {} did not clear", stage + 1);
-        (done.score, app.world().resource::<StageClock>().seconds)
+        (
+            done.score,
+            app.world().resource::<crate::kit::StageClock>().seconds,
+        )
     }
 
     #[test]
