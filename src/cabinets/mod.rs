@@ -16,6 +16,7 @@ mod placeholder;
 pub mod side_shooter;
 #[cfg(test)]
 mod stage_checks;
+pub mod vertical_shooter;
 
 pub const CABINET_COUNT: usize = 4;
 

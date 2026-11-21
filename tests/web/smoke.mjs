@@ -79,10 +79,12 @@ try {
   await tap("Space"); // play 1-2
   await wait(800);
   if ((await stored("save")) !== null) fail("the Save was not used up when Stage 1-2 began");
-  await tap("KeyC"); // clear 1-2: Cabinet Transition
-  await wait(1200);
+  await tap("KeyC"); // clear 1-2: the 1 -> 2 Cabinet Transition (5 s)
+  await wait(1800);
   await shot("cabinet-transition");
-  await wait(3000);
+  // The Stage Card waits for input, so a generous wait is safe on a slow
+  // browser.
+  await wait(5500);
   await shot("stage-card-cabinet-2");
 
   await tap("Space"); // play 2-1

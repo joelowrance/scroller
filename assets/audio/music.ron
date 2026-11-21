@@ -786,4 +786,58 @@
         },
         order: ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"],
     ),
+
+    // "Bank Up": original. The 1 -> 2 Cabinet Transition sting, about 4.5 s.
+    // It starts on Cabinet 1's A minor drive, climbs through F and G as the
+    // Wren banks and the view turns, and lands on a bright C major as
+    // Cabinet 2's colours arrive. Plays once.
+    BankUp: (
+        bpm: 160,
+        rows_per_beat: 4,
+        looping: false,
+        channels: [
+            // Lead
+            (instrument: (wave: Square(duty: 0.25), volume: 0.21,
+                          env: (attack: 0.005, decay: 0.12, sustain: 0.6, release: 0.30),
+                          vibrato: (depth: 0.2, rate: 6.0))),
+            // Arpeggio
+            (instrument: (wave: Square(duty: 0.125), volume: 0.09,
+                          env: (decay: 0.06, sustain: 0.35, release: 0.30))),
+            // Bass
+            (instrument: (wave: Triangle, volume: 0.31,
+                          env: (decay: 0.1, sustain: 0.7, release: 0.30))),
+            // Drums
+            (kit: {
+                "k": (freq: 160, gate: 0.09, instrument: (wave: Triangle, volume: 0.34, slide: -24,
+                      env: (decay: 0.09, sustain: 0.0, release: 0.01))),
+                "s": (freq: 5000, gate: 0.10, instrument: (wave: Noise, volume: 0.22,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.02))),
+                "h": (freq: 14000, gate: 0.025, instrument: (wave: Noise, volume: 0.12,
+                      env: (decay: 0.025, sustain: 0.0, release: 0.01))),
+                "c": (freq: 9000, gate: 0.6, instrument: (wave: Noise, volume: 0.16,
+                      env: (decay: 0.6, sustain: 0.0, release: 0.1))),
+            }),
+        ],
+        patterns: {
+        "cruise": [ // Am
+            "E5 - - - . . A4 - C5 - E5 - A5 - - -",
+            "A4 C5 E5 A5 A4 C5 E5 A5 A4 C5 E5 A5 A4 C5 E5 A5",
+            "A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 -",
+            "k . h . s . h . k . h . s . h h",
+        ],
+        "bank": [ // F, G
+            "F5 - G5 - A5 - C6 - D6 - - - E6 - - -",
+            "F4 A4 C5 F5 F4 A4 C5 F5 G4 B4 D5 G5 G4 B4 D5 G5",
+            "F2 - F3 - F2 - F3 - G2 - G3 - G2 - G3 -",
+            "k . h . s . h . k . s . s s s s",
+        ],
+        "arrive": [ // C
+            "G5 - C6 - - - - - - - - - - - . .",
+            "C5 E5 G5 C6 E6 - - - - - - - - - . .",
+            "C3 - - - - - - - - - - - - - . .",
+            "k . c . . . . . . . . . . . . .",
+        ],
+        },
+        order: ["cruise", "bank", "arrive"],
+    ),
 }

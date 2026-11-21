@@ -10,6 +10,8 @@
 //!   playing, the song is [`StageMusic`], chosen from the table in
 //!   `stage_music.rs` (one entry per Cabinet and Stage); it is cleared when
 //!   the Stage ends.
+//! - A Cabinet Transition can set [`TransitionMusic`] the same way; without
+//!   it, the Transition opens with the Stage-clear sting.
 //! - Lost lives and extra lives make their sounds here, for every Cabinet.
 //! - **M** mutes. The master volume and mute are stored with the high scores.
 //! - Music and gameplay sounds stop while a Stage is paused.
@@ -149,10 +151,12 @@ pub enum Song {
     OuterYard,
     /// Cabinet 2, Stage 2's run-out: a rising siren toward the hit.
     OuterYardAlarm,
+    /// The sting under the 1 → 2 Cabinet Transition (plays once).
+    BankUp,
 }
 
 impl Song {
-    pub const ALL: [Song; 8] = [
+    pub const ALL: [Song; 9] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
@@ -161,6 +165,7 @@ impl Song {
         Song::Cloudline,
         Song::OuterYard,
         Song::OuterYardAlarm,
+        Song::BankUp,
     ];
 }
 
@@ -172,6 +177,11 @@ pub struct PlaySfx(pub Sfx);
 /// screen is [`Screen::Playing`] and cleared when the Stage ends.
 #[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct StageMusic(pub Option<Song>);
+
+/// The song for the Cabinet Transition showing now, set by the Transition.
+/// It is cleared when the Transition ends.
+#[derive(Resource, Default, Clone, Copy, PartialEq, Eq, Debug)]
+pub struct TransitionMusic(pub Option<Song>);
 
 /// The song that should be playing now, worked out every frame by
 /// [`choose_music`] so no schedule ordering can overwrite a Cabinet's choice.
@@ -296,10 +306,12 @@ fn choose_music(
     screen: Res<State<Screen>>,
     stage: Res<StageMusic>,
     card: Option<Res<CardReason>>,
+    transition: Res<TransitionMusic>,
     mut wanted: ResMut<WantedMusic>,
 ) {
     let song = match screen.get() {
         Screen::Playing => stage.0,
+        Screen::CabinetTransition if transition.0.is_some() => transition.0,
         other => song_for_screen(*other, card.map(|c| *c)),
     };
     wanted.set_if_neq(WantedMusic(song));
@@ -307,6 +319,10 @@ fn choose_music(
 
 fn clear_stage_music(mut stage: ResMut<StageMusic>) {
     stage.0 = None;
+}
+
+fn clear_transition_music(mut transition: ResMut<TransitionMusic>) {
+    transition.0 = None;
 }
 
 fn play_music(
@@ -387,12 +403,14 @@ impl Plugin for AudioPlugin {
             .insert_resource(settings)
             .init_resource::<Output>()
             .init_resource::<StageMusic>()
+            .init_resource::<TransitionMusic>()
             .init_resource::<WantedMusic>()
             .init_resource::<NowPlaying>()
             .add_message::<PlaySfx>()
             .add_systems(OnExit(Screen::Playing), clear_stage_music)
             .add_systems(Update, life_sounds.before(play_sfx))
             .add_plugins(stage_music::StageMusicPlugin)
+            .add_systems(OnExit(Screen::CabinetTransition), clear_transition_music)
             .add_systems(
                 Update,
                 (
@@ -454,7 +472,11 @@ mod tests {
         for id in Song::ALL {
             let def = &defs[&id];
             let (samples, looping) = &bank.songs[&id];
-            assert_eq!(*looping, id != Song::StageClear, "{id:?}");
+            assert_eq!(
+                *looping,
+                !matches!(id, Song::StageClear | Song::BankUp),
+                "{id:?}"
+            );
             if *looping {
                 let rows = def.rows().unwrap() * def.samples_per_row();
                 assert_eq!(samples.len(), rows, "{id:?}");
@@ -529,8 +551,10 @@ mod tests {
         app.add_plugins(bevy::state::app::StatesPlugin)
             .init_state::<Screen>()
             .init_resource::<StageMusic>()
+            .init_resource::<TransitionMusic>()
             .init_resource::<WantedMusic>()
             .add_systems(OnExit(Screen::Playing), clear_stage_music)
+            .add_systems(OnExit(Screen::CabinetTransition), clear_transition_music)
             .add_systems(Update, choose_music);
         app
     }
@@ -555,6 +579,26 @@ mod tests {
         assert_eq!(wanted(&app), None);
         go(&mut app, Screen::Playing);
         assert_eq!(wanted(&app), None);
+    }
+
+    #[test]
+    fn a_transition_plays_its_sting_once_and_clears_it() {
+        let mut app = music_app();
+        app.add_systems(
+            OnEnter(Screen::CabinetTransition),
+            |mut music: ResMut<TransitionMusic>| music.0 = Some(Song::BankUp),
+        );
+        app.update();
+        go(&mut app, Screen::CabinetTransition);
+        assert_eq!(wanted(&app), Some(Song::BankUp));
+        go(&mut app, Screen::StageCard);
+        assert_eq!(wanted(&app), None);
+        assert_eq!(app.world().resource::<TransitionMusic>().0, None);
+        let bank = AudioBank::render().unwrap();
+        let (samples, looping) = &bank.songs[&Song::BankUp];
+        assert!(!looping);
+        let seconds = samples.len() as f32 / synth::SAMPLE_RATE as f32;
+        assert!((4.0..5.5).contains(&seconds), "{seconds} s");
     }
 
     #[test]
