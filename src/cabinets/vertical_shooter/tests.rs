@@ -293,3 +293,41 @@ fn pods_appear_beside_the_wren() {
     xs.sort_by(f32::total_cmp);
     assert_eq!(xs, [-14.0, 14.0]);
 }
+
+/// When Cabinet 1's last Stage clears, the Session moves to this Cabinet a
+/// frame before Cabinet 1's Stage is torn down. Nothing of ours may run then.
+#[test]
+fn the_frame_between_cabinets_is_safe() {
+    use crate::cabinets::side_shooter::SideShooterPlugin;
+
+    let tuning = Tuning {
+        debug_keys: false,
+        ..Tuning::default()
+    };
+    let session = Session::new_run(&tuning);
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, StatesPlugin))
+        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(100)))
+        .insert_resource(tuning)
+        .insert_resource(session)
+        .init_resource::<Paused>()
+        .init_resource::<Sprites>()
+        .init_resource::<Controls>()
+        .init_resource::<ButtonInput<KeyCode>>()
+        .init_state::<Screen>()
+        .add_message::<ScoreGained>()
+        .add_message::<LifeLost>()
+        .add_message::<StageCleared>()
+        .add_plugins((KitPlugin, SideShooterPlugin, VerticalShooterPlugin));
+    app.world_mut().spawn((GameCamera, Transform::default()));
+    app.world_mut()
+        .resource_mut::<NextState<Screen>>()
+        .set(Screen::Playing);
+    for _ in 0..5 {
+        app.update();
+    }
+    app.world_mut().resource_mut::<Session>().cabinet = CABINET;
+    for _ in 0..5 {
+        app.update();
+    }
+}

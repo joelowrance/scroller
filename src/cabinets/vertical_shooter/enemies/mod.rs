@@ -936,7 +936,10 @@ impl Plugin for EnemiesPlugin {
                 .run_if(gameplay_running)
                 .run_if(resource_exists::<StageRun>)
                 .run_if(crate::kit::stage_live)
-                .run_if(cabinet_active),
+                .run_if(cabinet_active)
+                // Only once this Cabinet's Stage has been set up, not in the
+                // frame where the Session has already moved on from Cabinet 1.
+                .run_if(resource_exists::<super::power_ups::PowerUps>),
         );
     }
 }
