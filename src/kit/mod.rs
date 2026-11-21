@@ -31,6 +31,7 @@ pub mod collision;
 pub mod combat;
 pub mod effects;
 pub mod motion;
+pub mod scenery;
 pub mod stage;
 pub mod timeline;
 
@@ -130,6 +131,14 @@ impl Plugin for KitPlugin {
             .add_systems(
                 Update,
                 stage::apply_time_scale.run_if(in_state(Screen::Playing)),
+            )
+            .add_systems(
+                Update,
+                scenery::sync_scenery
+                    .after(Timeline)
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(resource_exists::<StageRun>)
+                    .run_if(resource_exists::<crate::run::Session>),
             )
             .add_systems(
                 OnExit(Screen::Playing),

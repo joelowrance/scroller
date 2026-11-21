@@ -1,0 +1,12 @@
+# Cabinet 2 Mote, 4x4. Two frames: it flickers.
+# Format: see README.md in this folder.
+
+.55.
+5775
+5775
+.55.
+
+.55.
+5735
+5375
+.55.

@@ -1,0 +1,16 @@
+# Cabinet 2 Riser pod, 6x6. Frame 1 flashes before it bursts.
+# Format: see README.md in this folder.
+
+.5555.
+533335
+537735
+537735
+533335
+.5555.
+
+.5555.
+577775
+575575
+575575
+577775
+.5555.

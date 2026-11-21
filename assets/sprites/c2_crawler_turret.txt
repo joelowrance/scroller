@@ -1,0 +1,24 @@
+# Cabinet 2 Crawler turret, 6x10, barrel up; rotate it about its centre. Frame 1 flashes before a shot.
+# Format: see README.md in this folder.
+
+..55..
+..55..
+..55..
+.5885.
+588885
+588885
+588885
+.5555.
+......
+......
+
+..75..
+..75..
+..75..
+.5885.
+588885
+588885
+588885
+.5555.
+......
+......

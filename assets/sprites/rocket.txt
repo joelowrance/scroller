@@ -1,0 +1,9 @@
+# A homing rocket, 3x6, nose up: Ember dart with a Foam tip.
+# Format: see README.md in this folder.
+
+.5.
+666
+666
+666
+6.6
+6.6

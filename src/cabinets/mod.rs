@@ -14,6 +14,8 @@ use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
 mod placeholder;
 pub mod side_shooter;
+#[cfg(test)]
+mod stage_checks;
 
 pub const CABINET_COUNT: usize = 4;
 

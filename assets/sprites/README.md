@@ -17,8 +17,8 @@ Every `name.txt` here is a sprite, built into the game at compile time
   `docs/cabinets/1-side-shooter.md`). A sprite is baked once per Cabinet
   palette, so a shared sprite changes colour at each Cabinet Transition.
 - Background and terrain sprites use only roles 1, 2, 3 and 8, so nothing
-  behind the action looks like the Hero, an enemy or a bullet. List them in
-  `BACKGROUND_SPRITES` (`src/sprites/sheet.rs`) and a test enforces it.
+  behind the action looks like the Hero, an enemy or a bullet. Mark them with
+  a `#! background` line and a test enforces it.
 - Frames are separated by a blank line and must all be the same size.
 - Lines starting with `#` are comments.
 

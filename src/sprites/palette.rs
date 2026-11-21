@@ -65,15 +65,15 @@ const fn palette(colors: [u32; PALETTE_SIZE]) -> Palette {
     Palette { colors: out }
 }
 
-/// One palette per Cabinet, in Run order. Cabinet 1's is fixed by its design
-/// doc; the others are starting points until their design docs settle them.
+/// One palette per Cabinet, in Run order. Cabinets 1 and 2 are fixed by their
+/// design docs; the others are starting points until their docs settle them.
 #[rustfmt::skip]
 pub const PALETTES: [Palette; CABINET_COUNT] = [
     //        backdrop  shade     fill      accent    bright    warm      danger    extra
     // 1: side-scrolling shooter — Night, Slate, Sea, Spark, Foam, Ember, Signal, Rust.
     palette([0x05051a, 0x23305e, 0x2e7a8c, 0x4dd9ff, 0xf4f4f0, 0xffb43c, 0xff3c78, 0x8a3a22]),
-    // 2: vertical shooter — night violet with magenta.
-    palette([0x140019, 0x3d1450, 0x8a2d8f, 0xff66cc, 0xfff0fa, 0xffd23f, 0x40e0d0, 0xd070c8]),
+    // 2: vertical shooter — Dusk, Plum, Steel, Orchid, Foam, Ember, Volt, Clay.
+    palette([0x140019, 0x3a1f4f, 0x5a6e8c, 0xff66cc, 0xf4f4f0, 0xffb43c, 0xc8ff3c, 0x8c5a3c]),
     // 3: run-and-gun platformer — dusk earth with amber.
     palette([0x1a0d00, 0x4a2a10, 0x8c5a2b, 0xffbf33, 0xfff6e0, 0xff7a2a, 0x66d9ff, 0x6aa84f]),
     // 4: vertical climber — jungle green.
@@ -90,10 +90,23 @@ mod tests {
     }
 
     #[test]
-    fn cabinet_one_matches_its_design_doc() {
-        let doc = include_str!("../../docs/cabinets/1-side-shooter.md");
+    fn cabinet_palettes_match_their_design_docs() {
+        let docs = [
+            include_str!("../../docs/cabinets/1-side-shooter.md"),
+            include_str!("../../docs/cabinets/2-vertical-shooter.md"),
+        ];
+        for (cabinet, doc) in docs.iter().enumerate() {
+            check_palette_table(cabinet, doc);
+        }
+    }
+
+    fn check_palette_table(cabinet: usize, doc: &str) {
         for role in 1..=PALETTE_SIZE as u8 {
-            let hex = PALETTES[0].color(role).to_srgba().to_hex().to_uppercase();
+            let hex = PALETTES[cabinet]
+                .color(role)
+                .to_srgba()
+                .to_hex()
+                .to_uppercase();
             let row = doc
                 .lines()
                 .find(|l| l.starts_with(&format!("| {role} |")))

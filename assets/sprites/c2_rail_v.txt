@@ -1,0 +1,20 @@
+#! background
+# Cabinet 2 yard rails, a 10x16 tile running up-down: Steel rails on Plum sleepers.
+# Format: see README.md in this folder.
+
+2322222232
+.3......3.
+.3......3.
+.3......3.
+2322222232
+.3......3.
+.3......3.
+.3......3.
+2322222232
+.3......3.
+.3......3.
+.3......3.
+2322222232
+.3......3.
+.3......3.
+.3......3.
