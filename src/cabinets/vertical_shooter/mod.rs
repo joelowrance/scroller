@@ -112,6 +112,9 @@ impl Plugin for VerticalShooterPlugin {
                     (hero::pods_blink, hero::show_bombs, save_power_ups).after(KitSet::Effects),
                 )
                     .run_if(cabinet_is(CABINET))
+                    // The Session moves to this Cabinet one frame before
+                    // Cabinet 1's Stage ends; wait for this Cabinet's own.
+                    .run_if(resource_exists::<PowerUps>)
                     .run_if(stage_live),
             )
             .add_systems(OnExit(Screen::Playing), |mut commands: Commands| {
