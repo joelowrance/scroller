@@ -343,3 +343,36 @@ fn shot_blockers_stop_enemy_shots_only() {
     );
     assert!(alive(&app, enemy));
 }
+
+#[test]
+fn ground_targets_take_shots_and_rockets_but_never_touch_the_hero() {
+    let mut app = app(0.0, quiet_tuning());
+    let hero = spawn_hero(&mut app, Vec2::new(-100.0, 0.0));
+    let ground = |app: &mut App, at: Vec2| {
+        app.world_mut()
+            .spawn((
+                Hitbox::new(10.0, 10.0),
+                Layer::Ground,
+                Health(1),
+                ScoreValue(300),
+                Transform::from_translation(at.extend(0.0)),
+            ))
+            .id()
+    };
+    // Sitting right under the Hero: no hit.
+    let under = ground(&mut app, Vec2::new(-100.0, 0.0));
+    let shot_target = ground(&mut app, Vec2::new(50.0, 0.0));
+    let rocket_target = ground(&mut app, Vec2::new(50.0, 60.0));
+    spawn_shot(&mut app, Layer::HeroShot, Vec2::new(50.0, 0.0));
+    spawn_shot(&mut app, Layer::Rocket, Vec2::new(50.0, 60.0));
+    // A rocket passes under an air enemy.
+    let air = spawn_enemy(&mut app, Vec2::new(0.0, -60.0), 1, 100);
+    let rocket = spawn_shot(&mut app, Layer::Rocket, Vec2::new(0.0, -60.0));
+    app.update();
+    assert!(!alive(&app, shot_target) && !alive(&app, rocket_target));
+    assert!(alive(&app, air) && alive(&app, rocket));
+    assert!(alive(&app, under) && alive(&app, hero));
+    let log = app.world().resource::<Log>();
+    assert_eq!(log.score, [300, 300]);
+    assert_eq!(log.lives_lost, 0);
+}

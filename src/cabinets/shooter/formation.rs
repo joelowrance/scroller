@@ -1,11 +1,9 @@
 //! Formations: enemies that enter together. Destroying every member drops
 //! the Power-up the Stage file named, or pays the Formation bonus if it
 //! named none. If any member leaves alive, the Formation can't be cleared.
+//! Shared by both ship Cabinets; each checks the letters it knows.
 
 use bevy::prelude::*;
-
-/// The Power-up letters from the design doc.
-pub const POWER_UPS: [char; 6] = ['G', 'D', 'T', 'S', 'W', 'B'];
 
 /// What clearing a Formation earns.
 #[derive(Clone, Copy, Debug, PartialEq)]

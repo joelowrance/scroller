@@ -809,6 +809,64 @@ write new code only where Cabinet 2 differs.
 - **Gallery:** an enemy gallery Stage (`assets/stages/2-gallery.ron`), shown
   with `?gallery`, as in Cabinet 1.
 
+## Decisions made while building the gameplay (#14)
+
+- **Where the code is:** `src/cabinets/vertical_shooter/`. The shared pieces
+  moved to `src/cabinets/shooter/`, which Cabinet 1 now uses too:
+  - Formations and the Power-up drop rule (`formation.rs`).
+  - The pattern helpers `dir`, `fan`, `ring`, `turn_toward`, `bob` and
+    `home` (`pattern.rs`).
+  - The on/off `Pulse` behind both the Arc Gate and the Tether.
+- **Two new kit layers:**
+  - `Layer::Ground` is hit by Hero shots and rockets, and never touches the
+    Hero.
+  - `Layer::Rocket` hits ground targets only.
+- **The Swift has its own brain, not the Hook's with an axis parameter.**
+  The axis mapping took more code than the Swift's own state machine, so the
+  two share the shape and the numbers, not the code.
+- **The Mote uses the shared `home` step**, with its own tuning section,
+  rather than Cabinet 1's `Mote` type.
+- **A Riser pod is a ground target while it climbs.** When it takes off it
+  switches to `Layer::Enemy` and its score drops from 150 to 50.
+- **The fairness gate is one function, `may_fire`.** It checks grace, "not
+  below the Hero", the minimum distance from where the bullets appear, and
+  the bullet cap, all or nothing.
+  - A pod that bursts too close fizzles.
+  - A flak burst throws its ring only when the Hero is 40 px or more away.
+  - Cabinet 1's own gate is unchanged.
+- **The flak burst's hit zone is a square** 2 × `burst_radius` on a side,
+  on the enemy-shot layer, for `burst_seconds`. A Pod or the Squall can stop
+  it, like any bullet.
+- **The Squall stops at the play area.** Each edge stops at its own
+  boundary (the top of the play area, the bottom of the screen). It only
+  touches what is at least partly inside the play area, so enemies waiting
+  off screen (a Swift during its warning, a Loom arriving, a Bellows beside
+  the edge) are spared (review of #60).
+- **A Wisp curves toward the Hero's side of the Wisp itself**, not the
+  Hero's half of the screen. When both are on the same half, it curves
+  across the Hero's path rather than away from it, which makes the column a
+  real threat.
+- **A Flak Battery's first mark comes half an interval after it appears**
+  (1.2 s with `flak.fire_interval: 2.4`), then every interval.
+- **Rockets launch while A is held**, alongside the gun, as Cabinet 1's Tail
+  fires with the gun. They don't fire on their own.
+- **A Silo's cycle is closed 2.4 s, then the 0.3 s flash, then open 1.2 s**
+  (3.9 s in all), so its first opening is 2.7 s after it appears.
+- **Power-ups read from a Save are clamped** to their maximums.
+- **Each Loom shuttle launches one Wisp per launch.** Launched Wisps belong
+  to no Formation.
+- **Sprites:** #15's `c2_*` sprites draw everything. Frames show the state:
+  - the Bellows vent glows, and a Riser pod flashes, before they fire;
+  - a Silo goes closed, then warning, then open;
+  - a Loom core shows shielded, then open;
+  - a Crawler's turret turns and flashes before each shot.
+
+  Air sprites, the Wren and the Pods cast `Sprites::shadow` silhouettes.
+  Swifts turn to face their path.
+- **The Stage 2 bonuses and the final scripted hit are not part of this
+  ticket.** The Stage-clear and no-miss bonuses wait, as Cabinet 1's do (#9).
+  `Sfx::FinalHit` belongs to the 2 → 3 Transition (#21).
+
 ## Stage files and art (#15)
 
 What #15 built, and the contract #14's code keeps with it.

@@ -27,13 +27,6 @@ const PROGRESS_BAR_W: f32 = 120.0;
 
 const SIDEWAYS_STAGE: &str = include_str!("../../assets/stages/placeholder-sideways.ron");
 const UPWARD_STAGE: &str = include_str!("../../assets/stages/placeholder-upward.ron");
-/// Cabinet 2's real Stages (#15), flown on the placeholder until its
-/// gameplay (#14) replaces it: the scenery and length are real, and the
-/// enemy kinds are skipped.
-const CABINET_2_STAGES: [&str; 2] = [
-    include_str!("../../assets/stages/2-1.ron"),
-    include_str!("../../assets/stages/2-2.ron"),
-];
 
 /// Seconds until the Hero may fire again.
 #[derive(Component)]
@@ -60,11 +53,7 @@ fn ahead(scroll: Scroll) -> Vec2 {
 }
 
 fn stage_for(session: &Session) -> StageTimeline {
-    match session.cabinet {
-        1 => StageTimeline::parse(CABINET_2_STAGES[session.stage.min(1)])
-            .expect("Cabinet 2 Stage files must be valid"),
-        c => stage_timeline(CABINETS[c].scroll),
-    }
+    stage_timeline(CABINETS[session.cabinet].scroll)
 }
 
 fn stage_timeline(scroll: Scroll) -> StageTimeline {
@@ -287,7 +276,9 @@ fn update_progress(
 
 /// Cabinets without their own code yet use the placeholder.
 fn uses_placeholder(session: Option<Res<Session>>) -> bool {
-    session.is_some_and(|s| s.cabinet != super::side_shooter::CABINET)
+    session.is_some_and(|s| {
+        s.cabinet != super::side_shooter::CABINET && s.cabinet != super::vertical_shooter::CABINET
+    })
 }
 
 pub struct PlaceholderCabinetPlugin;

@@ -129,7 +129,8 @@ pub(super) fn run_flashes(
             sprite.color = Color::WHITE;
         } else {
             sprite.color = flash.original;
-            commands.entity(entity).remove::<HitFlash>();
+            // The entity may be despawned this frame (shot down, gone off screen).
+            commands.entity(entity).try_remove::<HitFlash>();
         }
     }
 }

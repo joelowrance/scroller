@@ -64,8 +64,12 @@ try {
 
   for (let stage = 1; stage <= 2; stage++) {
     const name = `${cabinet}-${stage}`;
-    await tap("Space"); // start the Stage; its Save is used up
-    await wait(500);
+    // Start the Stage; its Save is used up. A Cabinet Transition may still
+    // be playing (they vary in length), so keep trying for a while.
+    for (let tries = 0; tries < 20 && (await saved()); tries++) {
+      await tap("Space");
+      await wait(600);
+    }
     if (await saved()) fail(`${name}: the Save was not used up when the Stage began`);
     // Hold fire, so the screenshots show the Hero shooting.
     await page.keyboard.down("KeyZ");

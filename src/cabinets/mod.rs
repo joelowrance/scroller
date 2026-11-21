@@ -13,6 +13,7 @@ use crate::run::Session;
 use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
 mod placeholder;
+pub mod shooter;
 pub mod side_shooter;
 #[cfg(test)]
 mod stage_checks;
@@ -91,6 +92,7 @@ impl Plugin for CabinetsPlugin {
             .add_plugins((
                 placeholder::PlaceholderCabinetPlugin,
                 side_shooter::SideShooterPlugin,
+                vertical_shooter::VerticalShooterPlugin,
             ));
     }
 }
