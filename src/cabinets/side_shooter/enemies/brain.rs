@@ -198,6 +198,8 @@ pub struct Gull {
     pub entry_x: f32,
     pub base_y: f32,
     pub fires: bool,
+    /// Flies the wave upside down (opposite phase), so two snakes cross.
+    pub flip: bool,
     fired: bool,
 }
 
@@ -207,15 +209,22 @@ impl Gull {
             entry_x,
             base_y,
             fires,
+            flip: false,
             fired: false,
         }
+    }
+
+    pub fn flipped(mut self, flip: bool) -> Self {
+        self.flip = flip;
+        self
     }
 
     fn step(&mut self, pos: &mut Vec2, ctx: &Ctx, t: &EnemyTypes) -> Out {
         let g = &t.gull;
         pos.x -= g.speed * ctx.dt;
         let wavelength = (g.speed * g.period).max(1.0);
-        pos.y = self.base_y + g.amplitude * (TAU * (self.entry_x - pos.x) / wavelength).sin();
+        let amplitude = if self.flip { -g.amplitude } else { g.amplitude };
+        pos.y = self.base_y + amplitude * (TAU * (self.entry_x - pos.x) / wavelength).sin();
         let mut out = Out::default();
         if self.fires && !self.fired && pos.x <= g.fire_x {
             self.fired = true;
@@ -808,6 +817,23 @@ mod tests {
         run(&mut tail, &mut b, None, 2.0 + t.gull.period / 2.0);
         // Both are at the same x now, so on the same height.
         assert!(close(a.x, b.x, 0.5) && close(a.y, b.y, 0.5), "{a} {b}");
+    }
+
+    #[test]
+    fn a_flipped_snake_crosses_a_plain_one() {
+        let t = types();
+        let mut plain = Brain::Gull(Gull::new(176.0, 20.0, false));
+        let mut flipped = Brain::Gull(Gull::new(176.0, -20.0, false).flipped(true));
+        let (mut a, mut b) = (Vec2::new(176.0, 20.0), Vec2::new(176.0, -20.0));
+        let mut above = Vec::new();
+        for _ in 0..(t.gull.period * 1.5 / DT) as usize {
+            plain.step(&mut a, &ctx(None), &t);
+            flipped.step(&mut b, &ctx(None), &t);
+            above.push(a.y > b.y);
+        }
+        // The plain snake starts above, then the two swap sides.
+        assert!(above[0]);
+        assert!(above.iter().any(|&x| !x), "they never cross");
     }
 
     #[test]

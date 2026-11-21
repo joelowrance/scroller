@@ -22,8 +22,8 @@
         // 0:28.0 teach: a Gull snake
         (at: 840.0, kind: "gull", pos: (176.0, 40.0)), // 0:28.0
         // 0:36.0 twist: two Gull snakes in opposite phase -> D
-        (at: 1080.0, kind: "gull", pos: (176.0, 35.0)), // 0:36.0
-        (at: 1104.0, kind: "gull", pos: (176.0, -35.0), params: {"drop": "D"}), // 0:36.8
+        (at: 1080.0, kind: "gull", pos: (176.0, 20.0)), // 0:36.0
+        (at: 1080.0, kind: "gull", pos: (176.0, -20.0), params: {"flip": true, "drop": "D"}), // 0:36.0
         // 0:46.0 teach: three Bellbuoys, nothing else
         (at: 1380.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:46.0
         (at: 1422.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:47.4

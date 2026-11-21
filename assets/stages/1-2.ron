@@ -74,7 +74,7 @@
         // 2:00.0 Restart Point
         // 2:04.0 twist: Hooks from behind in a 132 px corridor -> W
         (at: 3752.0, kind: "hook", pos: (0.0, 0.0), params: {"drop": "W"}), // 2:04.0
-        // 2:16.0 test: Clams in the ceiling alcoves, firing Gulls below
+        // 2:16.0 test: Clams high in an open hall, firing Gulls below
         (at: 4136.0, kind: "clam", pos: (176.0, 80.0), params: {"size": 1}), // 2:16.0
         (at: 4200.0, kind: "gull", pos: (176.0, -30.0), params: {"fires": true}), // 2:18.0
         (at: 4264.0, kind: "clam", pos: (176.0, 80.0), params: {"size": 1}), // 2:20.0

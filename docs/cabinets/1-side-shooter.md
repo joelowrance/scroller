@@ -552,7 +552,7 @@ or two drones.
 | 1:52 | breathe | The corridor opens out. |
 | 2:00 | calm | **Restart Point.** |
 | 2:04 | twist | Hooks from behind in a 132 px corridor (the Tail pays off) → **W**. |
-| 2:16 | test | Clams set into ceiling alcoves, firing Gulls through the gaps. |
+| 2:16 | test | Clams high in an open hall (the ceiling lifts away), firing Gulls below. |
 | 2:30 | set piece | **Ferry** in the great furnace hall, with Barnacles on the floor → **D**. |
 | 2:50 | breathe | Short. Steam vents (scenery only). |
 | 2:55 | calm | **Restart Point.** |

@@ -211,8 +211,9 @@ mod playthrough {
     }
 
     /// Plays a whole Stage with the enemies, terrain and scenery, at a frame
-    /// step of `dt`, and returns the points scored once it clears.
-    fn play(stage: usize, dt: f32, time_scale: f32) -> u64 {
+    /// step of `dt`, and returns the points scored and the game seconds it
+    /// took to clear.
+    fn play(stage: usize, dt: f32, time_scale: f32) -> (u64, f32) {
         let tuning = Tuning {
             debug_keys: true,
             invincible_hero: true,
@@ -259,14 +260,21 @@ mod playthrough {
         }
         let done = app.world().resource::<Done>();
         assert!(done.cleared, "Stage {} did not clear", stage + 1);
-        done.score
+        (done.score, app.world().resource::<StageClock>().seconds)
     }
 
     #[test]
     fn both_stages_play_through_at_normal_speed() {
-        for stage in 0..2 {
-            let score = play(stage, 1.0 / 60.0, 1.0);
+        // Measured, not computed: the clear comes when the designed length
+        // is up, within a couple of frames.
+        for (stage, length) in [(0, 210.0), (1, 225.0)] {
+            let (score, seconds) = play(stage, 1.0 / 60.0, 1.0);
             assert!(score >= 3000, "Stage {} scored {score}", stage + 1);
+            assert!(
+                (seconds - length).abs() < 0.05,
+                "Stage {} took {seconds} s",
+                stage + 1
+            );
         }
     }
 

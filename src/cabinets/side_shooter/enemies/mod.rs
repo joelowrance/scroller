@@ -16,6 +16,7 @@
 //! - `drop`: the Power-up letter the Formation drops when cleared. Without
 //!   it, a Formation of more than one pays the Formation bonus instead.
 //! - `fires`: Gulls only, the Stage 2 variant that shoots.
+//! - `flip`: Gulls only, the wave in opposite phase, so two snakes cross.
 //! - `ceiling`: Barnacles only, mounted upside down.
 //! - `floor_y` / `ceiling_y`: Arc Gates only, the pylons' centres. Both are
 //!   expected; a missing one logs a warning and falls back to
@@ -110,6 +111,8 @@ pub struct SpawnParams {
     #[serde(deserialize_with = "present")]
     pub drop: Option<String>,
     pub fires: bool,
+    /// Gulls only: fly the wave in opposite phase, to cross another snake.
+    pub flip: bool,
     pub ceiling: bool,
     #[serde(deserialize_with = "present")]
     pub floor_y: Option<f32>,
@@ -183,7 +186,7 @@ pub fn layout(
         Kind::Gull => (0..size(t.gull.formation_size))
             .map(|i| {
                 let behind = i as f32 * t.gull.speed * t.gull.spacing_seconds;
-                let gull = brain::Gull::new(lead.x, lead.y, params.fires);
+                let gull = brain::Gull::new(lead.x, lead.y, params.fires).flipped(params.flip);
                 (lead + Vec2::X * behind, Brain::Gull(gull))
             })
             .collect(),

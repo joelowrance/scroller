@@ -40,9 +40,23 @@ const tap = async (key) => {
   await page.keyboard.up(key);
   await wait(250);
 };
-const save = () =>
-  page.evaluate(() => JSON.parse(localStorage.getItem("scroller.save") ?? "null"));
+const read = (key) =>
+  page.evaluate((k) => JSON.parse(localStorage.getItem(`scroller.${k}`) ?? "null"), key);
+const save = () => read("save");
+// With debug_keys, Cabinet 1 records the Stage's real progress here.
+const clock = () => read("debug.stage");
 const shot = (name) => page.screenshot({ path: `${out}/stages-${name}.png` });
+// Waits until the game itself has scrolled `fraction` of Stage `stage`,
+// however fast or slow the browser runs it.
+const reach = async (stage, fraction, timeoutMs) => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const c = await clock();
+    if (c && c.stage === stage && c.progress >= fraction) return c;
+    await wait(100);
+  }
+  return null;
+};
 
 try {
   await page.goto(`${base}?invincible&time_scale=${SCALE}`);
@@ -54,34 +68,43 @@ try {
 
   for (const [i, stage] of STAGES.entries()) {
     await tap("Space"); // play the Stage
-    const started = Date.now();
-    const game = () => ((Date.now() - started) / 1000) * SCALE;
     // Hold fire, so the screenshots show the Hero shooting.
     await page.keyboard.down("KeyZ");
-    for (const [at, label] of [[6, "start"], [stage.seconds / 2, "middle"], [stage.seconds - 8, "end"]]) {
-      await wait(Math.max(0, ((at - game()) * 1000) / SCALE));
+    // Generous: the browser may run well below the requested speed.
+    const budget = ((stage.seconds * 3) / SCALE) * 1000 + 30_000;
+    let stuck = false;
+    for (const [fraction, label] of [[0.02, "start"], [0.5, "middle"], [0.97, "end"]]) {
+      if (!(await reach(i, fraction, budget))) {
+        fail(`Stage ${stage.name} never reached ${label} (${fraction})`);
+        stuck = true;
+        break;
+      }
       await shot(`${stage.name}-${label}`);
     }
+    const end = stuck ? null : await reach(i, 1.0, budget);
+    await page.keyboard.up("KeyZ");
     // Clearing writes a Save for the next Stage (Cabinet 2 after 1-2).
     const want = i === 0 ? { cabinet: 0, stage: 1 } : { cabinet: 1, stage: 0 };
-    const deadline = Date.now() + ((stage.seconds * 1.5) / SCALE) * 1000 + 30_000;
     let cleared = false;
-    while (Date.now() < deadline) {
+    for (let n = 0; n < 50 && end; n++) {
       const s = await save();
       if (s && s.cabinet === want.cabinet && s.stage === want.stage) {
         cleared = true;
         break;
       }
-      await wait(500);
+      await wait(100);
     }
-    await page.keyboard.up("KeyZ");
-    const took = game();
     if (!cleared) {
       fail(`Stage ${stage.name} did not clear`);
       await shot(`${stage.name}-stuck`);
       break;
     }
-    console.log(`Stage ${stage.name} cleared after about ${Math.round(took)} game seconds`);
+    const seconds = end.seconds.toFixed(1);
+    console.log(`Stage ${stage.name} cleared after ${seconds} game seconds (designed: ${stage.seconds})`);
+    // One long frame (up to 2 game seconds at 8x) may overshoot the end.
+    if (Math.abs(end.seconds - stage.seconds) > 3) {
+      fail(`Stage ${stage.name} took ${seconds} game seconds, not about ${stage.seconds}`);
+    }
     await wait(600);
     await shot(`${stage.name}-cleared`);
     if (i === 0 && (await save()).score < 3000) fail("no Stage clear bonus in the score");
