@@ -300,4 +300,4 @@ impl Plugin for StagesPlugin {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

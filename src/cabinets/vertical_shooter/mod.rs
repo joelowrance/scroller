@@ -7,8 +7,8 @@
 
 use bevy::prelude::*;
 
-use super::cabinet_is;
-use crate::flow::Screen;
+use super::{LifeLost, ScoreGained, StageCleared, cabinet_is};
+use crate::flow::{FlowSet, Screen};
 use crate::kit::{KitSet, SpawnRequested, StageRun, StageTimeline, stage_live};
 use crate::run::Session;
 use crate::sprites::Sprites;
@@ -50,6 +50,7 @@ fn spawn_stage(
     commands.insert_resource(StageRun::new(stage_timeline(&tuning, session.stage)));
     hero::spawn_wren(&mut commands, &sprites, t, &power);
     commands.insert_resource(power);
+    commands.insert_resource(Misses::default());
 }
 
 /// Spawns the kinds this module owns: Power-up capsules (`power_up:<letter>`).
@@ -67,6 +68,38 @@ fn spawn_requested(
                 &tuning.vertical_shooter,
             );
         }
+    }
+}
+
+/// Lives lost so far in this Stage, for the no-miss bonus.
+#[derive(Resource, Default)]
+struct Misses(u32);
+
+fn count_misses(mut lost: MessageReader<LifeLost>, misses: Option<ResMut<Misses>>) {
+    let n = lost.read().count() as u32;
+    if let Some(mut misses) = misses {
+        misses.0 += n;
+    }
+}
+
+/// The Stage clear bonus, plus the no-miss bonus if no life was lost.
+pub fn stage_bonus_points(t: &tuning::VerticalShooterTuning, misses: u32) -> u64 {
+    t.score.stage_clear + if misses == 0 { t.score.no_miss } else { 0 }
+}
+
+/// The Stage clear and no-miss bonuses, paid as the scroll ends (before the
+/// flow saves the score and shows the Stage Card), as in Cabinet 1.
+fn stage_bonus(
+    tuning: Res<Tuning>,
+    misses: Res<Misses>,
+    mut cleared: MessageReader<StageCleared>,
+    mut score: MessageWriter<ScoreGained>,
+) {
+    if cleared.read().count() > 0 {
+        score.write(ScoreGained(stage_bonus_points(
+            &tuning.vertical_shooter,
+            misses.0,
+        )));
     }
 }
 
@@ -113,6 +146,7 @@ impl Plugin for VerticalShooterPlugin {
                         .after(KitSet::Resolve)
                         .before(KitSet::Effects),
                     (hero::pods_blink, hero::show_bombs, save_power_ups).after(KitSet::Effects),
+                    stage_bonus.after(KitSet::Timeline).before(FlowSet),
                 )
                     .run_if(cabinet_is(CABINET))
                     // The Session moves to this Cabinet one frame before
@@ -120,11 +154,21 @@ impl Plugin for VerticalShooterPlugin {
                     .run_if(resource_exists::<PowerUps>)
                     .run_if(stage_live),
             )
+            // Lives can be lost during the hit-stop, so this one always listens.
+            .add_systems(
+                Update,
+                count_misses
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(cabinet_is(CABINET)),
+            )
             .add_systems(OnExit(Screen::Playing), |mut commands: Commands| {
                 commands.remove_resource::<PowerUps>();
+                commands.remove_resource::<Misses>();
             });
     }
 }
 
+#[cfg(test)]
+mod balance;
 #[cfg(test)]
 mod tests;

@@ -744,11 +744,30 @@ used up. A player who lost lives gets the same drops as a way back up.
 
 The bonuses are paid as in Cabinet 1.
 
-**Rough targets** (#17 measures the real ones): about 35–45k for a perfect
-Stage 1 and 45–55k for Stage 2. Ground targets and climbing Riser pods are
-worth more than air popcorn, so working the ground pays. A decent player
-reaches the second extra life (70,000) during this Cabinet and the third
-(120,000) early in Cabinet 3.
+**Measured totals** (#15; the test `extra_lives_land_where_the_design_doc_says`
+in `vertical_shooter/balance.rs` recomputes them from the Stage files and
+tuning). A perfect Stage, with bullets cancelled by the Squall left out:
+
+| | Enemies | Formation bonus | Clear + no miss | Core total | Medals | **Perfect** | Riser pods milked | Loom Wisps milked | Most |
+|---|---|---|---|---|---|---|---|---|---|
+| Stage 1 | 22,100 | 3,500 | 8,000 | 33,600 | 0 | **33,600** | +2,100 | +2,000 | 37,700 |
+| Stage 2 | 27,300 | 3,700 | 8,000 | 39,000 | +5,000 | **44,000** | +1,800 | +1,000 | 46,800 |
+
+- **Medals** come from collecting every drop in order from a fresh start
+  with no life or bomb lost. Stage 1's drops (G P R G B S W P G) max
+  nothing. By Stage 2 the gun, Pods and Ward are full, so 5 of its 7 drops
+  (G, W, P, G, G; not S or B) pay medals.
+- **Milked** means leaving a Riser launcher alive while it launches (each pod
+  shot while climbing), or shooting a Loom's shuttles off as late as still
+  leaves time to kill its core before it retreats.
+- Both Stages come in a little under the first rough targets (35–45k and
+  45–55k). They were left there, because the extra lives land where they
+  should: Cabinet 1's perfect core is 60,800, so a strong player starts here
+  past the second extra life (70,000) only with Cabinet 1's extras. A
+  perfect Stage 1 brings them to 94,400, and Stage 2 to 138,400. So the
+  third extra life (120,000) comes late in Cabinet 2, during Stage 2, even
+  with everything milked in Stage 1 (116,700 at most before Stage 2). A
+  decent player reaches it early in Cabinet 3.
 
 ## Sound and music (for #15)
 

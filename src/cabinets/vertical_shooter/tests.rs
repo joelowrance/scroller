@@ -409,3 +409,52 @@ fn the_squall_spares_enemies_not_yet_on_screen() {
     let mut q = app.world_mut().query::<&hero::Squall>();
     assert_eq!(q.iter(app.world()).count(), 0, "the Squall is done");
 }
+
+/// The points scored in one frame after `setup` sends its messages.
+fn points_after(app: &mut App, setup: impl FnOnce(&mut World)) -> Vec<u64> {
+    app.world_mut()
+        .resource_mut::<Messages<ScoreGained>>()
+        .clear();
+    setup(app.world_mut());
+    app.update();
+    app.world_mut()
+        .resource_mut::<Messages<ScoreGained>>()
+        .drain()
+        .map(|s| s.0)
+        .collect()
+}
+
+#[test]
+fn a_clean_stage_clear_pays_the_clear_and_no_miss_bonuses() {
+    let mut app = app();
+    let s = &Tuning::default().vertical_shooter.score;
+    let points = points_after(&mut app, |w| {
+        w.write_message(StageCleared);
+    });
+    assert_eq!(points, [s.stage_clear + s.no_miss]);
+}
+
+#[test]
+fn a_lost_life_costs_the_no_miss_bonus() {
+    let mut app = app();
+    let s = &Tuning::default().vertical_shooter.score;
+    app.world_mut().write_message(LifeLost);
+    app.update();
+    let points = points_after(&mut app, |w| {
+        w.write_message(StageCleared);
+    });
+    assert_eq!(points, [s.stage_clear]);
+    // A new Stage starts clean.
+    app.world_mut()
+        .resource_mut::<NextState<Screen>>()
+        .set(Screen::StageCard);
+    app.update();
+    app.world_mut()
+        .resource_mut::<NextState<Screen>>()
+        .set(Screen::Playing);
+    app.update();
+    let points = points_after(&mut app, |w| {
+        w.write_message(StageCleared);
+    });
+    assert_eq!(points, [s.stage_clear + s.no_miss]);
+}
