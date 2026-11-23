@@ -1,0 +1,21 @@
+#! background
+# A crumbling Stage 2 gantry, 8x8: a buckled grate. Frame 1 is its shake.
+# Format: see README.md in this folder.
+
+88828888
+82.28282
+8.888828
+22.22222
+2......2
+.2....2.
+........
+........
+
+88882888
+282.2828
+88.88882
+222.2222
+2......2
+.2....2.
+........
+........

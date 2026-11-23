@@ -1,0 +1,18 @@
+# An arc floor tile, 8x4, repeated along the strip. Frames: off, crackle
+# (the warning), live.
+# Format: see README.md in this folder.
+
+28888882
+21111112
+12111121
+22222222
+
+28878882
+21171112
+12111171
+22222222
+
+78787877
+71777717
+17171771
+22222222

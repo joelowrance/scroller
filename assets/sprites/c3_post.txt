@@ -1,0 +1,28 @@
+#! background
+# A leaning fence post, 4x24 (Bark and Ochre), with a wire stub.
+# Format: see README.md in this folder.
+
+..2.
+..32
+.32.
+.32.
+.22.
+.322
+.32.
+.32.
+.32.
+.22.
+.32.
+.322
+.32.
+.32.
+.22.
+.32.
+.32.
+.32.
+.22.
+.32.
+.32.
+.32.
+2222
+2222

@@ -1,0 +1,21 @@
+#! background
+# A conveyor tile, 8x8, Iron and Bark; two frames run the belt.
+# Format: see README.md in this folder.
+
+22222222
+28828828
+82882882
+22222222
+11111111
+21111112
+28888882
+22222222
+
+22222222
+82882882
+28828828
+22222222
+11111111
+21111112
+28888882
+22222222

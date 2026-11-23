@@ -1,0 +1,12 @@
+#! background
+# A Stage 2 gantry (thin ledge), 8x8: an Iron grate.
+# Format: see README.md in this folder.
+
+88888888
+82828282
+88888888
+22222222
+2......2
+.2....2.
+..2..2..
+...22...
