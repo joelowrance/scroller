@@ -24,11 +24,14 @@ pub enum Layer {
     Ground,
     /// A Hero shot that only hits [`Layer::Ground`] (Cabinet 2's rockets).
     Rocket,
+    /// Part of the place that hurts the Hero on touch and ignores shots
+    /// (Cabinet 3's crushers, arc floors, shockwaves, a Strider's legs).
+    Hazard,
 }
 
 /// The layer pairs that interact. In each [`Contact`], `a` is on the first
 /// layer of its pair and `b` on the second.
-pub const PAIRS: [(Layer, Layer); 10] = [
+pub const PAIRS: [(Layer, Layer); 11] = [
     (Layer::HeroShot, Layer::Enemy),
     (Layer::EnemyShot, Layer::Hero),
     (Layer::Enemy, Layer::Hero),
@@ -39,6 +42,7 @@ pub const PAIRS: [(Layer, Layer); 10] = [
     (Layer::EnemyShot, Layer::ShotBlocker),
     (Layer::HeroShot, Layer::Ground),
     (Layer::Rocket, Layer::Ground),
+    (Layer::Hazard, Layer::Hero),
 ];
 
 /// Whether two layers interact at all, in either order.

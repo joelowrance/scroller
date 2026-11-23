@@ -22,11 +22,13 @@ pub struct StageRestarted {
 pub(super) fn advance_timeline(
     time: Res<Time>,
     mut stage: ResMut<StageRun>,
+    driven: Option<Res<super::timeline::DrivenScroll>>,
     mut spawns: MessageWriter<SpawnRequested>,
     mut cleared: MessageWriter<StageCleared>,
 ) {
     let StageRun { timeline, cursor } = &mut *stage;
-    let step = cursor.advance(timeline, time.delta_secs());
+    let limit = driven.map_or(f32::INFINITY, |d| d.0);
+    let step = cursor.advance_at_most(timeline, time.delta_secs(), limit);
     for entry in &timeline.spawns[step.spawns] {
         spawns.write(SpawnRequested {
             kind: entry.kind.clone(),
