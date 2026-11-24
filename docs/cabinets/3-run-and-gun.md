@@ -1066,3 +1066,18 @@ run_and_gun: (
   are Cabinet 3 ideas, defined here, like Cabinet 2's "front". The glossary
   keeps to words that hold across the whole Run. The Hero stays "the Hero"
   on foot, with no separate name.
+
+## Decisions made while building the 2 → 3 Transition (#21)
+
+- **The Hero lands at (−100, −86)** on screen: feet on the ground at
+  y = −96, standing, facing right, with the folded parachute lying on the
+  ground just behind it. Stage 1's opening (#18) can start the Hero there
+  without a cut.
+- **Stand-in art, for #18 and #20 to replace:** `pilot` (the Hero on foot,
+  12×20 standing), `parachute`, and `c3_ground` (the flat ground strip,
+  marked `#! background`). The Transition draws the Spire as a plain Iron
+  line and the cloud lid as Bark with Cabinet 2's cloud-bank edge in this
+  palette, as in the Stage 1 theme above.
+- **The wreck lands far off to the right and burns** (a small Ember flicker
+  and rising Bark and Ochre smoke) to the end of the Transition. Stage 1's
+  wreck in the mid layer picks it up.

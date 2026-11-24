@@ -111,11 +111,35 @@ fn save_power_ups(power: Res<PowerUps>, mut session: ResMut<Session>) {
     }
 }
 
+/// Where the Wren was last seen in a Stage, so the 2 → 3 Cabinet Transition
+/// can start from the same spot.
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct WrenLastSeen(pub Vec2);
+
+impl Default for WrenLastSeen {
+    fn default() -> Self {
+        Self(tuning::vec2(tuning::HeroTuning::default().start))
+    }
+}
+
+fn remember_wren(wren: Query<&Transform, With<hero::Wren>>, mut last: ResMut<WrenLastSeen>) {
+    if let Ok(transform) = wren.single() {
+        last.0 = transform.translation.truncate();
+    }
+}
+
 pub struct VerticalShooterPlugin;
 
 impl Plugin for VerticalShooterPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((enemies::EnemiesPlugin, sound::SoundPlugin))
+            .init_resource::<WrenLastSeen>()
+            .add_systems(
+                PostUpdate,
+                remember_wren
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(cabinet_is(CABINET)),
+            )
             .add_systems(
                 OnEnter(Screen::Playing),
                 spawn_stage.run_if(cabinet_is(CABINET)),
