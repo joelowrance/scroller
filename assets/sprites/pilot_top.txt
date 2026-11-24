@@ -1,0 +1,11 @@
+# The Hero seen from above as it ejects (2 -> 3 Transition), 7x7:
+# Foam suit, accent visor facing forward (up).
+# Format: see README.md in this folder.
+
+..222..
+.24442.
+2544452
+2555552
+2555552
+.25552.
+..2.2..

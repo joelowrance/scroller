@@ -197,10 +197,12 @@ pub enum Song {
     Roots,
     /// Cabinet 3, Stage 2's run-out: climbing in pitch toward the tower.
     RootsClimb,
+    /// The sting under the 2 → 3 Cabinet Transition (plays once).
+    BailOut,
 }
 
 impl Song {
-    pub const ALL: [Song; 12] = [
+    pub const ALL: [Song; 13] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
@@ -213,6 +215,7 @@ impl Song {
         Song::Wreckfall,
         Song::Roots,
         Song::RootsClimb,
+        Song::BailOut,
     ];
 }
 
@@ -521,7 +524,7 @@ mod tests {
             let (samples, looping) = &bank.songs[&id];
             assert_eq!(
                 *looping,
-                !matches!(id, Song::StageClear | Song::BankUp),
+                !matches!(id, Song::StageClear | Song::BankUp | Song::BailOut),
                 "{id:?}"
             );
             if *looping {
@@ -646,10 +649,13 @@ mod tests {
         assert_eq!(wanted(&app), None);
         assert_eq!(app.world().resource::<TransitionMusic>().0, None);
         let bank = AudioBank::render().unwrap();
-        let (samples, looping) = &bank.songs[&Song::BankUp];
-        assert!(!looping);
-        let seconds = samples.len() as f32 / synth::SAMPLE_RATE as f32;
-        assert!((4.0..5.5).contains(&seconds), "{seconds} s");
+        // Each sting fits its Transition (5.5 s and 6 s).
+        for (song, max) in [(Song::BankUp, 5.5), (Song::BailOut, 6.0)] {
+            let (samples, looping) = &bank.songs[&song];
+            assert!(!looping);
+            let seconds = samples.len() as f32 / synth::SAMPLE_RATE as f32;
+            assert!((4.0..max).contains(&seconds), "{song:?}: {seconds} s");
+        }
     }
 
     #[test]

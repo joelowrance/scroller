@@ -27,7 +27,7 @@ use std::f32::consts::{FRAC_PI_2, PI};
 use bevy::color::Mix;
 use bevy::prelude::*;
 
-use super::into_cabinet_2;
+use super::{Span, into_cabinet_2, noise};
 use crate::audio::{Song, TransitionMusic};
 use crate::cabinets::CABINETS;
 use crate::cabinets::side_shooter::WrenLastSeen;
@@ -38,21 +38,6 @@ use crate::display::{Backdrop, HALF_H, HALF_W};
 use crate::flow::{CardReason, Screen};
 use crate::font::{CELL_H, CELL_W, PixelText, text_at};
 use crate::sprites::Sprites;
-
-/// A stretch of the sequence, from `.0` to `.1` seconds.
-#[derive(Clone, Copy, Debug)]
-pub(super) struct Span(f32, f32);
-
-impl Span {
-    /// 0 before the span, 1 after it, linear within.
-    fn at(self, t: f32) -> f32 {
-        ((t - self.0) / (self.1 - self.0)).clamp(0.0, 1.0)
-    }
-
-    fn contains(self, t: f32) -> bool {
-        (self.0..self.1).contains(&t)
-    }
-}
 
 /// Length of the whole sequence, in seconds.
 pub(super) const SECONDS: f32 = 5.5;
@@ -146,15 +131,6 @@ pub(super) fn wren_pose(t: f32, from: Vec2) -> (Vec2, f32) {
     let bank = (PI * BANK.at(t)).sin();
     let at = glide + Vec2::new(0.0, 10.0 * bank);
     (at, bank * BANK_DEGREES.to_radians())
-}
-
-/// A repeatable pseudo-random number in 0..1.
-fn noise(i: u32, salt: u32) -> f32 {
-    let mut x = i.wrapping_mul(0x9E37_79B9) ^ salt.wrapping_mul(0x85EB_CA6B);
-    x ^= x >> 15;
-    x = x.wrapping_mul(0x2C1B_3C6D);
-    x ^= x >> 12;
-    (x & 0xFFFF) as f32 / 65535.0
 }
 
 /// Wraps `x` into `-half..half`.
