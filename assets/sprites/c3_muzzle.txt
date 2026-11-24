@@ -1,0 +1,14 @@
+# The Hero's muzzle flash, 5x5, Ember with a Foam heart. Two frames.
+# Format: see README.md in this folder.
+
+.6.6.
+66566
+.555.
+66566
+.6.6.
+
+..6..
+.656.
+65556
+.656.
+..6..

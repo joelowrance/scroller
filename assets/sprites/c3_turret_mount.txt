@@ -1,0 +1,7 @@
+# A Turret's mount plate, 12x4, Iron with a Foam outline (floor; the game turns it for walls and ceilings).
+# Format: see README.md in this folder.
+
+..55555555..
+.5888888885.
+588222222885
+555555555555

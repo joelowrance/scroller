@@ -1,0 +1,13 @@
+# A Power-up capsule, 10x10: Sprout rim, Umber inside for the Foam letter.
+# Format: see README.md in this folder.
+
+..444444..
+.44111144.
+4411111144
+4111111114
+4111111114
+4111111114
+4111111114
+4411111144
+.44111144.
+..444444..

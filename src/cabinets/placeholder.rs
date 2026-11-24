@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 
-use super::{CABINETS, Scroll};
+use super::{CABINETS, Scroll, run_and_gun};
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
 use crate::input::{Button, Controls};
@@ -53,7 +53,24 @@ fn ahead(scroll: Scroll) -> Vec2 {
 }
 
 fn stage_for(session: &Session) -> StageTimeline {
+    if session.cabinet == run_and_gun::CABINET {
+        return run_and_gun_stage(session.stage);
+    }
     stage_timeline(CABINETS[session.cabinet].scroll)
+}
+
+/// Cabinet 3's real Stages (#20), flown on the placeholder until its
+/// gameplay (#19) replaces it: the scenery, terrain and length are real, and
+/// the enemy kinds are skipped. The terrain is drawn as scenery.
+fn run_and_gun_stage(stage: usize) -> StageTimeline {
+    let text = run_and_gun::STAGES[stage.min(1)];
+    let mut timeline = StageTimeline::parse(text).expect("Cabinet 3 Stage files must be valid");
+    let terrain =
+        run_and_gun::terrain::StageTerrain::parse(text).expect("Cabinet 3 terrain must be valid");
+    timeline.spawns.extend(terrain.scenery());
+    // The timeline plays its spawns in order.
+    timeline.spawns.sort_by(|a, b| a.at.total_cmp(&b.at));
+    timeline
 }
 
 fn stage_timeline(scroll: Scroll) -> StageTimeline {
@@ -70,8 +87,8 @@ fn spawn_stage(mut commands: Commands, session: Res<Session>, sprites: Res<Sprit
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
-    // (Cabinet 2's Stages bring their own scenery.)
-    let stripes = if session.cabinet == 1 {
+    // (Cabinet 3's Stages bring their own scenery and terrain.)
+    let stripes = if session.cabinet == run_and_gun::CABINET {
         0
     } else {
         STRIPE_COUNT

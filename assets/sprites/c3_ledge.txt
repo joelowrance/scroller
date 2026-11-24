@@ -1,0 +1,12 @@
+#! background
+# A thin ledge, 8x8 (8 px thick): a fallen fence plank, Ochre on a Bark edge.
+# Format: see README.md in this folder.
+
+33333333
+32333233
+33333333
+22222222
+.2....2.
+.2....2.
+........
+........

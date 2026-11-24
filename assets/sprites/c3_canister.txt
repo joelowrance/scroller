@@ -1,0 +1,11 @@
+# A Dropper's canister, 8x8: an enemy bullet, Ice with a Foam core.
+# Format: see README.md in this folder.
+
+..7777..
+.777777.
+77755777
+77555577
+77555577
+77755777
+.777777.
+..7777..

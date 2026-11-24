@@ -1,0 +1,6 @@
+# The Hero's shot, 6x3: an Ember streak with a Foam head, flying right.
+# Format: see README.md in this folder.
+
+..6655
+666555
+..6655

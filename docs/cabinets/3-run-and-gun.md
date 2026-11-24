@@ -314,10 +314,10 @@ from nothing, as Cabinet 2 did, so the first drop comes in the first 10 s.
 | When (pace time) | Perfect | Typical |
 |---|---|---|
 | Stage 1, 0:56 (first Sentry) | Gun 2 + Flare | Gun 2 |
-| Stage 1, 1:30 (first Standoff) | Gun 3 + Flare: narrow 12, large 36 | Gun 2: narrow 12, large 12 |
+| Stage 1, 1:12 (first Standoff) | Gun 3 + Flare: narrow 12, large 36 | Gun 2: narrow 12, large 12 |
 | Stage 1, 2:44 (first Hauler) | Gun 3 + Flare + Jet + Ward | Gun 3 |
 | Stage 2, 0:00 | Gun 4 + all: narrow 24, large 48 | Gun 3: narrow 12, large 36 |
-| Stage 2, 3:00 (the Strider) | Gun 4 + all | Gun 3 + Flare |
+| Stage 2, 2:29 (the Strider) | Gun 4 + all | Gun 3 + Flare |
 
 Time-to-kill targets by role, and the HP that follows. The roles are the
 shared language from Cabinets 1 and 2.
@@ -329,7 +329,7 @@ shared language from Cabinets 1 and 2.
 | Timing lock | Sentry | dies inside one 1.4 s opening at typical power | 14 | 1.2 s at narrow 12; needs two openings at gun 1 |
 | Gunner | Dropper, Turret | 1.5–2 s, so it gets a burst off | 20, 24 | Dropper 1.7 s and Turret 2.0 s at narrow 12 |
 | Power check | Hauler | about 2 s at typical power up close, 3–4 s at range or at gun 2 | 40 | 1.7 s at gun 3 within 50 px (24 connects past the plough), 3.3 s at gun 2 or at range |
-| Set piece | Strider | about 10 s at typical, well inside its 25 s Standoff | 120 (core) | 10 s at gun 2–3 (only the centre shot hits its core), 5 s at gun 4 |
+| Set piece | Strider | about 10 s at typical, well inside its 22 s Standoff | 120 (core) | 10 s at gun 2–3 (only the centre shot hits its core), 5 s at gun 4 |
 
 ### Losing a life
 
@@ -689,7 +689,7 @@ under it.
     a full jump (0.73 s). Beyond 120 px there is no wave.
 - **Time to kill:** only the centre shot hits the 12 px core, at any range.
   That is 12 DPS at gun 2–3 (10 s) and 24 at gun 4 (5 s). Its Standoff has a
-  25 s timer. If the timer runs out, the Strider walks off to the right: no
+  22 s timer. If the timer runs out, the Strider walks off to the right: no
   points, no drop.
 
 ### Hazards
@@ -720,39 +720,38 @@ below).
     fallen fence posts and scaffold planks that make the ledges.
   - The Wren's wreck burns in the mid layer for the first 20 s.
 - **Scroll:** at most 40 px/s throughout (Stage file).
-- **Length:** 7,200 px. At pace that is 180 s of scrolling plus two Standoffs
-  of 14 s and 16 s: **3:30**.
-- **Restart Points:** 0:00 (scroll 0), 0:52 (2,080), 1:45 (3,640, just after
-  the first Standoff), 2:40 (5,840).
+- **Length:** 6,400 px. At pace that is 160 s of scrolling plus two Standoffs
+  of 14 s and 16 s: **3:10**, the short end of the 3–4 minutes (#65).
+- **Restart Points:** 0:00 (scroll 0), 0:44 (1,760), 1:27 (2,928, just after
+  the first Standoff), 2:11 (4,680).
 - **Power-ups, in order:** G F G J W G.
 
 | Pace time | Scroll | Beat | What happens |
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. The Hero stands by the parachute, the wreck burning behind. The music starts. |
 | 0:04 | 160 | teach | One Skitter line from the right on flat ground → **G** (gun 2). |
-| 0:12 | 480 | teach | The first pit, 24 px. Nothing else. |
-| 0:18 | 720 | test | A Skitter line hops a pit toward the Hero, then a second one behind it → Formation bonus. |
-| 0:26 | 1,040 | teach | A Kite trio crosses a flat stretch → **F**. |
-| 0:36 | 1,440 | test | Low ledges over a wide dip, with a Tick pair hopping across them. |
-| 0:46 | 1,840 | breathe | A long flat stretch past a spoil heap. |
-| 0:52 | 2,080 | calm | **Restart Point.** |
-| 0:56 | 2,240 | teach | One Sentry behind a rubble mound. The crouch lesson. |
-| 1:06 | 2,640 | test | A Sentry on a ledge above a Skitter line → **G** (gun 3). |
-| 1:16 | 3,040 | teach | One Burrower in loose ground, alone. The jump-the-ankle-shot lesson. |
-| 1:24 | 3,360 | breathe | Short. |
-| 1:30 | 3,600 | Standoff | **The Sinkhole Ring** (14 s): two small pits either side of the Hero. Skitter lines from both sides (chevrons on the left), a Tick pair, then a Kite trio. Clear: Formation bonus and the time bonus. |
-| 1:44 | 3,600 | — | The scroll resumes. |
-| 1:45 | 3,640 | calm | **Restart Point.** |
-| 1:48 | 3,760 | teach | One Dropper crosses overhead. Aim up. |
-| 1:56 | 4,080 | test | Crumbling planks over a 40 px pit, with a Kite trio above → **J**. |
-| 2:08 | 4,560 | test | A Dropper over a Burrower pair. Jump bursts and ankle shots at once. |
-| 2:20 | 5,040 | twist | A Sentry high on a ledge and a Burrower low, with Kites diving → **W**. |
-| 2:34 | 5,600 | breathe | A spoil heap shields the next stretch. |
-| 2:40 | 5,840 | calm | **Restart Point.** |
-| 2:44 | 6,000 | teach | One Hauler on a long flat stretch. The power check. |
-| 2:56 | 6,480 | Standoff | **The Fence Line** (16 s): a Hauler from the right, Skitter lines from behind, then a Kite trio and a Tick pair → **G** (gun 4). |
-| 3:12 | 6,480 | run-out | The scroll resumes. Rising ground with no enemies. The Spire's root grows in the far layer. |
-| 3:30 | 7,200 | end | The scroll ends at a cable trench: Stage clear (bonuses paid). |
+| 0:11 | 440 | teach | The first pit, 24 px. Nothing else. |
+| 0:17 | 680 | test | A Skitter line hops a pit toward the Hero, then a second one behind it → Formation bonus. |
+| 0:24 | 960 | teach | A Kite trio crosses a flat stretch → **F**. |
+| 0:32 | 1,280 | test | Low ledges over a wide dip, with a Tick pair hopping across them. |
+| 0:40 | 1,600 | breathe | A long flat stretch past a spoil heap. |
+| 0:44 | 1,760 | calm | **Restart Point.** |
+| 0:47 | 1,880 | teach | One Sentry behind a rubble mound. The crouch lesson. |
+| 0:56 | 2,240 | test | A Sentry on a ledge above a Skitter line → **G** (gun 3). |
+| 1:04 | 2,560 | teach | One Burrower in loose ground, alone. The jump-the-ankle-shot lesson. |
+| 1:12 | 2,880 | Standoff | **The Sinkhole Ring** (14 s): two small pits either side of the Hero. Skitter lines from both sides (chevrons on the left), a Tick pair, then a Kite trio. Clear: Formation bonus and the time bonus. |
+| 1:26 | 2,880 | — | The scroll resumes. |
+| 1:27 | 2,928 | calm | **Restart Point.** |
+| 1:30 | 3,040 | teach | One Dropper crosses overhead. Aim up. |
+| 1:37 | 3,400 | test | Crumbling planks over a 40 px pit, with a Kite trio above → **J**. |
+| 1:47 | 3,720 | test | A Dropper over a Burrower pair. Jump bursts and ankle shots at once. |
+| 1:57 | 4,120 | twist | A Sentry high on a ledge and a Burrower low, with Kites diving → **W**. |
+| 2:06 | 4,480 | breathe | A spoil heap shields the next stretch. |
+| 2:11 | 4,680 | calm | **Restart Point.** |
+| 2:16 | 4,880 | teach | One Hauler on a long flat stretch. The power check. |
+| 2:30 | 5,440 | Standoff | **The Fence Line** (16 s): a Hauler from the right, Skitter lines from behind, then a Kite trio and a Tick pair → **G** (gun 4). |
+| 2:46 | 5,440 | run-out | The scroll resumes. Rising ground with no enemies. The Spire's root grows in the far layer. |
+| 3:10 | 6,400 | end | The scroll ends at a cable trench: Stage clear (bonuses paid). |
 
 A perfect player leaves Stage 1 with gun 4, Flare, Jet and the Ward. A
 typical player finishes at gun 3 with one or two of the others.
@@ -769,10 +768,11 @@ typical player finishes at gun 3 with one or two of the others.
   - Bullets 15% faster.
   - Shorter breathers (about 4 s).
 - **Scroll:** at most 44 px/s, slowing to 32 px/s through the Crusher Hall
-  (scroll 4,312 to 5,528) so its timing can be read (Stage file).
-- **Length:** 7,728 px. At pace that is 186 s of scrolling plus two
-  Standoffs of 14 s and 25 s: **3:45**.
-- **Restart Points:** 0:00 (0), 0:56 (2,464), 1:52 (4,312), 2:40 (5,968).
+  (scroll 3,000 to 4,216) so its timing can be read (Stage file).
+- **Length:** 6,540 px. At pace that is 159 s of scrolling plus two
+  Standoffs of 14 s and 22 s: **3:15**, the short end of the 3–4 minutes
+  (#65).
+- **Restart Points:** 0:00 (0), 0:40 (1,760), 1:22 (3,000), 2:04 (4,400).
 - **Power-ups, in order:** G W J G F W. For a perfect player most are
   medals. A player who lost lives gets a way back up.
 
@@ -780,26 +780,25 @@ typical player finishes at gun 3 with one or two of the others.
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. The first deck plates, past the cable trench. |
 | 0:04 | 176 | teach | One Turret under a gantry, alone. |
-| 0:12 | 528 | test | Two Turrets with a Skitter line along the deck → **G**. |
-| 0:24 | 1,056 | teach | The first arc floor, with a Tick pair beyond it. |
-| 0:36 | 1,584 | teach | A Mote cloud over open deck → **W**. |
-| 0:50 | 2,200 | breathe | Short. |
-| 0:56 | 2,464 | calm | **Restart Point.** |
-| 1:00 | 2,640 | test | Droppers over a run of trenches, and a Sentry on the far side. |
-| 1:10 | 3,080 | Standoff | **The Nest** (14 s): three Turrets in the gantries above, Skitter lines from both sides, then a Mote cloud. Clear: Formation bonus and the time bonus. |
-| 1:24 | 3,080 | — | The scroll resumes. |
-| 1:28 | 3,256 | test | Two Haulers on a conveyor that runs toward the Hero → **J**. |
-| 1:46 | 4,048 | breathe | Short. |
-| 1:52 | 4,312 | calm | **Restart Point.** The scroll slows to 32 px/s. |
-| 1:56 | 4,440 | teach | The Crusher Hall: three Crushers in a ripple, nothing else. |
-| 2:08 | 4,824 | test | Crushers over a conveyor with Skitter lines coming through → **G**. |
-| 2:20 | 5,208 | twist | Crumbling gantries over arc floors, with a Burrower on the far side and a Kite trio → Formation bonus. |
-| 2:30 | 5,528 | breathe | Out of the hall. The scroll returns to 44 px/s. |
-| 2:40 | 5,968 | calm | **Restart Point.** |
-| 2:44 | 6,144 | test | The gauntlet: Sentries high and low, a Dropper, then a Mote cloud → **F**. |
-| 3:00 | 6,848 | Standoff | **The Strider** (25 s): the Strider walks in from the right, with a Skitter line from behind at 8 s and a Kite trio at 16 s → **W**. |
-| 3:25 | 6,848 | run-out | The scroll resumes. The deck ends and the ground rises to the Spire's base. No enemies. |
-| 3:45 | 7,728 | end | The scroll ends with the tower's wall filling the right of the screen: Stage clear (bonuses paid). The 3 → 4 Cabinet Transition (the Hero starts to climb) follows. |
+| 0:11 | 480 | test | Two Turrets with a Skitter line along the deck → **G**. |
+| 0:20 | 900 | teach | The first arc floor, with a Tick pair beyond it. |
+| 0:30 | 1,320 | teach | A Mote cloud over open deck → **W**. |
+| 0:36 | 1,584 | breathe | Short. |
+| 0:40 | 1,760 | calm | **Restart Point.** |
+| 0:43 | 1,880 | test | Droppers over a run of trenches, and a Sentry on the far side. |
+| 0:55 | 2,440 | Standoff | **The Nest** (14 s): three Turrets in the gantries above, Skitter lines from both sides, then a Mote cloud. Clear: Formation bonus and the time bonus. |
+| 1:09 | 2,440 | — | The scroll resumes. |
+| 1:14 | 2,620 | test | Two Haulers on a conveyor that runs toward the Hero → **J**. |
+| 1:22 | 3,000 | calm | **Restart Point.** The scroll slows to 32 px/s. |
+| 1:26 | 3,120 | teach | The Crusher Hall: three Crushers in a ripple, nothing else. |
+| 1:37 | 3,480 | test | Crushers over a conveyor with Skitter lines coming through → **G**. |
+| 1:48 | 3,840 | twist | Crumbling gantries over arc floors, with a Burrower on the far side and a Kite trio → Formation bonus. |
+| 2:00 | 4,216 | breathe | Out of the hall. The scroll returns to 44 px/s. |
+| 2:04 | 4,400 | calm | **Restart Point.** |
+| 2:07 | 4,520 | test | The gauntlet: Sentries high and low, a Dropper, then a Mote cloud → **F**. |
+| 2:29 | 5,500 | Standoff | **The Strider** (22 s): the Strider walks in from the right, with a Skitter line from behind at 8 s and a Kite trio at 14 s → **W**. |
+| 2:51 | 5,500 | run-out | The scroll resumes. The deck ends and the ground rises to the Spire's base. No enemies. |
+| 3:15 | 6,540 | end | The scroll ends with the tower's wall filling the right of the screen: Stage clear (bonuses paid). The 3 → 4 Cabinet Transition (the Hero starts to climb) follows. |
 
 ## Scoring
 
@@ -814,9 +813,19 @@ typical player finishes at gun 3 with one or two of the others.
 
 The bonuses are paid as in Cabinet 1. A Crusher's kills score nothing.
 
-**Rough targets** (#20 measures the real ones): about 30–40k for a perfect
-Stage 1 and 40–50k for Stage 2. A decent player reaches the third extra life
-(120,000) in this Cabinet.
+**Measured from the Stage files** (#20). The rough targets were 30–40k for a
+perfect Stage 1 and 40–50k for Stage 2, before #65 cut both Stages to the
+short end.
+
+| | Enemies | Formation bonus | Clear + no miss | **Core** | Power-ups at max | Standoffs cleared early | **Most** |
+|---|---|---|---|---|---|---|---|
+| Stage 1 | 11,250 | 3,100 | 8,000 | **22,350** | 0 | about +550 | **about 22,900** |
+| Stage 2 | 16,900 | 3,200 | 8,000 | **28,100** | +6,000 | about +700 | **about 34,800** |
+
+Both Stages land below the targets. Whether the third extra life (120,000)
+still comes in this Cabinet depends on what Cabinets 1 and 2 actually pay,
+so #19 checks it in play and raises enemy scores in `tuning.ron` if needed,
+instead of adding enemies back to the shortened Stages.
 
 ## Sound and music (for #20)
 
@@ -892,14 +901,30 @@ and write new code only where Cabinet 3 differs.
     That makes the run a second check that every gap is passable.
   - `scripts/stages-web.sh 3` then plays both Stages, as for Cabinets 1
     and 2. With Standoffs running to their timers, the clear comes at the
-    pace length (3:30 and 3:45). Standoffs end early only if the autopilot
+    pace length (3:10 and 3:15). Standoffs end early only if the autopilot
     happens to clear them.
 
 ## Stage files and art (for #20)
 
-- **Files:** `assets/stages/3-1.ron` (3:30) and `3-2.ron` (3:45), one line
+- **Files:** `assets/stages/3-1.ron` (3:10) and `3-2.ron` (3:15), one line
   per beat of the tables above, each with its pace time in a comment, plus
-  the `ground` and `ledges` lists.
+  the `ground` and `ledges` lists. Both are cut to the short end of the
+  3–4 minutes, as #65 asks.
+- **Terrain pieces** are a whole number of tiles long but needn't start on a
+  multiple of 8. The example above (900..948) isn't aligned, and nothing
+  needs it to be.
+- **A ledge's `row`** is the tile row it occupies, so it is stood on at the
+  top of that row (`surface(row + 1)`).
+- **`tiles`** (optional) names the sprites the terrain is drawn with: `top`,
+  `fill`, `ledge` and `crumble`. Stage 1 uses the dirt default; Stage 2 sets
+  `(top: "c3_deck", fill: "c3_deck_fill", ledge: "c3_gantry", crumble:
+  "c3_gantry_crumble")`.
+- **Restart Points** all use `hero: (-96.0, -86.0)`, the Hero's x and its
+  standing y on row-3 ground. Only the x counts once the Hero drops in from
+  above; Stage checks keep every one the same.
+- **Until #19 lands,** `src/cabinets/run_and_gun/terrain.rs` turns the
+  terrain into `scenery:` tiles at ground depth, and the placeholder plays
+  both Stages with them.
 - **Enemy kinds and params:** `skitter`, `tick`, `kite`, `sentry`,
   `burrower`, `dropper`, `hauler`, `turret` (`mount`: `"floor"`, `"ceiling"`
   or `"wall"`), `mote`, `strider`. Hazards: `crusher` (`offset`),
@@ -939,7 +964,7 @@ why not:
 - How much breathing room the 4–6 s breathers give.
 
 And, for this Cabinet's own playtest (#22): the jump numbers (they are the
-whole feel), the camera speed against the run speed, and whether 14–25 s
+whole feel), the camera speed against the run speed, and whether 14–22 s
 Standoffs feel like set pieces or like waiting.
 
 ## Proposed `tuning.ron` section
