@@ -65,8 +65,8 @@ const fn palette(colors: [u32; PALETTE_SIZE]) -> Palette {
     Palette { colors: out }
 }
 
-/// One palette per Cabinet, in Run order. Cabinets 1–3 are fixed by their
-/// design docs; the others are starting points until their docs settle them.
+/// One palette per Cabinet, in Run order. Each is fixed by its
+/// Cabinet's design doc.
 #[rustfmt::skip]
 pub const PALETTES: [Palette; CABINET_COUNT] = [
     //        backdrop  shade     fill      accent    bright    warm      danger    extra
@@ -76,8 +76,8 @@ pub const PALETTES: [Palette; CABINET_COUNT] = [
     palette([0x140019, 0x3a1f4f, 0x5a6e8c, 0xff66cc, 0xf4f4f0, 0xffb43c, 0xc8ff3c, 0x8c5a3c]),
     // 3: run-and-gun platformer — Umber, Bark, Ochre, Sprout, Foam, Ember, Ice, Iron.
     palette([0x1a0d00, 0x4a2a10, 0x8c5a2b, 0x9ce65a, 0xf4f4f0, 0xffb43c, 0x66d9ff, 0x6b6f7a]),
-    // 4: vertical climber — jungle green.
-    palette([0x00140a, 0x144a2a, 0x2e8a4a, 0x66ff80, 0xeffff0, 0xf0d040, 0xff3c8c, 0x7fd08a]),
+    // 4: vertical climber — Abyss, Indigo, Girder, Mint, Foam, Ember, Rose, Peach.
+    palette([0x0b0a24, 0x2b2a5c, 0x5e6a85, 0x66ffc2, 0xf4f4f0, 0xffb43c, 0xff3c8c, 0xc8946e]),
 ];
 
 #[cfg(test)]
@@ -95,6 +95,7 @@ mod tests {
             include_str!("../../docs/cabinets/1-side-shooter.md"),
             include_str!("../../docs/cabinets/2-vertical-shooter.md"),
             include_str!("../../docs/cabinets/3-run-and-gun.md"),
+            include_str!("../../docs/cabinets/4-climber.md"),
         ];
         for (cabinet, doc) in docs.iter().enumerate() {
             check_palette_table(cabinet, doc);
