@@ -23,9 +23,19 @@ user can override anything here by commenting on issue #23.
 "HIGHWIRE" is the working in-game name. DESIGN.md leaves final naming until
 there is something on screen (#34), so it may change then.
 
-**Nobody has playtested Cabinets 1–3 yet** (#12, #17 and #22 have no gameplay
-feedback so far). Numbers that follow theirs are listed in
-[Revisit after the playtests](#revisit-after-the-playtests).
+**What the Cabinet 1 playtest taught (#12, #65).** The user found Cabinet 1's
+Stages "a little long" and "a little easy", and its firing "a little much",
+while the scrolling was "great". This doc takes both lessons from the start:
+
+- **Stages of 2:45 and 2:55,** inside the 2.5–3 minutes Cabinet 1 moved to.
+  DESIGN.md still says 3–4 minutes; #67 asks the user whether every Cabinet
+  should follow. This Cabinet is unbuilt, so it is the cheapest to plan
+  short. If the answer is no, add a beat to each Stage.
+- **A weaker gun than Cabinet 3's:** gun 2 fires 10 volleys/s, not 12, so
+  typical power is about 17% lower (see [Damage budget](#damage-budget)).
+
+Cabinets 2 and 3 haven't been played yet (#17 and #22). Numbers that follow
+them are listed in [Revisit after the playtests](#revisit-after-the-playtests).
 
 ## Premise
 
@@ -190,9 +200,15 @@ player a moment to read the landing.
 
 ### B: fire
 
-As in Cabinet 3 (`climber.shot.*`, the same values): 6×2 Ember dashes at
-300 px/s, 8 or 12 volleys/s, 8 directions in the air, and the muzzle at chest
-height. Holding Up aims straight up, which is this Cabinet's main aim.
+As in Cabinet 3 (`climber.shot.*`): 6×2 Ember dashes at 300 px/s, 8
+directions in the air, and the muzzle at chest height. Holding Up aims
+straight up, which is this Cabinet's main aim.
+
+**One change from Cabinet 3, after the Cabinet 1 playtest (#65):** gun 1
+fires 8 volleys/s (`climber.shot.fire_interval: 0.125`), as in Cabinet 3, but
+gun 2 and up fire 10 volleys/s (`climber.shot.fire_interval_fast: 0.1`), not
+12. Cabinet 1's firing felt "a little much" at 10 volleys/s with a wide
+spread, and this gun reaches the same rate with a narrower one.
 
 ## Power-ups
 
@@ -235,8 +251,15 @@ Why these five:
 
 ### Damage budget
 
-The gun is Cabinet 3's, so its DPS table holds: gun 1 8, gun 2 12, gun 3 12
-narrow and 36 large, gun 4 24 narrow and 48 large.
+| Power | Narrow DPS | Large DPS | Cabinet 3, for comparison |
+|---|---|---|---|
+| Gun 1 | 8 | 8 | 8 / 8 |
+| Gun 2 | 10 | 10 | 12 / 12 |
+| Gun 3 | 10 | 30 | 12 / 36 |
+| Gun 4 | 20 | 40 | 24 / 48 |
+
+Gun 2 is a 25% step over gun 1, gun 3 triples damage on large targets, and
+gun 4 doubles narrow damage, so every G is still worth taking.
 
 **"Large" here is measured aiming up:** a target 24 px or more **wide**
 within about 50 px above the Hero, where the ±12° shots spread to ±10.5 px
@@ -250,20 +273,20 @@ from nothing again, so the first drop comes in the first 10 s.
 
 | When | Perfect | Typical |
 |---|---|---|
-| Stage 1, 0:56 (first Picket) | Gun 2 + Canopy | Gun 2 |
-| Stage 1, 1:30 (first Standoff) | Gun 3 + Canopy: narrow 12, large 36 | Gun 2: 12 |
-| Stage 2, 0:00 | Gun 4 + Canopy, Jet, Ward: narrow 24, large 48 | Gun 3: narrow 12, large 36 |
-| Stage 2, 3:00 (the Winch) | Gun 4 + all five | Gun 3 + Mag boots |
+| Stage 1, 0:46 (first Picket) | Gun 2 + Canopy: 10 | Gun 2: 10 |
+| Stage 1, 1:12 (first Standoff) | Gun 3 + Canopy: narrow 10, large 30 | Gun 2: 10 |
+| Stage 2, 0:00 | Gun 4 + Canopy, Jet, Ward: narrow 20, large 40 | Gun 3: narrow 10, large 30 |
+| Stage 2, 2:18 (the Winch) | Gun 4 + all five | Gun 3 + Mag boots |
 
 Time-to-kill targets by role, as in Cabinets 1–3:
 
 | Role | Enemies | Target | HP | Check |
 |---|---|---|---|---|
 | Popcorn | Flit, Limpet, Scrap, Mote | under 0.3 s even at gun 1 | 2, 2, 2, 1 | 0.25 s at gun 1 |
-| Small | Plumb | about 0.5 s at typical power | 6 | 0.5 s at narrow 12 |
-| Timing lock | Vent | dies inside one 1.4 s opening at typical power | 14 | 1.2 s at narrow 12; two openings at gun 1 |
-| Gunner | Picket, Pitcher | 1.5–2 s, so it gets a burst off | 16, 20 | 1.3 s and 1.7 s at narrow 12 |
-| Set piece | Winch | about 10 s at typical, inside its 25 s Standoff | 120 (hook core) | 10 s at narrow 12, 5 s at narrow 24 |
+| Small | Plumb | about 0.5 s at typical power | 6 | 0.6 s at narrow 10 |
+| Timing lock | Vent | dies inside one 1.4 s opening at typical power | 12 | 1.2 s at narrow 10; two openings at gun 1 |
+| Gunner | Picket, Pitcher | 1.5–2 s, so it gets a burst off | 16, 20 | 1.6 s and 2.0 s at narrow 10 |
+| Set piece | Winch | about 12 s at typical, inside its 22 s Standoff | 120 (hook core) | 12 s at narrow 10, 6 s at narrow 20 |
 
 ### Losing a life
 
@@ -387,7 +410,7 @@ General fairness rules, as in Cabinet 3:
 | 2 | Limpet | ledge crawler | 1, 2 | 10×6 | 2 | 100 | pair |
 | 3 | Scrap | falling | 1, 2 | 10×10 | 2 | 50 | single |
 | 4 | Picket | walker | 1, 2 | 12×18 | 16 | 500 | single |
-| 5 | Vent | fixed | 1, 2 | 16×12 | 14 | 500 | single |
+| 5 | Vent | fixed | 1, 2 | 16×12 | 12 | 500 | single |
 | 6 | Plumb | on a cable | 1, 2 | 10×10 | 6 | 300 | single |
 | 7 | Pitcher | walker | 1, 2 | 14×14 | 20 | 400 | single |
 | 8 | Mote | flyer | 2 | 4×4 | 1 | 50 | cloud of 8 |
@@ -539,7 +562,7 @@ timer runs under it, as Cabinet 3's Strider does.
   and how high the hook hangs. The steps follow each other, so they never
   overlap.
 - **Time to kill:** the hook core is 16 px wide, a narrow target. That is
-  12 DPS at gun 2–3 (10 s) and 24 at gun 4 (5 s), inside the 25 s timer. At
+  10 DPS at gun 2–3 (12 s) and 20 at gun 4 (6 s), inside the 22 s timer. At
   the timer, the Winch reels up and its carriage runs off the rail: no
   points, no drop.
 
@@ -567,38 +590,36 @@ into a forced fall.
   - The tower face: Girder plating with Indigo seams, catwalks for ledges,
     and service ladders.
 - **Scroll:** 14 px/s throughout (Stage file).
-- **Length:** 2,436 px of climb. That is 174 s of rising plus two Standoffs
-  of 12 s and 14 s: **3:20**.
-- **Restart Points:** 0:00 (height 0), 0:52 (728), 1:43 (1,274, just after
-  the first Standoff), 2:40 (2,072).
+- **Length:** 1,974 px of climb. That is 141 s of rising plus two Standoffs
+  of 12 s each: **2:45**.
+- **Restart Points:** 0:00 (height 0), 0:42 (588), 1:25 (1,022, just after
+  the first Standoff), 2:06 (1,596).
 - **Power-ups, in order:** G C G J W G.
 
 | Time | Height | Beat | What happens |
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. The first landing. The music starts. |
 | 0:04 | 56 | teach | A Flit trio crosses from the right → **G** (gun 2). |
-| 0:14 | 196 | teach | The first ladder and thin ledges, with a Limpet pair crawling a ledge above. |
-| 0:24 | 336 | test | Limpets on two ledges and a Flit trio from the left → Formation bonus. |
-| 0:34 | 476 | teach | The first Scrap, one piece, then a Flit trio → **C**. |
-| 0:46 | 644 | breathe | A ladder run with nothing on it. |
-| 0:52 | 728 | calm | **Restart Point.** A landing. |
-| 0:56 | 784 | teach | One Picket on a catwalk. The crouch lesson, again. |
-| 1:06 | 924 | test | Pickets on two levels, with a ladder between them that neither covers → **G** (gun 3). |
-| 1:16 | 1,064 | teach | One Vent in the face above the route. Aim up. |
-| 1:24 | 1,176 | breathe | Short. |
-| 1:30 | 1,260 | Standoff | **The First Landing** (12 s): Flit trios from both sides, a Plumb from above, then a Limpet pair. Clear: Formation bonus and the time bonus. |
-| 1:42 | 1,260 | — | The scroll resumes. |
-| 1:43 | 1,274 | calm | **Restart Point.** |
-| 1:48 | 1,344 | teach | One Plumb, alone. |
-| 1:58 | 1,484 | test | Plumbs and a scrapfall → **J**. |
-| 2:10 | 1,652 | teach | One Pitcher on a ledge above, with Limpets below it → **W**. |
-| 2:24 | 1,848 | twist | Vents in a column over a ladder run, with Flits rising from below (chevrons) → Formation bonus. |
-| 2:34 | 1,988 | breathe | A landing. |
-| 2:40 | 2,072 | calm | **Restart Point.** |
-| 2:44 | 2,128 | test | A Pitcher pair and a Picket on the ledge between them. |
-| 2:56 | 2,296 | Standoff | **The Lamp Deck** (14 s): Flits, Plumbs and a scrapfall around a wide landing under the tower's warning lamps → **G** (gun 4). |
-| 3:10 | 2,296 | run-out | The scroll resumes. A clear ladder run, no enemies. The first grey of dawn shows at the horizon. |
-| 3:20 | 2,436 | end | The scroll ends at a landing: Stage clear (bonuses paid). |
+| 0:12 | 168 | teach | The first ladder and thin ledges, with a Limpet pair crawling a ledge above. |
+| 0:20 | 280 | test | Limpets on two ledges and a Flit trio from the left → Formation bonus. |
+| 0:28 | 392 | teach | The first Scrap, one piece, then a Flit trio → **C**. |
+| 0:38 | 532 | breathe | A short ladder run with nothing on it. |
+| 0:42 | 588 | calm | **Restart Point.** A landing. |
+| 0:46 | 644 | teach | One Picket on a catwalk. The crouch lesson, again. |
+| 0:54 | 756 | test | Pickets on two levels, with a ladder between them that neither covers → **G** (gun 3). |
+| 1:04 | 896 | teach | One Vent in the face above the route. Aim up. |
+| 1:12 | 1,008 | Standoff | **The First Landing** (12 s): Flit trios from both sides, a Plumb from above, then a Limpet pair. Clear: Formation bonus and the time bonus. |
+| 1:24 | 1,008 | — | The scroll resumes. |
+| 1:25 | 1,022 | calm | **Restart Point.** |
+| 1:28 | 1,064 | teach | One Plumb, then a scrapfall around a second → **J**. |
+| 1:40 | 1,232 | teach | One Pitcher on a ledge above, with Limpets below it → **W**. |
+| 1:52 | 1,400 | twist | Vents in a column over a ladder run, with Flits rising from below (chevrons) → Formation bonus. |
+| 2:02 | 1,540 | breathe | A landing. |
+| 2:06 | 1,596 | calm | **Restart Point.** |
+| 2:10 | 1,652 | test | A Pitcher pair and a Picket on the ledge between them. |
+| 2:22 | 1,820 | Standoff | **The Lamp Deck** (12 s): Flits, Plumbs and a scrapfall around a wide landing under the tower's warning lamps → **G** (gun 4). |
+| 2:34 | 1,820 | run-out | The scroll resumes. A clear ladder run, no enemies. The first grey of dawn shows at the horizon. |
+| 2:45 | 1,974 | end | The scroll ends at a landing: Stage clear (bonuses paid). |
 
 A perfect player leaves Stage 1 with gun 4, Canopy, Jet and the Ward. A
 typical player finishes at gun 3 with one or two of the others.
@@ -614,10 +635,10 @@ typical player finishes at gun 3 with one or two of the others.
 - **What's new:** gusts, crumbling ledges, Sweepers, Motes and the Winch.
   Bullets 15% faster. Breathers of about 4 s.
 - **Scroll:** 16 px/s throughout (Stage file).
-- **Length:** 2,896 px of climb. That is 181 s of rising plus two Standoffs
-  of 14 s and 25 s: **3:40**.
-- **Restart Points:** 0:00 (0), 0:52 (832), 1:35 (1,296, just after the
-  first Standoff), 2:30 (2,176).
+- **Length:** 2,256 px of climb. That is 141 s of rising plus two Standoffs
+  of 12 s and 22 s: **2:55**.
+- **Restart Points:** 0:00 (0), 0:42 (672), 1:17 (1,040, just after the
+  first Standoff), 1:58 (1,696).
 - **Power-ups, in order:** M G W C J W G. For a perfect player most are
   medals; M is new.
 
@@ -625,26 +646,26 @@ typical player finishes at gun 3 with one or two of the others.
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. A landing above the night's last cloud layer. |
 | 0:04 | 64 | teach | A Flit trio → **M**. |
-| 0:12 | 192 | teach | The first gust zone, nothing else. |
-| 0:22 | 352 | test | Crumbling ledges (wide ones, no gusts) with a Limpet pair → **G**. |
-| 0:34 | 544 | teach | A Mote cloud over a landing → **W**. |
-| 0:46 | 736 | breathe | Short. |
-| 0:52 | 832 | calm | **Restart Point.** |
-| 0:56 | 896 | teach | One Sweeper, alone, beside a ladder. |
-| 1:06 | 1,056 | test | A Sweeper with Pickets on the ledges either side → Formation bonus. |
-| 1:20 | 1,280 | Standoff | **The Wind Deck** (14 s): gusts on the landing, Flit trios from both sides, then two Plumbs. Clear: Formation bonus and the time bonus. |
-| 1:34 | 1,280 | — | The scroll resumes. |
-| 1:35 | 1,296 | calm | **Restart Point.** |
-| 1:40 | 1,376 | test | Pitchers over a run of crumbling ledges → **C**. |
-| 1:54 | 1,600 | twist | A gust zone during a scrapfall, with Vents in the face → **J**. |
-| 2:08 | 1,824 | test | A Mote cloud with Plumbs dropping. |
-| 2:20 | 2,016 | breathe | A landing. The Crown's beacon comes into view. |
-| 2:30 | 2,176 | calm | **Restart Point.** |
-| 2:34 | 2,240 | test | The gauntlet: a Sweeper, a Picket pair, a Pitcher and a gust zone → **W**. |
-| 2:50 | 2,496 | breathe | Short, on a ladder run. |
-| 3:00 | 2,656 | Standoff | **The Winch** (25 s): the Winch on the Crown's lower deck, with a Flit trio from each side at 8 s and 16 s → **G**. |
-| 3:25 | 2,656 | run-out | The scroll resumes. A last ladder up, no enemies. The sun clears the cloud sea. |
-| 3:40 | 2,896 | end | The scroll ends on the Crown's deck: Stage clear (bonuses paid). The Ending (#28) follows. |
+| 0:10 | 160 | teach | The first gust zone, nothing else. |
+| 0:18 | 288 | test | Crumbling ledges (wide ones, no gusts) with a Limpet pair → **G**. |
+| 0:28 | 448 | teach | A Mote cloud over a landing → **W**. |
+| 0:38 | 608 | breathe | Short. |
+| 0:42 | 672 | calm | **Restart Point.** |
+| 0:46 | 736 | teach | One Sweeper, alone, beside a ladder. |
+| 0:54 | 864 | test | A Sweeper with Pickets on the ledges either side → Formation bonus. |
+| 1:04 | 1,024 | Standoff | **The Wind Deck** (12 s): gusts on the landing, Flit trios from both sides, then two Plumbs. Clear: Formation bonus and the time bonus. |
+| 1:16 | 1,024 | — | The scroll resumes. |
+| 1:17 | 1,040 | calm | **Restart Point.** |
+| 1:20 | 1,088 | test | Pitchers over a run of crumbling ledges → **C**. |
+| 1:32 | 1,280 | twist | A gust zone during a scrapfall, with Vents in the face → **J**. |
+| 1:44 | 1,472 | test | A Mote cloud with Plumbs dropping. |
+| 1:54 | 1,632 | breathe | A landing. The Crown's beacon comes into view. |
+| 1:58 | 1,696 | calm | **Restart Point.** |
+| 2:02 | 1,760 | test | The gauntlet: a Sweeper, a Picket pair, a Pitcher and a gust zone → **W**. |
+| 2:14 | 1,952 | breathe | Short, on a ladder run. |
+| 2:18 | 2,016 | Standoff | **The Winch** (22 s): the Winch on the Crown's lower deck, with a Flit trio from each side at 7 s and 14 s → **G**. |
+| 2:40 | 2,016 | run-out | The scroll resumes. A last ladder up, no enemies. The sun clears the cloud sea. |
+| 2:55 | 2,256 | end | The scroll ends on the Crown's deck: Stage clear (bonuses paid). The Ending (#28) follows. |
 
 ## Scoring
 
@@ -659,9 +680,10 @@ typical player finishes at gun 3 with one or two of the others.
 
 The bonuses are paid as in Cabinet 1.
 
-**Rough targets** (#25 measures the real ones): about 25–35k for a perfect
-Stage 1 and 35–45k for Stage 2. The Run's final score then lands around
-250–300k for a strong player, which #28's score breakdown and the High Score
+**Rough targets** (#25 measures the real ones): about 20–28k for a perfect
+Stage 1 and 28–36k for Stage 2, smaller than the other Cabinets' because the
+Stages are shorter. The Run's final score then lands around 230–280k for a
+strong player, which #28's score breakdown and the High Score
 Table's seeded entries should be checked against.
 
 ## Sound and music (for #25)
@@ -729,12 +751,12 @@ new code only where Cabinet 4 differs.
     next foothold and counts a **rescue**. The Stage test fails if there are
     any. That makes the run a second check of rule 2, beside the timed
     route check.
-  - `scripts/stages-web.sh 4` plays both Stages. The clear comes at 3:20 and
-    3:40, a little sooner if the autopilot clears a Standoff early.
+  - `scripts/stages-web.sh 4` plays both Stages. The clear comes at 2:45 and
+    2:55, a little sooner if the autopilot clears a Standoff early.
 
 ## Stage files and art (for #25)
 
-- **Files:** `assets/stages/4-1.ron` (3:20) and `4-2.ron` (3:40), one line per
+- **Files:** `assets/stages/4-1.ron` (2:45) and `4-2.ron` (2:55), one line per
   beat of the tables above, each with its time in a comment, plus `ledges`,
   `ladders`, `gusts` and `route`.
 - **Enemy kinds and params:** `flit` (`side`, or `"from": "below"`),
@@ -763,15 +785,19 @@ new code only where Cabinet 4 differs.
 
 ## Revisit after the playtests
 
-These numbers follow Cabinets 1–3, none of which has been played yet. When
-#12, #17 or #22 changes the matching number there, check it here too, or
-record why not:
+Cabinet 1's playtest (#12) is already acted on here (Stage length and gun
+2's fire rate). The other numbers follow Cabinets 2 and 3, which haven't been
+played yet. When #17 or #22 changes the matching number there, check it here
+too, or record why not:
 
-- Everything copied from Cabinet 3's Hero: the jump, run speed, hitboxes, and
-  the gun's levels and fire rates.
+- Everything copied from Cabinet 3's Hero: the jump, run speed, hitboxes,
+  and the gun's levels. If Cabinet 3's gun also proves too strong, the 10
+  volleys/s here may need to come down further.
+- The Stage lengths, once #67 settles whether every Cabinet runs 2.5–3
+  minutes.
 - The bullet caps (60 and 70 px/s) and the reaction-time reasoning.
 - Losing one gun level per life, and the rewind replaying Power-ups.
-- The role HP and time-to-kill targets, and the 25 s set-piece Standoff.
+- The role HP and time-to-kill targets, and the 22 s set-piece Standoff.
 
 And, for this Cabinet's own playtest (#27): whether 14 and 16 px/s feel like
 pressure or like waiting, how much slack the 48 px drop margin really gives,
@@ -800,7 +826,7 @@ climber: (
     ),
     ladder: (climb_speed: 48.0, grab_window: 6.0, jump_speed_fraction: 0.6),
     shot: (
-        fire_interval: 0.125, fire_interval_fast: 0.083, speed: 300.0, damage: 1,
+        fire_interval: 0.125, fire_interval_fast: 0.1, speed: 300.0, damage: 1,
         size: (6.0, 2.0), muzzle: (8.0, 14.0), crouch_muzzle: (8.0, 6.0),
         spread_degrees: 12.0, bolt_size: (10.0, 3.0), bolt_damage: 2, max_on_screen: 64,
     ),
@@ -830,7 +856,7 @@ climber: (
         picket: (hp: 16, score: 500, speed: 20.0, level_window: 16.0,
                  telegraph_seconds: 0.35, burst: 2, burst_interval: 0.25,
                  shot_speed: 60.0, cooldown_seconds: 2.0),
-        vent: (hp: 14, score: 500, closed_seconds: 2.2, telegraph_seconds: 0.3,
+        vent: (hp: 12, score: 500, closed_seconds: 2.2, telegraph_seconds: 0.3,
                open_seconds: 1.4, fan_count: 3, fan_degrees: 30.0, shot_speed: 55.0),
         plumb: (hp: 6, score: 300, drop_speed: 60.0, hang_seconds: 2.0,
                 telegraph_seconds: 0.3, shot_speed: 60.0, reel_speed: 40.0),
@@ -879,6 +905,10 @@ climber: (
   looks like bullets. The placeholder palette in `src/sprites/palette.rs` is
   updated to this table in the same change, and its doc test now covers
   Cabinet 4.
+- **Shorter Stages and a weaker gun, from the Cabinet 1 playtest.** Cabinet 1
+  was cut to under 3 minutes and its firepower lowered (#65); this Cabinet
+  starts there rather than waiting for its own playtest. The user rules on
+  the length for every Cabinet in #67.
 - **The summit sets up the Ending; it doesn't play it.** #28 decides what
   happens at the Crown.
 - **No new glossary terms.** "Route", "landing", "fall line" and "Standoff"
