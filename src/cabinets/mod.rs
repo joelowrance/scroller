@@ -13,6 +13,7 @@ use crate::run::Session;
 use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
 mod placeholder;
+pub mod run_and_gun;
 pub mod shooter;
 pub mod side_shooter;
 #[cfg(test)]

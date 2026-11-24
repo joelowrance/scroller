@@ -66,10 +66,24 @@ const reach = async (stage, fraction, timeoutMs) => {
   }
   return null;
 };
-// The Save a clear of Stage `stage` writes: the next Stage of this Cabinet,
-// or the first of the next. The last Stage of the Run has none.
-const nextSave = (stage) =>
-  stage === 0 ? { cabinet: cabinet - 1, stage: 1 } : cabinet < 4 ? { cabinet, stage: 0 } : null;
+// The Save a clear of Cabinet `c`'s (1-based) Stage `s` (0-based) writes:
+// the next Stage of that Cabinet, or the first of the next. The last Stage
+// of the Run has none.
+const nextSave = (c, s) =>
+  s === 0 ? { cabinet: c - 1, stage: 1 } : c < 4 ? { cabinet: c, stage: 0 } : null;
+const isSave = (v, want) => v && want && v.cabinet === want.cabinet && v.stage === want.stage;
+// Presses A until Cabinet `c`'s Stage `s` is playing, as the game's Stage
+// clock shows, so Stage Cards and Cabinet Transitions of any length are
+// waited out rather than timed.
+const startStage = async (c, s) => {
+  for (let tries = 0; tries < 60; tries++) {
+    const k = await clock();
+    if (k && k.cabinet === c - 1 && k.stage === s) return true;
+    await tap("Space");
+    await wait(350);
+  }
+  return false;
+};
 
 try {
   await page.goto(`${base}?invincible&time_scale=${SCALE}`);
@@ -79,24 +93,23 @@ try {
   await tap("Space"); // NEW RUN
   await wait(500);
 
+  // Skip the earlier Cabinets with the developer key C (clear Stage).
   for (let c = 1; c < cabinet; c++) {
     for (let s = 0; s < 2; s++) {
-      await tap("Space"); // start the Stage
-      await wait(800);
-      await tap("KeyC");
-      await wait(800);
+      if (!(await startStage(c, s))) throw new Error(`could not start Stage ${c}-${s + 1} to skip it`);
+      for (let tries = 0; tries < 10 && !isSave(await save(), nextSave(c, s)); tries++) {
+        await tap("KeyC");
+        await wait(400);
+      }
     }
-    await wait(4000); // the Cabinet Transition
   }
 
   for (let i = 0; i < 2; i++) {
     const name = `${cabinet}-${i + 1}`;
-    // Play the Stage; its Save is used up. A Cabinet Transition may still
-    // be playing (they vary in length), so keep trying for a while.
-    await tap("Space");
-    for (let tries = 0; tries < 20 && (await save()); tries++) {
-      await wait(600);
-      if (await save()) await tap("Space");
+    if (!(await startStage(cabinet, i))) {
+      fail(`Stage ${name} did not start`);
+      await shot(`${name}-stuck`);
+      break;
     }
     // Hold fire, so the screenshots show the Hero shooting.
     await page.keyboard.down("KeyZ");
@@ -116,7 +129,7 @@ try {
     }
     const end = stuck ? null : await reach(i, 1.0, budget);
     await page.keyboard.up("KeyZ");
-    const want = nextSave(i);
+    const want = nextSave(cabinet, i);
     let cleared = end !== null && want === null;
     for (let n = 0; n < 50 && end && want; n++) {
       const s = await save();

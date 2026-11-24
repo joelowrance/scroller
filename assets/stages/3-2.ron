@@ -1,0 +1,166 @@
+// Cabinet 3, Stage 2: The Roots (docs/cabinets/3-run-and-gun.md).
+// 6,540 px: 44 px/s, 32 px/s through the Crusher Hall (3,000 to 4,216),
+// 159 s of scrolling plus Standoffs of 14 s and 22 s: 3:15 at pace, the short
+// end of the 3-4 minutes (#65). Comments give the pace time.
+(
+    length: 6540.0,
+    speed: [(from: 0.0, speed: 44.0), (from: 3000.0, speed: 32.0), (from: 4216.0, speed: 44.0)],
+    tiles: (top: "c3_deck", fill: "c3_deck_fill", ledge: "c3_gantry", crumble: "c3_gantry_crumble"),
+    restart_points: [
+        (at: 0.0, hero: (-96.0, -86.0)), // 0:00
+        (at: 1760.0, hero: (-96.0, -86.0)), // 0:40
+        (at: 3000.0, hero: (-96.0, -86.0)), // 1:22
+        (at: 4400.0, hero: (-96.0, -86.0)), // 2:04
+    ],
+    ground: [
+        (from: -320.0, to: 360.0, top: 3),
+        (from: 392.0, to: 1960.0, top: 3),
+        (from: 1992.0, to: 2048.0, top: 3),
+        (from: 2080.0, to: 2136.0, top: 3),
+        (from: 2176.0, to: 5104.0, top: 3),
+        (from: 5136.0, to: 5800.0, top: 3),
+        (from: 5800.0, to: 6000.0, top: 4),
+        (from: 6000.0, to: 6200.0, top: 5),
+        (from: 6200.0, to: 6864.0, top: 6),
+    ],
+    ledges: [
+        (from: 200.0, to: 264.0, row: 9, kind: "thin"),
+        (from: 520.0, to: 616.0, row: 9, kind: "thin"),
+        (from: 1240.0, to: 1304.0, row: 7, kind: "thin"),
+        (from: 2232.0, to: 2408.0, row: 10, kind: "thin"),
+        (from: 3872.0, to: 3952.0, row: 6, kind: "crumble"),
+        (from: 4600.0, to: 4664.0, row: 7, kind: "thin"),
+    ],
+    spawns: [
+        (at: -200.0, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+
+        // 0:00 calm: Restart Point. The first deck plates, past the cable trench.
+        (at: 0.0, kind: "scenery:c3_spire_mid", pos: (70.0, 18.0), params: {"depth": 0.02, "until": 3000.0}),
+        (at: 0.0, kind: "scenery:c3_lid_b", pos: (-200.0, 109.0), params: {"depth": 0.08, "flip": true}),
+        (at: 0.0, kind: "scenery:c3_lid_b", pos: (39.41, 109.0), params: {"depth": 0.08, "flip": false}),
+        (at: 0.0, kind: "scenery:c3_lid_b", pos: (254.62, 109.0), params: {"depth": 0.08, "flip": true}),
+        (at: 0.0, kind: "scenery:c3_lid_a", pos: (473.15, 106.0), params: {"depth": 0.08, "flip": false}),
+        (at: 0.0, kind: "scenery:c3_lid_a", pos: (686.08, 106.0), params: {"depth": 0.08, "flip": true}),
+        (at: 83.82, kind: "scenery:c3_pipe", pos: (176.0, -20.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+
+        // 0:04 teach: one Turret under a gantry, alone
+        (at: 176.0, kind: "turret", pos: (216.0, -54.0), params: {"mount": "ceiling"}),
+        (at: 278.17, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+
+        // 0:11 test: two Turrets with a Skitter line along the deck -> G
+        (at: 480.0, kind: "turret", pos: (216.0, -54.0), params: {"mount": "ceiling"}),
+        (at: 480.0, kind: "turret", pos: (280.0, -54.0), params: {"mount": "ceiling"}),
+        (at: 540.84, kind: "scenery:c3_pipe", pos: (176.0, -20.0), params: {"depth": 0.5, "repeat": 1, "every": 64.0}),
+        (at: 560.0, kind: "skitter", pos: (176.0, -92.0), params: {"size": 4, "drop": "G"}),
+        (at: 753.41, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+
+        // 0:20 teach: the first arc floor, a Tick pair beyond it
+        (at: 900.0, kind: "arc_floor", pos: (220.0, -96.0), params: {"length": 48.0, "offset": 0.0}),
+        (at: 1033.65, kind: "scenery:c3_cable", pos: (176.0, 60.0), params: {"depth": 0.5}),
+        (at: 1040.0, kind: "tick", pos: (176.0, -91.0), params: {"size": 2}),
+        (at: 1240.0, kind: "scenery:c3_strut", pos: (164.0, -80.0), params: {"z": -61.0}),
+        (at: 1244.51, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+        (at: 1296.0, kind: "scenery:c3_strut", pos: (164.0, -80.0), params: {"z": -61.0}),
+
+        // 0:30 teach: a Mote cloud over open deck -> W
+        (at: 1320.0, kind: "mote", pos: (120.0, 128.0), params: {"size": 8, "drop": "W"}),
+        (at: 1530.75, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 2, "every": 64.0}),
+
+        // 0:36 breathe: short
+        (at: 1749.65, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 1, "every": 64.0}),
+
+        // 0:40 calm: Restart Point
+
+        // 0:43 test: Droppers over a run of trenches, a Sentry on the far side
+        (at: 1880.0, kind: "dropper", pos: (184.0, 72.0)),
+        (at: 1942.63, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+        (at: 2000.0, kind: "dropper", pos: (184.0, 72.0)),
+        (at: 2159.66, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+        (at: 2160.0, kind: "sentry", pos: (240.0, -87.0)),
+        (at: 2357.14, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+
+        // 0:55 Standoff: the Nest, Turrets in the gantries above
+        (at: 2440.0, kind: "standoff", pos: (0.0, 0.0), params: {"max_seconds": 14.0, "waves": [{"after": 0.5, "kind": "turret", "pos": (0.0, -46.0), "params": {"mount": "ceiling"}}, {"after": 0.5, "kind": "turret", "pos": (56.0, -46.0), "params": {"mount": "ceiling"}}, {"after": 0.5, "kind": "turret", "pos": (112.0, -46.0), "params": {"mount": "ceiling"}}, {"after": 2.0, "kind": "skitter", "pos": (176.0, -92.0), "params": {"size": 4}}, {"after": 4.0, "kind": "skitter", "pos": (-176.0, -92.0), "params": {"size": 4}}, {"after": 8.0, "kind": "mote", "pos": (120.0, 128.0), "params": {"size": 8}}]}),
+        (at: 2614.43, kind: "scenery:c3_cable", pos: (176.0, 60.0), params: {"depth": 0.5}),
+
+        // 1:14 test: two Haulers on a conveyor that runs toward the Hero -> J
+        (at: 2620.0, kind: "conveyor", pos: (364.0, -96.0), params: {"length": 128.0, "dir": "left"}),
+        (at: 2700.0, kind: "hauler", pos: (184.0, -84.0), params: {"size": 2, "drop": "J"}),
+        (at: 2875.26, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+        (at: 2900.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 2964.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+
+        // 1:22 calm: Restart Point. The scroll slows to 32 px/s.
+        (at: 3000.0, kind: "scenery:c3_spire_root", pos: (40.0, 0.0), params: {"depth": 0.02}),
+        (at: 3028.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3092.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3100.0, kind: "scenery:c3_pillar", pos: (168.0, -48.0), params: {"z": -62.0}),
+
+        // 1:26 teach: the Crusher Hall, three Crushers in a ripple, nothing else
+        (at: 3120.0, kind: "crusher", pos: (240.0, -80.0), params: {"offset": 0.0}),
+        (at: 3120.0, kind: "crusher", pos: (304.0, -80.0), params: {"offset": 0.4}),
+        (at: 3120.0, kind: "crusher", pos: (368.0, -80.0), params: {"offset": 0.8}),
+        (at: 3156.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3220.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3284.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3348.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3400.0, kind: "scenery:c3_pillar", pos: (168.0, -48.0), params: {"z": -62.0}),
+        (at: 3412.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3476.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+
+        // 1:37 test: Crushers over a conveyor, Skitter lines coming through -> G
+        (at: 3480.0, kind: "conveyor", pos: (264.0, -96.0), params: {"length": 128.0, "dir": "right"}),
+        (at: 3480.0, kind: "crusher", pos: (240.0, -80.0), params: {"offset": 0.0}),
+        (at: 3480.0, kind: "crusher", pos: (304.0, -80.0), params: {"offset": 0.5}),
+        (at: 3540.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3600.0, kind: "skitter", pos: (176.0, -92.0), params: {"size": 4, "drop": "G"}),
+        (at: 3604.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3668.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3700.0, kind: "skitter", pos: (176.0, -92.0), params: {"size": 4}),
+        (at: 3700.0, kind: "scenery:c3_pillar", pos: (168.0, -48.0), params: {"z": -62.0}),
+        (at: 3732.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3796.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+
+        // 1:48 twist: crumbling gantries over arc floors, a Burrower beyond, a Kite trio -> Formation bonus
+        (at: 3840.0, kind: "arc_floor", pos: (232.0, -96.0), params: {"length": 64.0, "offset": 0.0}),
+        (at: 3860.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3924.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 3960.0, kind: "burrower", pos: (168.0, -90.0)),
+        (at: 3960.0, kind: "kite", pos: (40.0, 128.0), params: {"size": 3}),
+        (at: 3988.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 4000.0, kind: "scenery:c3_pillar", pos: (168.0, -48.0), params: {"z": -62.0}),
+        (at: 4052.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 4116.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 4180.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+
+        // 2:00 breathe: out of the hall. The scroll returns to 44 px/s.
+        (at: 4244.0, kind: "scenery:c3_hall_wall", pos: (192.0, 0.0), params: {"depth": 0.6}),
+        (at: 4355.04, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+
+        // 2:04 calm: Restart Point
+
+        // 2:07 test: the gauntlet, Sentries high and low, a Dropper, a Mote cloud -> F
+        (at: 4520.0, kind: "sentry", pos: (272.0, -47.0)),
+        (at: 4600.0, kind: "sentry", pos: (200.0, -87.0)),
+        (at: 4600.0, kind: "scenery:c3_strut", pos: (164.0, -80.0), params: {"z": -61.0}),
+        (at: 4651.82, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 1, "every": 64.0}),
+        (at: 4656.0, kind: "scenery:c3_strut", pos: (164.0, -80.0), params: {"z": -61.0}),
+        (at: 4720.0, kind: "dropper", pos: (184.0, 72.0)),
+        (at: 4880.0, kind: "mote", pos: (120.0, 128.0), params: {"size": 8, "drop": "F"}),
+        (at: 4925.64, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+        (at: 5190.92, kind: "scenery:c3_pipe", pos: (176.0, 28.0), params: {"depth": 0.5, "repeat": 1, "every": 64.0}),
+        (at: 5393.8, kind: "scenery:c3_pipe", pos: (176.0, 28.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+
+        // 2:29 Standoff: the Strider
+        (at: 5500.0, kind: "standoff", pos: (0.0, 0.0), params: {"max_seconds": 22.0, "drop": "W", "waves": [{"after": 0.5, "kind": "strider", "pos": (192.0, -72.0)}, {"after": 8.0, "kind": "skitter", "pos": (-176.0, -92.0), "params": {"size": 4}}, {"after": 14.0, "kind": "kite", "pos": (40.0, 128.0), "params": {"size": 3}}]}),
+
+        // 2:51 run-out: the deck ends, the ground rises to the Spire's base. No enemies.
+        (at: 5651.77, kind: "scenery:c3_cable", pos: (176.0, 40.0), params: {"depth": 0.5}),
+        (at: 5863.84, kind: "scenery:c3_pipe", pos: (176.0, 4.0), params: {"depth": 0.5, "repeat": 2, "every": 64.0}),
+        (at: 6081.32, kind: "scenery:c3_pipe", pos: (176.0, 28.0), params: {"depth": 0.5, "repeat": 3, "every": 64.0}),
+        (at: 6305.38, kind: "scenery:c3_cable", pos: (176.0, 60.0), params: {"depth": 0.5}),
+
+        // 3:15 end: the tower's wall fills the right of the screen. Stage clear.
+        (at: 6540.0, kind: "scenery:c3_tower_wall", pos: (112.0, 0.0), params: {"z": -55.0}),
+    ],
+)
