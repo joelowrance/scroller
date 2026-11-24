@@ -162,6 +162,47 @@ sfx_list! {
     StandoffRelease,
     /// A fall into a pit (the life-lost sound follows on [`LifeLost`]).
     FallWhistle,
+    // Cabinet 4 (docs/cabinets/4-climber.md). Jump, JetPuff, Land, the shot
+    // (Shot), the bolt (Lance), Power-ups G, W and J, the medal, hits, sparks,
+    // explosions, the Ward, the Flit's below-chevron (HookWarning), crumbling
+    // ledges (LedgeCreak), the Standoff stings and the fall (FallWhistle) reuse
+    // the sounds above.
+    /// A soft tick, every rung of a climb.
+    LadderRung,
+    /// The canopy opens.
+    CanopyOpen,
+    /// The open canopy flutters; send about twice a second.
+    CanopyFlutter,
+    PowerUpCanopy,
+    PowerUpMag,
+    /// The Scrap chevron appears.
+    ScrapChevron,
+    /// A gust arrow appears.
+    GustArrow,
+    /// A Picket's flash.
+    PicketFlash,
+    /// A Plumb's flash.
+    PlumbFlash,
+    /// A Vent glows before its puff.
+    VentGlow,
+    /// A Pitcher winds up.
+    PitcherWindUp,
+    /// The Winch's cable shakes before the drop.
+    WinchShake,
+    /// A Scrap shatters.
+    ScrapShatter,
+    /// A Vent puffs.
+    VentPuff,
+    /// A Plumb's cable pays out.
+    PlumbCable,
+    /// A Sweeper's hum; send about once a second while one is on screen.
+    SweeperHum,
+    /// A gust blows.
+    GustWhistle,
+    /// The Winch's hook drops.
+    WinchDrop,
+    /// The Winch reels in.
+    WinchReel,
 }
 
 impl Sfx {
@@ -199,10 +240,16 @@ pub enum Song {
     RootsClimb,
     /// The sting under the 2 → 3 Cabinet Transition (plays once).
     BailOut,
+    /// Cabinet 4, Stage 1.
+    Footings,
+    /// Cabinet 4, Stage 2.
+    Crown,
+    /// Cabinet 4, Stage 2's run-out: builds to a held chord (plays once).
+    CrownRise,
 }
 
 impl Song {
-    pub const ALL: [Song; 13] = [
+    pub const ALL: [Song; 16] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
@@ -216,6 +263,9 @@ impl Song {
         Song::Roots,
         Song::RootsClimb,
         Song::BailOut,
+        Song::Footings,
+        Song::Crown,
+        Song::CrownRise,
     ];
 }
 
@@ -524,7 +574,10 @@ mod tests {
             let (samples, looping) = &bank.songs[&id];
             assert_eq!(
                 *looping,
-                !matches!(id, Song::StageClear | Song::BankUp | Song::BailOut),
+                !matches!(
+                    id,
+                    Song::StageClear | Song::BankUp | Song::BailOut | Song::CrownRise
+                ),
                 "{id:?}"
             );
             if *looping {
@@ -551,6 +604,10 @@ mod tests {
         assert_eq!(defs[&Song::Wreckfall].bpm, 120.0);
         assert_eq!(defs[&Song::Roots].bpm, 150.0);
         assert_eq!(defs[&Song::RootsClimb].bpm, 150.0);
+        // docs/cabinets/4-climber.md: about 112 and 144 BPM.
+        assert_eq!(defs[&Song::Footings].bpm, 112.0);
+        assert_eq!(defs[&Song::Crown].bpm, 144.0);
+        assert_eq!(defs[&Song::CrownRise].bpm, 144.0);
     }
 
     /// Writes every sound to `target/audio-preview/*.wav` for listening:

@@ -1201,4 +1201,290 @@
         },
         order: ["hit", "fall", "land"],
     ),
+
+    // "Footings" (Cabinet 4, Stage 1): original. F# minor, 112 BPM, night.
+    Footings: (
+        bpm: 112,
+        rows_per_beat: 4,
+        channels: [
+            // Lead: high, sparse
+            (instrument: (wave: Square(duty: 0.25), volume: 0.15,
+                          env: (attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.2),
+                          vibrato: (depth: 0.12, rate: 5.0))),
+            // The climbing arpeggio: steady eighths, rising each bar
+            (instrument: (wave: Square(duty: 0.125), volume: 0.11,
+                          env: (decay: 0.10, sustain: 0.25, release: 0.02))),
+            // Drone
+            (instrument: (wave: Triangle, volume: 0.36,
+                          env: (attack: 0.03, decay: 0.3, sustain: 0.8, release: 0.05))),
+            // Drums: soft
+            (kit: {
+                "k": (freq: 110, gate: 0.10, instrument: (wave: Triangle, volume: 0.28, slide: -24,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.01))),
+                "r": (freq: 3200, gate: 0.04, instrument: (wave: Noise, volume: 0.10,
+                      env: (decay: 0.04, sustain: 0.0, release: 0.01))),
+                "h": (freq: 12000, gate: 0.015, instrument: (wave: Noise, volume: 0.06,
+                      env: (decay: 0.015, sustain: 0.0, release: 0.01))),
+            }),
+        ],
+        patterns: {
+            "intro": [
+                ". . . . . . . . . . . . . . . .",
+                "F#3 - A3 - C#4 - F#4 - A4 - C#5 - F#5 - A5 -",
+                "F#2 - - - - - - - - - - - - - - -",
+                ". . . . . . . . . . . . . . . .",
+            ],
+            "a1": [
+                "C#5 - - - - - - - . . A4 - - - - -",
+                "F#3 - A3 - C#4 - F#4 - A4 - C#5 - F#5 - A5 -",
+                "F#2 - - - - - - - - - - - - - - -",
+                "k . . . . . . . k . . . . . . .",
+            ],
+            "a2": [
+                "A4 - - - - - . . F#5 - - - - - - -",
+                "D3 - F#3 - A3 - D4 - F#4 - A4 - D5 - F#5 -",
+                "D2 - - - - - - - - - - - - - - -",
+                "k . . . . . . . k . . . . . . .",
+            ],
+            "a3": [
+                ". . E5 - - - - - - - - - . . . .",
+                "A3 - C#4 - E4 - A4 - C#5 - E5 - A5 - C#6 -",
+                "A2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+            "a4": [
+                "B4 - - - - - - - G#4 - - - - - - -",
+                "E3 - G#3 - B3 - E4 - G#4 - B4 - E5 - G#5 -",
+                "E2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+            "a5": [
+                "C#5 - - - - - . . F#5 - - - - - - -",
+                "F#3 - A3 - C#4 - F#4 - A4 - C#5 - F#5 - A5 -",
+                "F#2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+            "a6": [
+                "A5 - - - - - - - . . F#5 - - - - -",
+                "D3 - F#3 - A3 - D4 - F#4 - A4 - D5 - F#5 -",
+                "D2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+            "a7": [
+                ". . . . D5 - - - - - - - - - - -",
+                "B3 - D4 - F#4 - B4 - D5 - F#5 - B5 - D6 -",
+                "B2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+            "a8": [
+                "C#5 - - - . . . . G#4 - - - - - - -",
+                "C#3 - F3 - G#3 - C#4 - F4 - G#4 - C#5 - F5 -",
+                "C#2 - - - - - - - - - - - - - - -",
+                "k . . . h . . . k . . . h . r .",
+            ],
+        },
+        order: ["intro", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8"],
+    ),
+
+    // "Crown" (Cabinet 4, Stage 2): original. 144 BPM, A minor, then the relative major (C) as dawn comes in.
+    Crown: (
+        bpm: 144,
+        rows_per_beat: 4,
+        channels: [
+            // Lead
+            (instrument: (wave: Square(duty: 0.25), volume: 0.16,
+                          env: (attack: 0.005, decay: 0.10, sustain: 0.55, release: 0.05),
+                          vibrato: (depth: 0.1, rate: 6.0))),
+            // The climbing arpeggio: sixteenths
+            (instrument: (wave: Square(duty: 0.125), volume: 0.09,
+                          env: (decay: 0.05, sustain: 0.2, release: 0.01))),
+            // Bass: octave bounce
+            (instrument: (wave: Triangle, volume: 0.38,
+                          env: (decay: 0.12, sustain: 0.4, release: 0.02))),
+            // Drums
+            (kit: {
+                "k": (freq: 120, gate: 0.11, instrument: (wave: Triangle, volume: 0.36, slide: -26,
+                      env: (decay: 0.11, sustain: 0.0, release: 0.01))),
+                "s": (freq: 4200, gate: 0.09, instrument: (wave: Noise, volume: 0.20,
+                      env: (decay: 0.09, sustain: 0.0, release: 0.02))),
+                "h": (freq: 14000, gate: 0.02, instrument: (wave: Noise, volume: 0.09,
+                      env: (decay: 0.02, sustain: 0.0, release: 0.01))),
+            }),
+        ],
+        patterns: {
+            "a1": [
+                "E5 - - - - - . . C5 - - - D5 - - -",
+                "A3 C4 E4 A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a2": [
+                "C5 - - - - - - - A5 - - - - - - -",
+                "F3 A3 C4 F4 A4 C5 F5 A5 C6 F6 A6 C7 F7 A7 C8 F8",
+                "F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a3": [
+                "B4 - - - C5 - - - E5 - - - - - - -",
+                "A3 C4 E4 A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "a4": [
+                "G#4 - - - - - - - B4 - - - - - - -",
+                "E3 G#3 B3 E4 G#4 B4 E5 G#5 B5 E6 G#6 B6 E7 G#7 B7 E8",
+                "E2 . E3 . E2 . E3 . E2 . E3 . E2 . E3 .",
+                "k . h . s . h . k . h k s . h .",
+            ],
+            "b1": [
+                "G5 - - - - - . . E5 - - - G5 - - -",
+                "C3 E3 G3 C4 E4 G4 C5 E5 G5 C6 E6 G6 C7 E7 G7 C8",
+                "C2 . C3 . C2 . C3 . C2 . C3 . C2 . C3 .",
+                "k . h . s . h h k . h k s . h s",
+            ],
+            "b2": [
+                "D5 - - - - - - - B4 - - - - - - -",
+                "G3 B3 D4 G4 B4 D5 G5 B5 D6 G6 B6 D7 G7 B7 D8 G8",
+                "G2 . G3 . G2 . G3 . G2 . G3 . G2 . G3 .",
+                "k . h . s . h h k . h k s . h s",
+            ],
+            "b3": [
+                "C5 - - - E5 - - - A5 - - - - - - -",
+                "A3 C4 E4 A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k . h . s . h h k . h k s . h s",
+            ],
+            "b4": [
+                "A5 - - - - - . . G5 - - - F5 - - -",
+                "F3 A3 C4 F4 A4 C5 F5 A5 C6 F6 A6 C7 F7 A7 C8 F8",
+                "F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .",
+                "k . h . s . h h k . h k s . h s",
+            ],
+            "intro": [
+                ". . . . . . . . . . . . . . . .",
+                "A3 C4 E4 A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k . . . k . . . k . . . k . k .",
+            ],
+        },
+        order: ["intro", "a1", "a2", "a3", "a4", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "b1", "b2", "b3", "b4"],
+    ),
+
+    // "The Crown Rise" (Cabinet 4, Stage 2 run-out): original. 144 BPM, C major, 12 bars (20 s), builds to a held chord that hands over to the Ending. Plays once.
+    CrownRise: (
+        bpm: 144,
+        rows_per_beat: 4,
+        looping: false,
+        channels: [
+            // Lead
+            (instrument: (wave: Square(duty: 0.25), volume: 0.16,
+                          env: (attack: 0.005, decay: 0.10, sustain: 0.55, release: 0.05),
+                          vibrato: (depth: 0.1, rate: 6.0))),
+            // The climbing arpeggio: sixteenths
+            (instrument: (wave: Square(duty: 0.125), volume: 0.09,
+                          env: (decay: 0.05, sustain: 0.2, release: 0.01))),
+            // Bass: octave bounce
+            (instrument: (wave: Triangle, volume: 0.38,
+                          env: (decay: 0.12, sustain: 0.4, release: 0.02))),
+            // Drums
+            (kit: {
+                "k": (freq: 120, gate: 0.11, instrument: (wave: Triangle, volume: 0.36, slide: -26,
+                      env: (decay: 0.11, sustain: 0.0, release: 0.01))),
+                "s": (freq: 4200, gate: 0.09, instrument: (wave: Noise, volume: 0.20,
+                      env: (decay: 0.09, sustain: 0.0, release: 0.02))),
+                "h": (freq: 14000, gate: 0.02, instrument: (wave: Noise, volume: 0.09,
+                      env: (decay: 0.02, sustain: 0.0, release: 0.01))),
+            }),
+            // Pad: holds the chord
+            (instrument: (wave: Square(duty: 0.5), volume: 0.06,
+                          env: (attack: 0.05, decay: 0.2, sustain: 0.9, release: 0.3))),
+        ],
+        patterns: {
+            "r1": [
+                "G5 - - - - - - - E5 - - - - - - -",
+                "C3 E3 G3 C4 E4 G4 C5 E5 G5 C6 E6 G6 C7 E7 G7 C8",
+                "C2 . C3 . C2 . C3 . C2 . C3 . C2 . C3 .",
+                "k . h . s . h h k . h k s . h s",
+                "C4 - - - - - - - - - - - - - - -",
+            ],
+            "r2": [
+                "D5 - - - - - - - B5 - - - - - - -",
+                "G3 B3 D4 G4 B4 D5 G5 B5 D6 G6 B6 D7 G7 B7 D8 G8",
+                "G2 . G3 . G2 . G3 . G2 . G3 . G2 . G3 .",
+                "k . h . s . h h k . h k s . h s",
+                "G4 - - - - - - - - - - - - - - -",
+            ],
+            "r3": [
+                "C6 - - - - - - - A5 - - - - - - -",
+                "A3 C4 E4 A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k . h . s . h h k . h k s . h s",
+                "A4 - - - - - - - - - - - - - - -",
+            ],
+            "r4": [
+                "A5 - - - - - - - F5 - - - - - - -",
+                "F3 A3 C4 F4 A4 C5 F5 A5 C6 F6 A6 C7 F7 A7 C8 F8",
+                "F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .",
+                "k . h . s . h h k . h k s . h s",
+                "F4 - - - - - - - - - - - - - - -",
+            ],
+            "r5": [
+                "G5 - - - C6 - - - E6 - - - - - - -",
+                "C4 E4 G4 C5 E5 G5 C6 E6 G6 C7 E7 G7 C8 E8 G8 C9",
+                "C2 . C3 . C2 . C3 . C2 . C3 . C2 . C3 .",
+                "k h s h k h s h k s k s k s k s",
+                "C4 - - - - - - - - - - - - - - -",
+            ],
+            "r6": [
+                "D6 - - - B5 - - - G5 - - - - - - -",
+                "G4 B4 D5 G5 B5 D6 G6 B6 D7 G7 B7 D8 G8 B8 D9 G9",
+                "G2 . G3 . G2 . G3 . G2 . G3 . G2 . G3 .",
+                "k h s h k h s h k s k s k s k s",
+                "G4 - - - - - - - - - - - - - - -",
+            ],
+            "r7": [
+                "E6 - - - C6 - - - A5 - - - - - - -",
+                "A4 C5 E5 A5 C6 E6 A6 C7 E7 A7 C8 E8 A8 C9 E9 A9",
+                "A2 . A3 . A2 . A3 . A2 . A3 . A2 . A3 .",
+                "k h s h k h s h k s k s k s k s",
+                "A4 - - - - - - - - - - - - - - -",
+            ],
+            "r8": [
+                "F6 - - - A5 - - - C6 - - - - - - -",
+                "F4 A4 C5 F5 A5 C6 F6 A6 C7 F7 A7 C8 F8 A8 C9 F9",
+                "F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .",
+                "k h s h k h s h k s k s k s k s",
+                "F4 - - - - - - - - - - - - - - -",
+            ],
+            "r9": [
+                "F6 - A5 - C6 - F6 - A6 - - - - - - -",
+                "F5 A5 C6 F6 A6 C7 F7 A7 C8 F8 A8 C9 F9 A9 C10 F10",
+                "F2 . F3 . F2 . F3 . F2 . F3 . F2 . F3 .",
+                "k h k h s h k h k s k s s s s s",
+                "F4 - - - - - - - - - - - - - - -",
+            ],
+            "r10": [
+                "G5 - B5 - D6 - G6 - B6 - - - - - - -",
+                "G5 B5 D6 G6 B6 D7 G7 B7 D8 G8 B8 D9 G9 B9 D10 G10",
+                "G2 . G3 . G2 . G3 . G2 . G3 . G2 . G3 .",
+                "k h k h s h k h k s k s s s s s",
+                "G4 - - - - - - - - - - - - - - -",
+            ],
+            "r11": [
+                "G6 - B6 - D7 - - - - - - - - - - -",
+                "G5 B5 D6 G6 B6 D7 G7 B7 D8 G8 B8 D9 G9 B9 D10 G10",
+                "G2 . G3 . G2 . G3 . G2 . G3 . G2 . G3 .",
+                "k h k h s h k h k s k s s s s s",
+                "G4 - - - - - - - - - - - - - - -",
+            ],
+            "r12": [
+                "G5 - - - - - - - - - - - - - - -",
+                "E5 - - - - - - - - - - - - - - -",
+                "C2 - - - - - - - - - - - - - - -",
+                "k . . . . . . . . . . . . . . .",
+                "C4 - - - - - - - - - - - - - - -",
+            ],
+        },
+        order: ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12"],
+    ),
 }
