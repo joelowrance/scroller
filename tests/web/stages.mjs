@@ -1,24 +1,34 @@
-// Plays Cabinet 1's two Stages unattended in headless Chromium, with the
-// invincible Hero and the game sped up, and fails unless both clear.
-// Screenshots the start, middle and end of each Stage.
-// Usage: node stages.mjs <base-url> <screenshot-dir>
-// Run by scripts/smoke-web.sh after smoke.mjs.
+// Plays both Stages of one Cabinet unattended in headless Chromium, with the
+// invincible Hero and the game sped up, and fails unless both clear in about
+// their designed time with no page or console errors. Screenshots the start,
+// middle and end of each Stage. Earlier Cabinets are skipped with the
+// developer key C (clear Stage).
+//
+// Progress is read from the game's own Stage clock (`scroller.debug.stage`,
+// written by the gameplay kit while debug_keys is on), so a slow browser
+// that can't keep up with the time scale doesn't fail the test.
+//
+// Usage: node stages.mjs <base-url> <screenshot-dir> <cabinet 1-4>
+// Run by scripts/smoke-web.sh (every Cabinet with Stages) and
+// scripts/stages-web.sh (one Cabinet).
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const [base, out] = process.argv.slice(2);
-if (!base || !out) {
-  console.error("usage: node stages.mjs <base-url> <screenshot-dir>");
+const [base, out, cabinetArg] = process.argv.slice(2);
+const cabinet = Number(cabinetArg);
+if (!base || !out || !(cabinet >= 1 && cabinet <= 4)) {
+  console.error("usage: node stages.mjs <base-url> <screenshot-dir> <cabinet 1-4>");
   process.exit(2);
 }
 await mkdir(out, { recursive: true });
 
 const SCALE = 8;
-// Stage lengths at normal speed (see docs/cabinets/1-side-shooter.md).
-const STAGES = [
-  { name: "1-1", seconds: 210 },
-  { name: "1-2", seconds: 225 },
-];
+// Longest a Stage may be designed to last (docs/DESIGN.md: 3-4 minutes).
+const MAX_STAGE_SECONDS = 240;
+// One long frame (up to 2 game seconds at 8x) may overshoot the end.
+const SECONDS_SLACK = 3;
+// Score a Stage clear must have reached, where a Cabinet pays a clear bonus.
+const CLEAR_BONUS = { 1: 3000 };
 
 const failures = [];
 const fail = (msg) => {
@@ -43,20 +53,23 @@ const tap = async (key) => {
 const read = (key) =>
   page.evaluate((k) => JSON.parse(localStorage.getItem(`scroller.${k}`) ?? "null"), key);
 const save = () => read("save");
-// With debug_keys, Cabinet 1 records the Stage's real progress here.
 const clock = () => read("debug.stage");
 const shot = (name) => page.screenshot({ path: `${out}/stages-${name}.png` });
-// Waits until the game itself has scrolled `fraction` of Stage `stage`,
-// however fast or slow the browser runs it.
+// Waits until the game itself has scrolled `fraction` of this Cabinet's
+// Stage `stage` (0-based), however fast or slow the browser runs it.
 const reach = async (stage, fraction, timeoutMs) => {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const c = await clock();
-    if (c && c.stage === stage && c.progress >= fraction) return c;
+    if (c && c.cabinet === cabinet - 1 && c.stage === stage && c.progress >= fraction) return c;
     await wait(100);
   }
   return null;
 };
+// The Save a clear of Stage `stage` writes: the next Stage of this Cabinet,
+// or the first of the next. The last Stage of the Run has none.
+const nextSave = (stage) =>
+  stage === 0 ? { cabinet: cabinet - 1, stage: 1 } : cabinet < 4 ? { cabinet, stage: 0 } : null;
 
 try {
   await page.goto(`${base}?invincible&time_scale=${SCALE}`);
@@ -66,27 +79,46 @@ try {
   await tap("Space"); // NEW RUN
   await wait(500);
 
-  for (const [i, stage] of STAGES.entries()) {
-    await tap("Space"); // play the Stage
+  for (let c = 1; c < cabinet; c++) {
+    for (let s = 0; s < 2; s++) {
+      await tap("Space"); // start the Stage
+      await wait(800);
+      await tap("KeyC");
+      await wait(800);
+    }
+    await wait(4000); // the Cabinet Transition
+  }
+
+  for (let i = 0; i < 2; i++) {
+    const name = `${cabinet}-${i + 1}`;
+    // Play the Stage; its Save is used up. A Cabinet Transition may still
+    // be playing (they vary in length), so keep trying for a while.
+    await tap("Space");
+    for (let tries = 0; tries < 20 && (await save()); tries++) {
+      await wait(600);
+      if (await save()) await tap("Space");
+    }
     // Hold fire, so the screenshots show the Hero shooting.
     await page.keyboard.down("KeyZ");
     // Generous: the browser may run well below the requested speed.
-    const budget = ((stage.seconds * 3) / SCALE) * 1000 + 30_000;
+    const budget = ((MAX_STAGE_SECONDS * 3) / SCALE) * 1000 + 30_000;
     let stuck = false;
     for (const [fraction, label] of [[0.02, "start"], [0.5, "middle"], [0.97, "end"]]) {
       if (!(await reach(i, fraction, budget))) {
-        fail(`Stage ${stage.name} never reached ${label} (${fraction})`);
+        fail(`Stage ${name} never reached ${label} (${fraction})`);
         stuck = true;
         break;
       }
-      await shot(`${stage.name}-${label}`);
+      await shot(`${name}-${label}`);
+      if (label === "start" && (await save())) {
+        fail(`Stage ${name}: the Save was not used up when the Stage began`);
+      }
     }
     const end = stuck ? null : await reach(i, 1.0, budget);
     await page.keyboard.up("KeyZ");
-    // Clearing writes a Save for the next Stage (Cabinet 2 after 1-2).
-    const want = i === 0 ? { cabinet: 0, stage: 1 } : { cabinet: 1, stage: 0 };
-    let cleared = false;
-    for (let n = 0; n < 50 && end; n++) {
+    const want = nextSave(i);
+    let cleared = end !== null && want === null;
+    for (let n = 0; n < 50 && end && want; n++) {
       const s = await save();
       if (s && s.cabinet === want.cabinet && s.stage === want.stage) {
         cleared = true;
@@ -95,23 +127,26 @@ try {
       await wait(100);
     }
     if (!cleared) {
-      fail(`Stage ${stage.name} did not clear`);
-      await shot(`${stage.name}-stuck`);
+      fail(`Stage ${name} did not clear`);
+      await shot(`${name}-stuck`);
       break;
     }
     const seconds = end.seconds.toFixed(1);
-    console.log(`Stage ${stage.name} cleared after ${seconds} game seconds (designed: ${stage.seconds})`);
-    // One long frame (up to 2 game seconds at 8x) may overshoot the end.
-    if (Math.abs(end.seconds - stage.seconds) > 3) {
-      fail(`Stage ${stage.name} took ${seconds} game seconds, not about ${stage.seconds}`);
+    const designed = end.designed.toFixed(1);
+    console.log(`Stage ${name} cleared after ${seconds} game seconds (designed: ${designed})`);
+    if (Math.abs(end.seconds - end.designed) > SECONDS_SLACK) {
+      fail(`Stage ${name} took ${seconds} game seconds, not about ${designed}`);
     }
     await wait(600);
-    await shot(`${stage.name}-cleared`);
-    if (i === 0 && (await save()).score < 3000) fail("no Stage clear bonus in the score");
+    await shot(`${name}-cleared`);
+    const bonus = CLEAR_BONUS[cabinet];
+    if (i === 0 && bonus && (await save()).score < bonus) {
+      fail(`Stage ${name}: no Stage clear bonus in the score`);
+    }
   }
 } catch (e) {
   fail(`flow did not finish: ${e.message}`);
-  await shot("failure").catch(() => {});
+  await shot(`${cabinet}-failure`).catch(() => {});
 }
 
 await browser.close();
@@ -119,4 +154,4 @@ if (failures.length > 0) {
   console.error(`Stage test FAILED (${failures.length} problem${failures.length === 1 ? "" : "s"}).`);
   process.exit(1);
 }
-console.log("Both Cabinet 1 Stages cleared unattended.");
+console.log(`Both Cabinet ${cabinet} Stages cleared unattended.`);

@@ -27,6 +27,7 @@
 
 use bevy::prelude::*;
 
+pub mod clock;
 pub mod collision;
 pub mod combat;
 pub mod effects;
@@ -35,6 +36,7 @@ pub mod scenery;
 pub mod stage;
 pub mod timeline;
 
+pub use clock::StageClock;
 pub use collision::TerrainHitbox;
 pub use collision::{Contact, Hitbox, Layer};
 pub use combat::{
@@ -84,6 +86,7 @@ impl Plugin for KitPlugin {
             .add_message::<Hurt>()
             .add_message::<ShieldAbsorbed>()
             .init_resource::<stage::HitStopTimer>()
+            .init_resource::<clock::StageClock>()
             .init_resource::<effects::Trauma>()
             .init_resource::<effects::EffectRng>()
             .configure_sets(
@@ -141,6 +144,14 @@ impl Plugin for KitPlugin {
                     .run_if(resource_exists::<crate::run::Session>),
             )
             .add_systems(
+                Update,
+                (clock::start_clock, clock::tick_clock.run_if(stage_live))
+                    .chain()
+                    .after(Timeline)
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(resource_exists::<StageRun>),
+            )
+            .add_systems(
                 OnExit(Screen::Playing),
                 (
                     stage::end_stage,
@@ -148,6 +159,12 @@ impl Plugin for KitPlugin {
                     effects::reset_camera,
                 ),
             );
+        #[cfg(target_arch = "wasm32")]
+        app.add_systems(
+            Update,
+            clock::report_clock.run_if(in_state(Screen::Playing)),
+        )
+        .add_systems(OnExit(Screen::Playing), clock::report_final_clock);
     }
 }
 

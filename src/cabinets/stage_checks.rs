@@ -24,15 +24,6 @@ fn stage(text: &str) -> StageTimeline {
     StageTimeline::parse(text).unwrap()
 }
 
-/// Seconds the Stage takes at normal speed.
-fn duration(t: &StageTimeline) -> f32 {
-    let mut keys: Vec<(f32, f32)> = t.speed.iter().map(|k| (k.from, k.speed)).collect();
-    keys.push((t.length, 0.0));
-    keys.windows(2)
-        .map(|w| (w[1].0.min(t.length) - w[0].0) / w[0].1)
-        .sum()
-}
-
 fn param<'a>(entry: &'a crate::kit::timeline::SpawnEntry, key: &str) -> Option<&'a ron::Value> {
     entry.params.get(&ron::Value::String(key.into()))
 }
@@ -40,12 +31,12 @@ fn param<'a>(entry: &'a crate::kit::timeline::SpawnEntry, key: &str) -> Option<&
 #[test]
 fn each_cabinet_2_stage_lasts_three_to_four_minutes() {
     for (name, text) in CABINET_2 {
-        let seconds = duration(&stage(text));
+        let seconds = stage(text).duration();
         assert!((180.0..=240.0).contains(&seconds), "{name}: {seconds} s");
     }
     // The doc's own lengths: 3:20 and 3:36.
-    assert!((duration(&stage(CABINET_2[0].1)) - 200.0).abs() < 1.0);
-    assert!((duration(&stage(CABINET_2[1].1)) - 216.0).abs() < 1.0);
+    assert!((stage(CABINET_2[0].1).duration() - 200.0).abs() < 1.0);
+    assert!((stage(CABINET_2[1].1).duration() - 216.0).abs() < 1.0);
 }
 
 #[test]

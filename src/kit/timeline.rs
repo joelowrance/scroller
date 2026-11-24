@@ -93,6 +93,21 @@ impl StageTimeline {
         Ok(timeline)
     }
 
+    /// Seconds the Stage takes at normal speed, from its length and speeds.
+    pub fn duration(&self) -> f32 {
+        let keys = &self.speed;
+        let mut seconds = 0.0;
+        for (i, key) in keys.iter().enumerate() {
+            let end = keys
+                .get(i + 1)
+                .map_or(self.length, |k| k.from.min(self.length));
+            if end > key.from {
+                seconds += (end - key.from) / key.speed;
+            }
+        }
+        seconds
+    }
+
     /// Scroll speed at a scroll position.
     pub fn speed_at(&self, position: f32) -> f32 {
         self.speed
