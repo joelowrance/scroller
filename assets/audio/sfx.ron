@@ -272,4 +272,167 @@
          vibrato: (depth: 1.0, rate: 16.0),
          env: (decay: 1.0, sustain: 0.0, release: 0.1), volume: 0.18),
     ],
+
+    // ---------------------------------------------------------------- Cabinet 3
+    // docs/cabinets/3-run-and-gun.md. The shot (Shot), the bolt (Lance),
+    // Power-ups G and W, the medal, hits, armour sparks (ShellPing),
+    // explosions, the Ward, the behind chevron (HookWarning), lost lives and
+    // the STAGE CLEAR sting reuse the sounds above.
+    // A footstep: a soft scuff, every other run frame.
+    Footstep: [
+        (wave: Noise, freq: 1800, gate: 0.025,
+         env: (decay: 0.025, sustain: 0.0, release: 0.005), volume: 0.07),
+    ],
+    // The jump: a quick rise.
+    Jump: [
+        (wave: Square(duty: 0.25), freq: 330, gate: 0.12, slide: 12,
+         env: (decay: 0.12, sustain: 0.2, release: 0.02), volume: 0.16),
+    ],
+    // The Jet's mid-air jump: a puff of air and a higher rise.
+    JetPuff: [
+        (wave: Noise, freq: 5000, gate: 0.12, slide: -12,
+         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.16),
+        (wave: Square(duty: 0.125), freq: 523, gate: 0.10, slide: 10,
+         env: (decay: 0.10, sustain: 0.1, release: 0.02), volume: 0.10),
+    ],
+    // Landing: a low thump.
+    Land: [
+        (wave: Triangle, freq: 110, gate: 0.06, slide: -10,
+         env: (decay: 0.06, sustain: 0.0, release: 0.01), volume: 0.30),
+        (wave: Noise, freq: 1200, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.01), volume: 0.06),
+    ],
+    // A flare is lobbed: a soft whump with a short whistle up.
+    FlareLob: [
+        (wave: Triangle, freq: 220, gate: 0.05, slide: -5,
+         env: (decay: 0.05, sustain: 0.0, release: 0.01), volume: 0.22),
+        (wave: Square(duty: 0.125), freq: 1400, gate: 0.15, slide: 5,
+         env: (attack: 0.02, decay: 0.13, sustain: 0.0, release: 0.02), volume: 0.06),
+    ],
+    // A flare bursts: a bright crackle with a little body.
+    FlareBurst: [
+        (wave: Noise, freq: 9000, gate: 0.18, slide: -18,
+         env: (decay: 0.18, sustain: 0.0, release: 0.03), volume: 0.24),
+        (wave: Triangle, freq: 150, gate: 0.10, slide: -12,
+         env: (decay: 0.10, sustain: 0.0, release: 0.01), volume: 0.22),
+    ],
+    PowerUpFlare: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1397, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // F6
+    ],
+    PowerUpJet: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1661, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // G#6
+    ],
+    PowerUpHustle: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1865, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // Bb6
+    ],
+    // A Sentry rises out of its pit: a grinding climb.
+    SentryRise: [
+        (wave: Square(duty: 0.125), freq: 110, gate: 0.5, slide: 12,
+         vibrato: (depth: 0.5, rate: 25.0),
+         env: (attack: 0.05, sustain: 0.8, release: 0.05), volume: 0.12),
+    ],
+    // A Burrower's dust before it bites: a low rumbling hiss.
+    BurrowerDust: [
+        (wave: Noise, freq: 700, gate: 0.5,
+         env: (attack: 0.15, decay: 0.35, sustain: 0.0, release: 0.05), volume: 0.18),
+        (wave: Triangle, freq: 55, gate: 0.5,
+         vibrato: (depth: 1.0, rate: 14.0),
+         env: (attack: 0.1, sustain: 0.8, release: 0.05), volume: 0.22),
+    ],
+    // A Dropper's hatch opens: two metal clicks.
+    DropperHatch: [
+        (at: 0.00, wave: Square(duty: 0.5), freq: 660, gate: 0.02,
+         env: (release: 0.01), volume: 0.14),
+        (at: 0.08, wave: Square(duty: 0.5), freq: 440, gate: 0.03,
+         env: (release: 0.01), volume: 0.14),
+        (at: 0.08, wave: Noise, freq: 6000, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.01), volume: 0.08),
+    ],
+    // The Strider lifts a leg: hydraulics straining upward.
+    StriderLegLift: [
+        (wave: Noise, freq: 2500, gate: 0.4, slide: 12,
+         env: (attack: 0.1, sustain: 0.6, release: 0.05), volume: 0.12),
+        (wave: Square(duty: 0.25), freq: 82, gate: 0.4, slide: 7,
+         env: (attack: 0.05, sustain: 0.7, release: 0.05), volume: 0.12),
+    ],
+    // A Crusher slams down: a heavy boom with a clank on top.
+    CrusherSlam: [
+        (wave: Triangle, freq: 70, gate: 0.25, slide: -12,
+         env: (decay: 0.25, sustain: 0.0, release: 0.03), volume: 0.45),
+        (wave: Noise, freq: 2000, gate: 0.15,
+         env: (decay: 0.15, sustain: 0.0, release: 0.03), volume: 0.24),
+        (wave: Square(duty: 0.125), freq: 900, gate: 0.05,
+         env: (decay: 0.05, sustain: 0.0, release: 0.01), volume: 0.08),
+    ],
+    // An arc floor's 0.4 s crackle before it goes live.
+    ArcFloorCrackle: [
+        (wave: Noise, freq: 14000, gate: 0.4,
+         vibrato: (depth: 6.0, rate: 22.0),
+         env: (attack: 0.05, sustain: 0.8, release: 0.03), volume: 0.12),
+        (wave: Square(duty: 0.5), freq: 120, gate: 0.4,
+         vibrato: (depth: 0.5, rate: 40.0),
+         env: (attack: 0.3, sustain: 1.0, release: 0.03), volume: 0.08),
+    ],
+    // A conveyor on screen: a low hum (sent about once a second).
+    ConveyorHum: [
+        (wave: Square(duty: 0.25), freq: 65, gate: 0.9,
+         vibrato: (depth: 0.2, rate: 8.0),
+         env: (attack: 0.1, sustain: 0.8, release: 0.1), volume: 0.06),
+    ],
+    // A crumbling ledge starts to shake: a dry creak.
+    LedgeCreak: [
+        (wave: Square(duty: 0.125), freq: 180, gate: 0.4, slide: -5,
+         vibrato: (depth: 1.5, rate: 18.0),
+         env: (attack: 0.03, sustain: 0.6, release: 0.05), volume: 0.12),
+        (wave: Noise, freq: 1500, gate: 0.4,
+         env: (attack: 0.2, decay: 0.2, sustain: 0.0, release: 0.05), volume: 0.10),
+    ],
+    // The Strider's foot comes down.
+    StriderStomp: [
+        (wave: Triangle, freq: 55, gate: 0.35, slide: -12,
+         env: (decay: 0.35, sustain: 0.0, release: 0.05), volume: 0.50),
+        (wave: Noise, freq: 1000, gate: 0.2,
+         env: (decay: 0.2, sustain: 0.0, release: 0.03), volume: 0.20),
+    ],
+    // The shockwave rolls out along the ground.
+    StriderShockwave: [
+        (wave: Noise, freq: 600, gate: 0.6, slide: 12,
+         env: (decay: 0.6, sustain: 0.0, release: 0.05), volume: 0.20),
+        (wave: Square(duty: 0.5), freq: 90, gate: 0.5, slide: -5,
+         vibrato: (depth: 0.5, rate: 20.0),
+         env: (decay: 0.5, sustain: 0.0, release: 0.05), volume: 0.10),
+    ],
+    // The Standoff locks in as the scroll stops: two low, hard notes.
+    StandoffLock: [
+        (at: 0.00, wave: Square(duty: 0.5), freq: 147, gate: 0.10,
+         env: (release: 0.02), volume: 0.20),                                         // D3
+        (at: 0.00, wave: Noise, freq: 3000, gate: 0.05,
+         env: (decay: 0.05, sustain: 0.0, release: 0.01), volume: 0.12),
+        (at: 0.16, wave: Square(duty: 0.5), freq: 139, gate: 0.30,
+         env: (decay: 0.3, sustain: 0.3, release: 0.05), volume: 0.20),               // C#3
+        (at: 0.16, wave: Triangle, freq: 69, gate: 0.30,
+         env: (decay: 0.3, sustain: 0.3, release: 0.05), volume: 0.30),
+    ],
+    // The Standoff is cleared and the scroll resumes: a bright rise.
+    StandoffRelease: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 587, gate: 0.06, volume: 0.20),   // D5
+        (at: 0.06, wave: Square(duty: 0.25), freq: 740, gate: 0.06, volume: 0.20),   // F#5
+        (at: 0.12, wave: Square(duty: 0.25), freq: 880, gate: 0.06, volume: 0.20),   // A5
+        (at: 0.18, wave: Square(duty: 0.25), freq: 1175, gate: 0.20, volume: 0.20,
+         vibrato: (depth: 0.2, rate: 10.0), env: (release: 0.08)),                    // D6
+    ],
+    // A fall into a pit: a long falling whistle (LifeLost follows).
+    FallWhistle: [
+        (wave: Square(duty: 0.5), freq: 1600, gate: 0.8, slide: -30,
+         env: (attack: 0.02, sustain: 0.9, release: 0.05), volume: 0.14),
+    ],
 }

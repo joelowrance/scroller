@@ -28,6 +28,9 @@ pub fn stage_song(cabinet: usize, stage: usize, seconds_left: f32) -> Option<Son
         (1, 0) => Song::Cloudline,
         (1, _) if run_out => Song::OuterYardAlarm,
         (1, _) => Song::OuterYard,
+        (2, 0) => Song::Wreckfall,
+        (2, _) if run_out => Song::RootsClimb,
+        (2, _) => Song::Roots,
         _ => return None,
     })
 }
@@ -88,7 +91,10 @@ mod tests {
         assert_eq!(stage_song(1, 0, 5.0), Some(Song::Cloudline));
         assert_eq!(stage_song(1, 1, 60.0), Some(Song::OuterYard));
         assert_eq!(stage_song(1, 1, 0.0), Some(Song::OuterYardAlarm));
-        assert_eq!(stage_song(2, 0, 60.0), None);
+        assert_eq!(stage_song(2, 0, 5.0), Some(Song::Wreckfall));
+        assert_eq!(stage_song(2, 1, 60.0), Some(Song::Roots));
+        assert_eq!(stage_song(2, 1, 20.0), Some(Song::RootsClimb));
+        assert_eq!(stage_song(3, 0, 60.0), None);
     }
 
     #[test]
