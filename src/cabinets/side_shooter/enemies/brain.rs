@@ -854,7 +854,7 @@ mod tests {
     }
 
     #[test]
-    fn lamplighter_stops_fires_twice_then_leaves_away_from_the_hero() {
+    fn lamplighter_stops_fires_its_shots_then_leaves_away_from_the_hero() {
         let t = types();
         let mut b = Brain::Lamplighter(Lamplighter::new());
         let mut pos = Vec2::new(170.0, 20.0);
@@ -869,7 +869,11 @@ mod tests {
                 .expect("first shot");
         assert!(first as f32 * DT < 1.8, "first shot before 1.8 s");
         let rest = run(&mut b, &mut pos, hero, 3.0);
-        assert_eq!(shots(&rest), 1, "two shots in all");
+        assert_eq!(
+            shots(&rest),
+            t.lamplighter.shots as usize - 1,
+            "every shot in the hover"
+        );
         assert!(pos.y < 20.0, "left downward, away from a Hero above");
         let shot = rest.iter().find(|o| !o.shots.is_empty()).unwrap().shots[0];
         assert!(close(shot.length(), t.lamplighter.shot_speed, 0.01));
@@ -965,9 +969,11 @@ mod tests {
         let shot = (0..frames)
             .find_map(|_| b.step(&mut pos, &c, &t).shots.first().copied())
             .expect("fires once the interval is up");
-        // 10°/s for 1.6 s turns the barrel only ~16° from straight up.
+        // 10°/s over the fire interval turns the barrel only a little from
+        // straight up.
         let degrees = shot.to_angle().to_degrees();
-        assert!(close(degrees, 90.0 + 16.0, 1.0), "shot at {degrees}°");
+        let turned = 10.0 * t.barnacle.fire_interval;
+        assert!(close(degrees, 90.0 + turned, 1.0), "shot at {degrees}°");
         assert!(close(shot.length(), t.barnacle.shot_speed, 0.01));
     }
 

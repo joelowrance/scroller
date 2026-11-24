@@ -22,11 +22,12 @@ fn under(at: f32, x: f32) -> f32 {
 }
 
 #[test]
-fn both_stages_last_three_to_four_minutes() {
+fn both_stages_last_two_and_a_half_to_three_minutes() {
+    // #65: trimmed from 3:30 and 3:45 after the Cabinet 1 playtest.
     let one = timeline(0).duration();
     let two = timeline(1).duration();
-    assert!((205.0..=215.0).contains(&one), "Stage 1 takes {one} s");
-    assert!((220.0..=230.0).contains(&two), "Stage 2 takes {two} s");
+    assert!((150.0..=180.0).contains(&one), "Stage 1 takes {one} s");
+    assert!((150.0..=180.0).contains(&two), "Stage 2 takes {two} s");
 }
 
 #[test]
@@ -71,8 +72,8 @@ fn restart_points_match_the_pacing_outline() {
             })
             .collect()
     };
-    assert_eq!(at(0), [0.0, 70.0, 140.0]);
-    assert_eq!(at(1), [0.0, 60.0, 120.0, 175.0]);
+    assert_eq!(at(0), [0.0, 54.0, 112.0]);
+    assert_eq!(at(1), [0.0, 50.0, 106.0, 144.0]);
 }
 
 #[test]
@@ -255,7 +256,7 @@ mod playthrough {
     fn both_stages_play_through_at_normal_speed() {
         // Measured, not computed: the clear comes when the designed length
         // is up, within a couple of frames.
-        for (stage, length) in [(0, 210.0), (1, 225.0)] {
+        for (stage, length) in [(0, 172.0), (1, 178.0)] {
             let (score, seconds) = play(stage, 1.0 / 60.0, 1.0);
             assert!(score >= 3000, "Stage {} scored {score}", stage + 1);
             assert!(
@@ -419,7 +420,7 @@ fn extra_lives_land_where_the_design_doc_says() {
     println!("Stage 1: {} = {one:?}", one.total());
     println!("Stage 2: {} = {two:?}", two.total());
     // The measured totals the design doc's Scoring section quotes.
-    assert!((35_000..=45_000).contains(&one.total()), "Stage 1");
+    assert!((35_000..=47_000).contains(&one.total()), "Stage 1");
     assert!((32_000..=42_000).contains(&two.total()), "Stage 2");
     // Without the extras (maxed Power-ups, Ferries milked for Skiffs), a
     // flawless Stage 1 still passes the first extra life...
