@@ -13,14 +13,17 @@ use crate::flow::Screen;
 use crate::kit::StageRun;
 use crate::run::Session;
 
-/// The second Stage switches to its run-out music when this many seconds of
-/// scroll are left (both design docs say "the last 20 s").
+/// The second Stage switches to its run-out music once fewer than this many
+/// seconds of scroll are left (the design docs say "the last 20 s").
+/// Strictly fewer: Cabinet 3's Strider Standoff holds the scroll at exactly
+/// 20 s left, and the run-out must start only when the scroll resumes. No
+/// Standoff may sit inside the last 20 s of scroll.
 pub const RUN_OUT_SECONDS: f32 = 20.0;
 
 /// The song for a Stage, given the seconds of scroll left. `None` for a
 /// Cabinet that has no music yet.
 pub fn stage_song(cabinet: usize, stage: usize, seconds_left: f32) -> Option<Song> {
-    let run_out = stage == 1 && seconds_left <= RUN_OUT_SECONDS;
+    let run_out = stage == 1 && seconds_left < RUN_OUT_SECONDS;
     Some(match (cabinet, stage) {
         (0, 0) => Song::LowTide,
         (0, _) if run_out => Song::FoundryClimb,
@@ -87,13 +90,16 @@ mod tests {
     fn each_stage_has_its_song_and_the_second_changes_at_the_end() {
         assert_eq!(stage_song(0, 0, 5.0), Some(Song::LowTide));
         assert_eq!(stage_song(0, 1, 60.0), Some(Song::Foundry));
-        assert_eq!(stage_song(0, 1, 20.0), Some(Song::FoundryClimb));
+        assert_eq!(stage_song(0, 1, 19.9), Some(Song::FoundryClimb));
         assert_eq!(stage_song(1, 0, 5.0), Some(Song::Cloudline));
         assert_eq!(stage_song(1, 1, 60.0), Some(Song::OuterYard));
         assert_eq!(stage_song(1, 1, 0.0), Some(Song::OuterYardAlarm));
         assert_eq!(stage_song(2, 0, 5.0), Some(Song::Wreckfall));
         assert_eq!(stage_song(2, 1, 60.0), Some(Song::Roots));
-        assert_eq!(stage_song(2, 1, 20.0), Some(Song::RootsClimb));
+        // The Strider Standoff holds the scroll at exactly 20 s left: the
+        // climb waits for the scroll to resume.
+        assert_eq!(stage_song(2, 1, 20.0), Some(Song::Roots));
+        assert_eq!(stage_song(2, 1, 19.9), Some(Song::RootsClimb));
         assert_eq!(stage_song(3, 0, 60.0), None);
     }
 
