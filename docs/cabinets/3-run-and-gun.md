@@ -826,6 +826,11 @@ Stage 1 and 40–50k for Stage 2. A decent player reaches the third extra life
 - **Stage 2 track:** about 150 BPM, mechanical, with a pounding low pulse on
   every beat (the Crushers' rhythm) and noise hats. In the last 20 s it
   climbs in pitch toward the tower.
+  - The climb starts once fewer than 20 s of scroll are left
+    (`RUN_OUT_SECONDS` in `src/audio/stage_music.rs`). The Strider Standoff
+    holds the scroll at exactly 20 s left, so the climb starts as the scroll
+    resumes after it. **No Standoff may sit inside the last 20 s of scroll**,
+    or the climb plays under it.
 - **Effects to cover:**
   - Hero: footsteps (soft, every other run frame), jump, Jet puff, land,
     shot, bolt, Flare lob and burst.

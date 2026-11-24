@@ -124,6 +124,44 @@ sfx_list! {
     TetherHum,
     /// The flak hit that ends Cabinet 2 and starts the 2 → 3 Transition.
     FinalHit,
+    // Cabinet 3 (docs/cabinets/3-run-and-gun.md). The shot (Shot), the bolt
+    // (Lance), Power-ups G and W, the medal, hits, armour sparks (ShellPing),
+    // explosions, the Ward and the behind chevron (HookWarning) reuse the
+    // sounds above.
+    /// A soft step, every other run frame.
+    Footstep,
+    Jump,
+    /// The Jet's second jump in mid-air.
+    JetPuff,
+    Land,
+    FlareLob,
+    FlareBurst,
+    PowerUpFlare,
+    PowerUpJet,
+    PowerUpHustle,
+    /// A Sentry rises from its pit.
+    SentryRise,
+    /// The dust before a Burrower bites.
+    BurrowerDust,
+    /// A Dropper's hatch opens.
+    DropperHatch,
+    /// The Strider lifts a leg (its stomp's warning).
+    StriderLegLift,
+    CrusherSlam,
+    /// An arc floor's crackle before it goes live.
+    ArcFloorCrackle,
+    /// A conveyor's hum; send about once a second while one is on screen.
+    ConveyorHum,
+    /// A crumbling ledge starts to shake.
+    LedgeCreak,
+    StriderStomp,
+    StriderShockwave,
+    /// A Standoff locks in as the scroll stops.
+    StandoffLock,
+    /// A Standoff is cleared and the scroll resumes.
+    StandoffRelease,
+    /// A fall into a pit (the life-lost sound follows on [`LifeLost`]).
+    FallWhistle,
 }
 
 impl Sfx {
@@ -153,10 +191,16 @@ pub enum Song {
     OuterYardAlarm,
     /// The sting under the 1 → 2 Cabinet Transition (plays once).
     BankUp,
+    /// Cabinet 3, Stage 1.
+    Wreckfall,
+    /// Cabinet 3, Stage 2.
+    Roots,
+    /// Cabinet 3, Stage 2's run-out: climbing in pitch toward the tower.
+    RootsClimb,
 }
 
 impl Song {
-    pub const ALL: [Song; 9] = [
+    pub const ALL: [Song; 12] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
@@ -166,6 +210,9 @@ impl Song {
         Song::OuterYard,
         Song::OuterYardAlarm,
         Song::BankUp,
+        Song::Wreckfall,
+        Song::Roots,
+        Song::RootsClimb,
     ];
 }
 
@@ -497,6 +544,10 @@ mod tests {
         assert_eq!(defs[&Song::Cloudline].bpm, 140.0);
         assert_eq!(defs[&Song::OuterYard].bpm, 165.0);
         assert_eq!(defs[&Song::OuterYardAlarm].bpm, 165.0);
+        // docs/cabinets/3-run-and-gun.md: about 120 and 150 BPM.
+        assert_eq!(defs[&Song::Wreckfall].bpm, 120.0);
+        assert_eq!(defs[&Song::Roots].bpm, 150.0);
+        assert_eq!(defs[&Song::RootsClimb].bpm, 150.0);
     }
 
     /// Writes every sound to `target/audio-preview/*.wav` for listening:
