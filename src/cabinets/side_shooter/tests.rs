@@ -180,7 +180,7 @@ fn drones_blink_with_the_wren() {
 }
 
 #[test]
-fn the_gun_fires_ten_volleys_a_second_at_any_frame_rate() {
+fn the_gun_fires_eight_volleys_a_second_at_any_frame_rate() {
     use crate::input::Button;
 
     for fps in [30, 60, 75, 120, 144] {
@@ -196,7 +196,7 @@ fn the_gun_fires_ten_volleys_a_second_at_any_frame_rate() {
         }
         let fired = volleys(&mut app) - before;
         assert!(
-            (99..=101).contains(&fired),
+            (79..=81).contains(&fired),
             "{fired} volleys in 10 s at {fps} fps"
         );
     }

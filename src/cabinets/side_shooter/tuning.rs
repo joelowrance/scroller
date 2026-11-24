@@ -99,6 +99,7 @@ pub struct ShotTuning {
     pub lance_size: (f32, f32),
     pub lance_damage: u32,
     pub tail_every: u32,
+    pub drone_every: u32,
     pub max_on_screen: usize,
 }
 
@@ -153,7 +154,7 @@ impl Default for HeroTuning {
 impl Default for ShotTuning {
     fn default() -> Self {
         Self {
-            fire_interval: 0.1,
+            fire_interval: 0.125,
             speed: 360.0,
             damage: 1,
             size: (8.0, 2.0),
@@ -162,6 +163,7 @@ impl Default for ShotTuning {
             lance_size: (12.0, 3.0),
             lance_damage: 2,
             tail_every: 2,
+            drone_every: 2,
             max_on_screen: 96,
         }
     }
@@ -312,7 +314,7 @@ tuning_struct!(Bellbuoy {
     fan_count: u32 = 3,
     fan_degrees: f32 = 15.0,
     shot_speed: f32 = 90.0,
-    cooldown: f32 = 2.5,
+    cooldown: f32 = 2.0,
 });
 
 tuning_struct!(Lamplighter {
@@ -326,9 +328,9 @@ tuning_struct!(Lamplighter {
     bob_amplitude: f32 = 2.0,
     bob_period: f32 = 1.5,
     telegraph_seconds: f32 = 0.4,
-    shots: u32 = 2,
+    shots: u32 = 3,
     shot_speed: f32 = 100.0,
-    fire_interval: f32 = 1.2,
+    fire_interval: f32 = 1.0,
     exit_speed: f32 = 80.0,
 });
 
@@ -349,12 +351,12 @@ tuning_struct!(Hook {
 });
 
 tuning_struct!(Ferry {
-    hp: u32 = 400,
+    hp: u32 = 360,
     hp_stage2: u32 = 640,
     score: u64 = 2000,
     speed: f32 = 25.0,
     hold_x: f32 = 60.0,
-    hold_seconds: f32 = 15.0,
+    hold_seconds: f32 = 18.0,
     sink_speed: f32 = 20.0,
     launch_count: u32 = 2,
     launch_offset: (f32, f32) = (-12.0, 10.0),
@@ -363,7 +365,7 @@ tuning_struct!(Ferry {
     ring_count: u32 = 8,
     ring_speed: f32 = 70.0,
     first_ring_delay: f32 = 2.0,
-    ring_interval: f32 = 3.0,
+    ring_interval: f32 = 2.5,
 });
 
 tuning_struct!(Barnacle {
@@ -372,11 +374,11 @@ tuning_struct!(Barnacle {
     turn_rate: f32 = 120.0,
     telegraph_seconds: f32 = 0.3,
     shot_speed: f32 = 110.0,
-    fire_interval: f32 = 1.6,
+    fire_interval: f32 = 1.3,
 });
 
 tuning_struct!(Clam {
-    hp: u32 = 16,
+    hp: u32 = 14,
     score: u64 = 800,
     formation_size: u32 = 2,
     pair_spacing: (f32, f32) = (0.0, -48.0),

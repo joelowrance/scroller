@@ -1,67 +1,68 @@
-// Stage 1-1: Low Tide (about 3:30).
-// Generated from the pacing outline in docs/cabinets/1-side-shooter.md;
+// Stage 1-1: Low Tide (about 2:52).
+// Paced from the outline in docs/cabinets/1-side-shooter.md (trimmed by #65);
 // each comment is the time at normal speed. Positions are scroll pixels.
 (
-    length: 6720.0, // 3:30.0
+    length: 5520.0, // 2:52.0
     speed: [
         (from: 0.0, speed: 30.0), // 0:00.0
-        (from: 4200.0, speed: 36.0), // 2:20.0
+        (from: 3360.0, speed: 36.0), // 1:52.0
     ],
     restart_points: [
         (at: 0.0, hero: (-110.0, 0.0)), // 0:00.0
-        (at: 2100.0, hero: (-110.0, 0.0)), // 1:10.0
-        (at: 4200.0, hero: (-110.0, 0.0)), // 2:20.0
+        (at: 1620.0, hero: (-110.0, 0.0)), // 0:54.0
+        (at: 3360.0, hero: (-110.0, 0.0)), // 1:52.0
     ],
     spawns: [
-        // 0:05.0 teach: one Skiff V
-        (at: 150.0, kind: "skiff", pos: (176.0, 0.0)), // 0:05.0
-        // 0:12.0 test: Skiff Vs high, low, then middle -> G
-        (at: 360.0, kind: "skiff", pos: (176.0, 50.0)), // 0:12.0
-        (at: 480.0, kind: "skiff", pos: (176.0, -50.0)), // 0:16.0
-        (at: 600.0, kind: "skiff", pos: (176.0, 0.0), params: {"drop": "G"}), // 0:20.0
-        // 0:28.0 teach: a Gull snake
-        (at: 840.0, kind: "gull", pos: (176.0, 40.0)), // 0:28.0
-        // 0:36.0 twist: two Gull snakes in opposite phase -> D
-        (at: 1080.0, kind: "gull", pos: (176.0, 20.0)), // 0:36.0
-        (at: 1080.0, kind: "gull", pos: (176.0, -20.0), params: {"flip": true, "drop": "D"}), // 0:36.0
-        // 0:46.0 teach: three Bellbuoys, nothing else
-        (at: 1380.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:46.0
-        (at: 1422.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:47.4
-        (at: 1464.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:48.8
-        // 0:53.0 test: a Skiff V over the Bellbuoys (Formation bonus)
-        (at: 1590.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:53.0
-        (at: 1650.0, kind: "skiff", pos: (176.0, 20.0)), // 0:55.0
-        // 1:04.0 breathe: quiet sea, the lighthouse passes
-        // 1:10.0 Restart Point
-        // 1:14.0 teach: one Lamplighter
-        (at: 2220.0, kind: "lamplighter", pos: (180.0, 30.0)), // 1:14.0
-        // 1:24.0 test: a Lamplighter pair and a Gull snake -> S
-        (at: 2520.0, kind: "lamplighter", pos: (180.0, 55.0)), // 1:24.0
-        (at: 2550.0, kind: "lamplighter", pos: (180.0, -45.0)), // 1:25.0
-        (at: 2610.0, kind: "gull", pos: (176.0, 0.0), params: {"drop": "S"}), // 1:27.0
-        // 1:38.0 test: Skiff Vs either side of centre over Bellbuoys -> G
-        (at: 2940.0, kind: "skiff", pos: (176.0, 40.0)), // 1:38.0
-        (at: 2940.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 1:38.0
-        (at: 3060.0, kind: "skiff", pos: (176.0, -40.0)), // 1:42.0
-        (at: 3120.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 1:44.0
-        (at: 3180.0, kind: "skiff", pos: (176.0, 20.0), params: {"drop": "G"}), // 1:46.0
-        // 1:52.0 set piece: the Ferry -> B
-        (at: 3360.0, kind: "ferry", pos: (184.0, 30.0), params: {"drop": "B"}), // 1:52.0
-        // 2:14.0 breathe: wreckage drifts past
-        // 2:20.0 Restart Point; the scroll speeds up
-        // 2:24.0 teach: a Hook pair from behind
-        (at: 4344.0, kind: "hook", pos: (0.0, 0.0)), // 2:24.0
-        // 2:33.0 twist: Hooks behind, a Lamplighter in front -> W
-        (at: 4668.0, kind: "lamplighter", pos: (180.0, 0.0)), // 2:33.0
-        (at: 4776.0, kind: "hook", pos: (0.0, 0.0), params: {"drop": "W"}), // 2:36.0
-        // 2:48.0 test: Gulls, Bellbuoys and a Skiff V -> D
-        (at: 5208.0, kind: "gull", pos: (176.0, 40.0)), // 2:48.0
-        (at: 5208.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 2:48.0
-        (at: 5280.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 2:50.0
-        (at: 5352.0, kind: "skiff", pos: (176.0, -30.0), params: {"drop": "D"}), // 2:52.0
-        // 3:02.0 set piece: the finale Ferry with Hooks -> G
-        (at: 5712.0, kind: "ferry", pos: (184.0, 20.0), params: {"drop": "G"}), // 3:02.0
-        (at: 5928.0, kind: "hook", pos: (0.0, 0.0)), // 3:08.0
-        (at: 6216.0, kind: "hook", pos: (0.0, 0.0)), // 3:16.0
+        // 0:04 test: Skiff Vs high, low, then middle -> G
+        (at: 120.0, kind: "skiff", pos: (176.0, 50.0)), // 0:04.0
+        (at: 240.0, kind: "skiff", pos: (176.0, -50.0)), // 0:08.0
+        (at: 360.0, kind: "skiff", pos: (176.0, 0.0), params: {"drop": "G"}), // 0:12.0
+        // 0:20 teach: a Gull snake
+        (at: 600.0, kind: "gull", pos: (176.0, 40.0)), // 0:20.0
+        // 0:26 twist: two Gull snakes in opposite phase -> D
+        (at: 780.0, kind: "gull", pos: (176.0, 20.0)), // 0:26.0
+        (at: 780.0, kind: "gull", pos: (176.0, -20.0), params: {"flip": true, "drop": "D"}), // 0:26.0
+        // 0:36 teach: three Bellbuoys, nothing else
+        (at: 1080.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:36.0
+        (at: 1122.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:37.4
+        (at: 1164.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:38.8
+        // 0:41 test: a Skiff V over the Bellbuoys (Formation bonus)
+        (at: 1230.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 0:41.0
+        (at: 1290.0, kind: "skiff", pos: (176.0, 20.0)), // 0:43.0
+        // 0:50 breathe: quiet sea, the lighthouse passes
+        // 0:54 Restart Point
+        // 0:58 teach: one Lamplighter
+        (at: 1740.0, kind: "lamplighter", pos: (180.0, 30.0)), // 0:58.0
+        // 1:06 test: a Lamplighter pair and a Gull snake -> S
+        (at: 1980.0, kind: "lamplighter", pos: (180.0, 55.0)), // 1:06.0
+        (at: 2010.0, kind: "lamplighter", pos: (180.0, -45.0)), // 1:07.0
+        (at: 2070.0, kind: "gull", pos: (176.0, 0.0), params: {"drop": "S"}), // 1:09.0
+        // 1:16 test: Skiff Vs either side of centre over Bellbuoys, a Gull snake through them -> G
+        (at: 2280.0, kind: "skiff", pos: (176.0, 40.0)), // 1:16.0
+        (at: 2280.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 1:16.0
+        (at: 2340.0, kind: "gull", pos: (176.0, 0.0)), // 1:18.0
+        (at: 2400.0, kind: "skiff", pos: (176.0, -40.0)), // 1:20.0
+        (at: 2460.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 1:22.0
+        (at: 2520.0, kind: "skiff", pos: (176.0, 20.0), params: {"drop": "G"}), // 1:24.0
+        // 1:28 set piece: the Ferry -> B
+        (at: 2640.0, kind: "ferry", pos: (184.0, 30.0), params: {"drop": "B"}), // 1:28.0
+        // 1:52 Restart Point; the scroll speeds up
+        // 1:54 teach: a Hook pair from behind
+        (at: 3432.0, kind: "hook", pos: (0.0, 0.0)), // 1:54.0
+        // 2:01 twist: Hooks behind, a Lamplighter in front, then a Skiff V -> W
+        (at: 3684.0, kind: "lamplighter", pos: (180.0, 0.0)), // 2:01.0
+        (at: 3792.0, kind: "hook", pos: (0.0, 0.0), params: {"drop": "W"}), // 2:04.0
+        (at: 3936.0, kind: "skiff", pos: (176.0, 40.0)), // 2:08.0
+        // 2:14 test: Gulls, Bellbuoys, a Lamplighter and a Skiff V -> D
+        (at: 4152.0, kind: "gull", pos: (176.0, 40.0)), // 2:14.0
+        (at: 4152.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 2:14.0
+        (at: 4224.0, kind: "bellbuoy", pos: (176.0, 0.0)), // 2:16.0
+        (at: 4224.0, kind: "lamplighter", pos: (180.0, -40.0)), // 2:16.0
+        (at: 4296.0, kind: "skiff", pos: (176.0, -30.0), params: {"drop": "D"}), // 2:18.0
+        // 2:26 set piece: the finale Ferry with Hooks and a Gull snake -> G
+        (at: 4584.0, kind: "ferry", pos: (184.0, 20.0), params: {"drop": "G"}), // 2:26.0
+        (at: 4800.0, kind: "hook", pos: (0.0, 0.0)), // 2:32.0
+        (at: 4944.0, kind: "gull", pos: (176.0, -40.0)), // 2:36.0
+        (at: 5088.0, kind: "hook", pos: (0.0, 0.0)), // 2:40.0
     ],
 )

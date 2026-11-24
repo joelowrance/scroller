@@ -1,20 +1,20 @@
-// Stage 1-2: The Foundry (about 3:45).
-// Generated from the pacing outline in docs/cabinets/1-side-shooter.md;
+// Stage 1-2: The Foundry (about 2:58).
+// Paced from the outline in docs/cabinets/1-side-shooter.md (trimmed by #65);
 // each comment is the time at normal speed. Positions are scroll pixels.
 (
-    length: 7052.0, // 3:45.0
+    length: 5420.0, // 2:58.0
     speed: [
         (from: 0.0, speed: 32.0), // 0:00.0
-        (from: 2432.0, speed: 26.0), // 1:16.0
-        (from: 3368.0, speed: 32.0), // 1:52.0
-        (from: 5480.0, speed: 26.0), // 2:58.0
-        (from: 6052.0, speed: 40.0), // 3:20.0
+        (from: 2112.0, speed: 26.0), // 1:06.0
+        (from: 3048.0, speed: 32.0), // 1:42.0
+        (from: 4488.0, speed: 26.0), // 2:27.0
+        (from: 5060.0, speed: 40.0), // 2:49.0
     ],
     restart_points: [
         (at: 0.0, hero: (-110.0, 0.0)), // 0:00.0
-        (at: 1920.0, hero: (-110.0, 0.0)), // 1:00.0
-        (at: 3624.0, hero: (-110.0, 0.0)), // 2:00.0
-        (at: 5384.0, hero: (-110.0, 0.0)), // 2:55.0
+        (at: 1600.0, hero: (-110.0, 0.0)), // 0:50.0
+        (at: 3176.0, hero: (-110.0, 0.0)), // 1:46.0
+        (at: 4392.0, hero: (-110.0, 0.0)), // 2:24.0
     ],
     // Floor and ceiling heights (canvas y) at scroll positions, joined by
     // straight ramps. -120 and 108 are the play-area edges: no terrain.
@@ -25,69 +25,67 @@
         (at: 448.0, floor: -104.0, ceiling: 84.0), // 0:14.0
         (at: 768.0, floor: -104.0, ceiling: 84.0), // 0:24.0
         (at: 832.0, floor: -120.0, ceiling: 108.0), // 0:26.0
-        (at: 2240.0, floor: -120.0, ceiling: 108.0), // 1:10.0
-        (at: 2368.0, floor: -56.0, ceiling: 44.0), // 1:14.0
-        (at: 3316.0, floor: -56.0, ceiling: 44.0), // 1:50.0
-        (at: 3400.0, floor: -120.0, ceiling: 108.0), // 1:53.0
-        (at: 3560.0, floor: -120.0, ceiling: 108.0), // 1:58.0
-        (at: 3656.0, floor: -64.0, ceiling: 68.0), // 2:01.0
-        (at: 3944.0, floor: -64.0, ceiling: 68.0), // 2:10.0
-        (at: 4008.0, floor: -64.0, ceiling: 108.0), // 2:12.0
-        (at: 4520.0, floor: -64.0, ceiling: 108.0), // 2:28.0
-        (at: 4584.0, floor: -104.0, ceiling: 108.0), // 2:30.0
-        (at: 5352.0, floor: -104.0, ceiling: 108.0), // 2:54.0
-        (at: 5448.0, floor: -40.0, ceiling: 36.0), // 2:57.0
-        (at: 6000.0, floor: -40.0, ceiling: 36.0), // 3:18.0
-        (at: 6092.0, floor: -120.0, ceiling: 108.0), // 3:21.0
+        (at: 1920.0, floor: -120.0, ceiling: 108.0), // 1:00.0
+        (at: 2048.0, floor: -56.0, ceiling: 44.0), // 1:04.0
+        (at: 2996.0, floor: -56.0, ceiling: 44.0), // 1:40.0
+        (at: 3080.0, floor: -120.0, ceiling: 108.0), // 1:43.0
+        (at: 3112.0, floor: -120.0, ceiling: 108.0), // 1:44.0
+        (at: 3208.0, floor: -64.0, ceiling: 68.0), // 1:47.0
+        (at: 3432.0, floor: -64.0, ceiling: 68.0), // 1:54.0
+        (at: 3496.0, floor: -64.0, ceiling: 108.0), // 1:56.0
+        (at: 3528.0, floor: -64.0, ceiling: 108.0), // 1:57.0
+        (at: 3592.0, floor: -104.0, ceiling: 108.0), // 1:59.0
+        (at: 4360.0, floor: -104.0, ceiling: 108.0), // 2:23.0
+        (at: 4456.0, floor: -40.0, ceiling: 36.0), // 2:26.0
+        (at: 5008.0, floor: -40.0, ceiling: 36.0), // 2:47.0
+        (at: 5100.0, floor: -120.0, ceiling: 108.0), // 2:50.0
     ],
     spawns: [
-        // 0:04.0 teach: floor Barnacles, one at a time
+        // 0:04 teach: floor Barnacles, one at a time
         (at: 128.0, kind: "barnacle", pos: (176.0, -99.0)), // 0:04.0
         (at: 224.0, kind: "barnacle", pos: (176.0, -99.0)), // 0:07.0
         (at: 320.0, kind: "barnacle", pos: (176.0, -99.0)), // 0:10.0
-        // 0:14.0 test: the ceiling appears; Barnacles above and below, a Skiff V -> T
+        // 0:14 test: the ceiling appears; Barnacles above and below, a Skiff V -> T
         (at: 480.0, kind: "barnacle", pos: (176.0, 79.0), params: {"ceiling": true}), // 0:15.0
         (at: 512.0, kind: "skiff", pos: (176.0, -10.0), params: {"drop": "T"}), // 0:16.0
         (at: 576.0, kind: "barnacle", pos: (176.0, -99.0)), // 0:18.0
         (at: 640.0, kind: "barnacle", pos: (176.0, 79.0), params: {"ceiling": true}), // 0:20.0
-        // 0:28.0 twist: Gulls that fire, in an open hall
+        // 0:28 twist: Gulls that fire, in an open hall
         (at: 896.0, kind: "gull", pos: (176.0, 30.0), params: {"fires": true}), // 0:28.0
         (at: 1056.0, kind: "gull", pos: (176.0, -30.0), params: {"fires": true}), // 0:33.0
-        // 0:40.0 teach: one Clam pair
+        // 0:40 teach: one Clam pair
         (at: 1280.0, kind: "clam", pos: (176.0, 40.0)), // 0:40.0
-        // 0:52.0 breathe: a wide chamber
-        // 1:00.0 Restart Point
-        // 1:04.0 teach: the first Mote cloud -> S
-        (at: 2048.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "S"}), // 1:04.0
-        // 1:16.0 test: a 100 px corridor, Barnacles and a Lamplighter; the scroll slows
-        (at: 2432.0, kind: "barnacle", pos: (176.0, -51.0)), // 1:16.0
-        (at: 2510.0, kind: "barnacle", pos: (176.0, 39.0), params: {"ceiling": true}), // 1:19.0
-        (at: 2562.0, kind: "lamplighter", pos: (180.0, 0.0)), // 1:21.0
-        (at: 2666.0, kind: "barnacle", pos: (176.0, -51.0)), // 1:25.0
-        // 1:30.0 teach: the first Arc Gate, alone
-        (at: 2796.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:30.0
-        // 1:40.0 test: two Arc Gates 80 px apart and a Mote cloud -> G
-        (at: 3056.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:40.0
-        (at: 3082.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "G"}), // 1:41.0
-        (at: 3136.6, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:43.1
-        // 1:52.0 breathe: the corridor opens out
-        // 2:00.0 Restart Point
-        // 2:04.0 twist: Hooks from behind in a 132 px corridor -> W
-        (at: 3752.0, kind: "hook", pos: (0.0, 0.0), params: {"drop": "W"}), // 2:04.0
-        // 2:16.0 test: Clams high in an open hall, firing Gulls below
-        (at: 4136.0, kind: "clam", pos: (176.0, 80.0), params: {"size": 1}), // 2:16.0
-        (at: 4200.0, kind: "gull", pos: (176.0, -30.0), params: {"fires": true}), // 2:18.0
-        (at: 4264.0, kind: "clam", pos: (176.0, 80.0), params: {"size": 1}), // 2:20.0
-        // 2:30.0 set piece: the Ferry in the furnace hall, Barnacles on the floor -> D
-        (at: 4584.0, kind: "ferry", pos: (184.0, 30.0), params: {"drop": "D"}), // 2:30.0
-        (at: 4712.0, kind: "barnacle", pos: (176.0, -99.0)), // 2:34.0
-        (at: 4904.0, kind: "barnacle", pos: (176.0, -99.0)), // 2:40.0
-        // 2:50.0 breathe: steam vents
-        // 2:55.0 Restart Point
-        // 2:58.0 test: the gauntlet, an Arc Gate, Barnacles and a Mote cloud -> B
-        (at: 5532.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -32.0, "ceiling_y": 28.0}), // 3:00.0
-        (at: 5662.0, kind: "barnacle", pos: (176.0, -35.0)), // 3:05.0
-        (at: 5740.0, kind: "barnacle", pos: (176.0, 31.0), params: {"ceiling": true}), // 3:08.0
-        (at: 5844.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "B"}), // 3:12.0
+        // 0:46 breathe: a wide chamber
+        // 0:50 Restart Point
+        // 0:54 teach: the first Mote cloud -> S
+        (at: 1728.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "S"}), // 0:54.0
+        // 1:06 test: a 100 px corridor, Barnacles and a Lamplighter; the scroll slows
+        (at: 2112.0, kind: "barnacle", pos: (176.0, -51.0)), // 1:06.0
+        (at: 2190.0, kind: "barnacle", pos: (176.0, 39.0), params: {"ceiling": true}), // 1:09.0
+        (at: 2242.0, kind: "lamplighter", pos: (180.0, 0.0)), // 1:11.0
+        (at: 2346.0, kind: "barnacle", pos: (176.0, -51.0)), // 1:15.0
+        // 1:20 teach: the first Arc Gate, alone
+        (at: 2476.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:20.0
+        // 1:30 test: two Arc Gates 80 px apart and a Mote cloud -> G
+        (at: 2736.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:30.0
+        (at: 2762.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "G"}), // 1:31.0
+        (at: 2816.6, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -48.0, "ceiling_y": 36.0}), // 1:30.0
+        // 1:42 breathe: the corridor opens out
+        // 1:46 Restart Point
+        // 1:54 twist: Hooks from behind in a 132 px corridor, a Skiff V ahead -> W
+        (at: 3432.0, kind: "hook", pos: (0.0, 0.0), params: {"drop": "W"}), // 1:54.0
+        (at: 3464.0, kind: "skiff", pos: (176.0, 0.0)), // 1:55.0
+        // 1:59 set piece: the Ferry in the furnace hall, Barnacles on the floor, a firing Gull -> D
+        (at: 3592.0, kind: "ferry", pos: (184.0, 30.0), params: {"drop": "D"}), // 1:59.0
+        (at: 3720.0, kind: "barnacle", pos: (176.0, -99.0)), // 2:03.0
+        (at: 3784.0, kind: "gull", pos: (176.0, -40.0), params: {"fires": true}), // 2:05.0
+        (at: 3912.0, kind: "barnacle", pos: (176.0, -99.0)), // 2:09.0
+        // 2:20 breathe: steam vents
+        // 2:24 Restart Point
+        // 2:27 test: the gauntlet, an Arc Gate, Barnacles and a Mote cloud -> B
+        (at: 4540.0, kind: "arc_gate", pos: (176.0, 0.0), params: {"floor_y": -32.0, "ceiling_y": 28.0}), // 2:29.0
+        (at: 4670.0, kind: "barnacle", pos: (176.0, -35.0)), // 2:34.0
+        (at: 4748.0, kind: "barnacle", pos: (176.0, 31.0), params: {"ceiling": true}), // 2:37.0
+        (at: 4852.0, kind: "mote", pos: (200.0, 0.0), params: {"drop": "B"}), // 2:41.0
     ],
 )

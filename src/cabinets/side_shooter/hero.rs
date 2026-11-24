@@ -111,7 +111,12 @@ pub fn volley(power: &PowerUps, volley: u32, t: &SideShooterTuning) -> Vec<ShotS
             });
         }
     }
-    for slot in 0..power.drones.min(2) {
+    let drones = if volley.is_multiple_of(s.drone_every.max(1)) {
+        power.drones.min(2)
+    } else {
+        0
+    };
+    for slot in 0..drones {
         let drone = drone_offset(slot, t) + Vec2::new(DRONE_SIZE.x / 2.0, 0.0);
         shots.push(forward(drone, s.size, s.damage));
     }
@@ -627,11 +632,11 @@ mod tests {
     }
 
     #[test]
-    fn drones_add_a_forward_shot_each_and_the_tail_fires_every_second_volley() {
+    fn drones_and_the_tail_fire_every_second_volley() {
         let t = t();
         let p = power(4, 2, true);
         let counts: Vec<_> = (0..4).map(|v| volley(&p, v, &t).len()).collect();
-        assert_eq!(counts, [7, 6, 7, 6], "6.5 shots per volley on average");
+        assert_eq!(counts, [7, 4, 7, 4], "5.5 shots per volley on average");
         let tail: Vec<_> = volley(&p, 0, &t)
             .into_iter()
             .filter(|s| s.direction == Vec2::NEG_X)
@@ -641,11 +646,11 @@ mod tests {
 
     #[test]
     fn full_power_stays_well_under_the_shot_cap() {
-        // A forward shot crosses the screen in under a second; at 10 volleys
-        // per second that is about 65 shots alive, below the cap of 96.
+        // A forward shot crosses the screen in under a second; at 8 volleys
+        // per second that is about 44 shots alive, below the cap of 96.
         let t = t();
         let p = power(4, 2, true);
-        let per_second: usize = (0..10).map(|v| volley(&p, v, &t).len()).sum();
+        let per_second: usize = (0..8).map(|v| volley(&p, v, &t).len()).sum();
         let lifetime = (HALF_W * 2.0) / t.shot.speed;
         assert!((per_second as f32 * lifetime) < t.shot.max_on_screen as f32);
     }

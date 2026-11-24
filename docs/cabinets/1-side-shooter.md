@@ -122,17 +122,18 @@ feel fair.
 
 ### A: fire (hold to auto-fire)
 
-- Holding A fires 10 volleys/s (`side_shooter.shot.fire_interval: 0.1`).
+- Holding A fires 8 volleys/s (`side_shooter.shot.fire_interval: 0.125`;
+  10 before the #65 playtest changes).
   Tapping is never faster than holding, so nobody has to mash.
 - Hero shots are 8×2 Ember dashes (`side_shooter.shot.size: (8.0, 2.0)`)
   moving at 360 px/s (`side_shooter.shot.speed: 360.0`), 1 damage each
   (`side_shooter.shot.damage: 1`). They despawn off screen.
 - **Shot cap:** at most 96 Hero shots exist at once
   (`side_shooter.shot.max_on_screen: 96`). It is a safety valve and should
-  never trigger in play. Full power fires 6.5 shots per volley (4 gun, 2
-  drones, a Tail shot every second volley). A forward shot lives at most
-  about 0.9 s (from x = −156 to the right edge), so about 59 shots are alive
-  at once. If a volley *would* go over the cap, the whole volley is skipped,
+  never trigger in play. Full power fires 5.5 shots per volley on average
+  (4 gun, plus 2 drone shots and a Tail shot every second volley). A forward
+  shot lives at most about 0.9 s (from x = −156 to the right edge), so about
+  40 shots are alive at once. If a volley *would* go over the cap, the whole volley is skipped,
   never part of it, so the pattern never looks broken.
 
 ### B: the Undertow (bomb)
@@ -191,8 +192,8 @@ A ring of force bursts out from the Wren and sweeps the screen.
 | Letter | Name | Effect | Max | Key(s) |
 |---|---|---|---|---|
 | **G** | Gun | Raises the gun level by 1 (see below). | level 4 | `side_shooter.power_up.gun_max: 4` |
-| **D** | Drone | Adds an 8×8 drone 14 px above the Wren, and a second one 14 px below. A drone fires one forward shot with every volley. It **absorbs enemy bullets** that touch it, but enemy bodies pass through it. Drones can't be destroyed and ignore terrain. | 2 | `side_shooter.power_up.drone_max: 2`, `side_shooter.power_up.drone_offset: 14.0` |
-| **T** | Tail | A rear shot fires straight backward with every second volley (5/s). Pays off against Hooks and Stage 2 threats from behind. | 1 | `side_shooter.shot.tail_every: 2` |
+| **D** | Drone | Adds an 8×8 drone 14 px above the Wren, and a second one 14 px below. A drone fires one forward shot with every second volley (`side_shooter.shot.drone_every: 2`; every volley before #65). It **absorbs enemy bullets** that touch it, but enemy bodies pass through it. Drones can't be destroyed and ignore terrain. | 2 | `side_shooter.power_up.drone_max: 2`, `side_shooter.power_up.drone_offset: 14.0` |
+| **T** | Tail | A rear shot fires straight backward with every second volley (4/s). Pays off against Hooks and Stage 2 threats from behind. | 1 | `side_shooter.shot.tail_every: 2` |
 | **S** | Speed | +1 speed step (+20 px/s). | 2 steps (140 px/s) | `side_shooter.power_up.speed_max: 2` |
 | **W** | Ward | A shield that absorbs one hit from a bullet, an enemy or terrain. On absorbing a hit it flashes and gives 1.0 s of invulnerability. If the hit was terrain, it also pushes the Wren 8 px away from it. | 1 | `side_shooter.power_up.ward_invulnerable_seconds: 1.0`, `side_shooter.power_up.ward_push: 8.0` |
 | **B** | Bomb | +1 bomb. | 4 bombs | `side_shooter.bomb.max` |
@@ -208,17 +209,25 @@ A ring of force bursts out from the Wren and sweeps the screen.
 
 ### Damage budget
 
-Damage per second (DPS) at 10 volleys/s. "Narrow" is a small target lined up
+Damage per second (DPS) at 8 volleys/s. "Narrow" is a small target lined up
 dead ahead: only the parallel shots hit it. "Large" is a target 32 px or more
 tall within about 90 px: the angled shots and both drones hit it too.
 
-| Power | Narrow DPS | Large DPS |
-|---|---|---|
-| Gun 1 | 10 | 10 |
-| Gun 2 | 20 | 20 |
-| Gun 3 | 20 | 40 |
-| Gun 4 | 40 | 60 |
-| each Drone | +0 | +10 |
+| Power | Narrow DPS | Large DPS | Before #65 |
+|---|---|---|---|
+| Gun 1 | 8 | 8 | 10 / 10 |
+| Gun 2 | 16 | 16 | 20 / 20 |
+| Gun 3 | 16 | 32 | 20 / 40 |
+| Gun 4 | 32 | 48 | 40 / 60 |
+| each Drone | +0 | +4 | +0 / +10 |
+
+**Why it is lower (#65).** The playtest found the firing "a little much",
+making the Cabinet too easy. The gun fires 20% slower at every level, and
+drones fire on every second volley, so each drone adds 60% less. Full power
+drops from 40 narrow / 80 large to 32 / 56, which is 20% and 30% less. Typical
+power (gun 3 + 1 drone) drops from 20 / 50 to 16 / 36. Every Power-up still
+adds a visible step: gun 2 doubles gun 1, gun 3 doubles large targets, and gun
+4 doubles narrow ones.
 
 Expected power when each enemy role first matters ("perfect" means every
 Formation cleared and no life lost; "typical" means one or two Formations
@@ -226,23 +235,23 @@ missed and one life lost):
 
 | When | Perfect | Typical |
 |---|---|---|
-| Stage 1, 1:14 (first Lamplighter) | Gun 2 + 1 Drone: narrow 20, large 30 | Gun 2: narrow 20, large 20 |
-| Stage 1, 1:52 (first Ferry) | Gun 3 + 1 Drone: narrow 20, large 50 | Gun 2 + 1 Drone: narrow 20, large 30 |
-| Stage 1, 3:02 (finale Ferry) | Gun 3 + 2 Drones: narrow 20, large 60 | Gun 3 + 1 Drone: narrow 20, large 50 |
-| Stage 2 | Gun 4 + 2 Drones: narrow 40, large 80 | Gun 3 + 1 Drone: narrow 20, large 50 |
+| Stage 1, 0:58 (first Lamplighter) | Gun 2 + 1 Drone: narrow 16, large 20 | Gun 2: narrow 16, large 16 |
+| Stage 1, 1:28 (first Ferry) | Gun 3 + 1 Drone: narrow 16, large 36 | Gun 2 + 1 Drone: narrow 16, large 20 |
+| Stage 1, 2:26 (finale Ferry) | Gun 3 + 2 Drones: narrow 16, large 40 | Gun 3 + 1 Drone: narrow 16, large 36 |
+| Stage 2 | Gun 4 + 2 Drones: narrow 32, large 56 | Gun 3 + 1 Drone: narrow 16, large 36 |
 
 Time-to-kill targets by role, and the HP that follows from them:
 
 | Role | Enemies | Target | HP | Check |
 |---|---|---|---|---|
-| Popcorn | Skiff, Gull, Mote, Hook | under 0.3 s even at gun 1 | 1, 1, 1, 2 | Hook: 0.2 s at gun 1 |
-| Small hazard | Bellbuoy, Barnacle | about 0.5 s at typical power | 10 each | 0.5 s at narrow 20; 1.0 s at gun 1; one Undertow kills it |
-| Gunner | Lamplighter | 1.5–2 s, so it gets a shot off | 36 | 1.8 s at narrow 20 (typical in both Stages), 0.9 s at gun 4 |
-| Timing lock | Clam | dies inside one 1.0 s opening at typical power | 16 | 0.8 s at narrow 20; two openings at gun 1 |
-| Power check | Arc Gate pylon | about 2 s at typical power; long but possible at gun 1 | 40 | 2 s at narrow 20; 4 s at gun 1 (a pylon is on screen for about 10 s) |
-| Set piece | Ferry | 8–10 s at perfect power: at least two launch and ring cycles | 400 in Stage 1, 640 in Stage 2 | Stage 1: 8 s perfect and 13 s typical at 1:52, 6.7 s / 8 s at 3:02. Stage 2: 8 s perfect, 12.8 s typical |
+| Popcorn | Skiff, Gull, Mote, Hook | under 0.3 s even at gun 1 | 1, 1, 1, 2 | Hook: 0.25 s at gun 1 |
+| Small hazard | Bellbuoy, Barnacle | about 0.5 s at typical power | 10 each | 0.6 s at narrow 16; 1.25 s at gun 1; one Undertow kills it |
+| Gunner | Lamplighter | about 2 s, so it gets two shots off | 36 | 2.25 s at narrow 16 (typical in both Stages), 1.1 s at gun 4 |
+| Timing lock | Clam | dies inside one 1.0 s opening at typical power | 14 (16 before #65) | 0.9 s at narrow 16; two openings at gun 1 |
+| Power check | Arc Gate pylon | about 2.5 s at typical power; long but possible at gun 1 | 40 | 2.5 s at narrow 16; 5 s at gun 1 (a pylon is on screen for about 10 s) |
+| Set piece | Ferry | about 10 s at perfect power: at least two launch and ring cycles | 360 in Stage 1 (400 before #65), 640 in Stage 2 | Stage 1: 10 s perfect and 18 s typical at 1:28, 9 s / 10 s at 2:26. Stage 2: 11.4 s perfect, 17.8 s typical |
 
-A typical player can take up to 15 s on a Ferry: it holds position for that
+A typical player can take up to 18 s on a Ferry: it holds position for that
 long before leaving (see Ferry).
 
 ### Losing a life
@@ -310,7 +319,7 @@ General fairness rules (from #11's checklist):
 | 5 | Hook | 1, 2 | 14×8 | 2 | 200 | pair |
 | 6 | Ferry | 1, 2 | 48×32 | 400 / 640 | 2,000 | single; launches Skiffs |
 | 7 | Barnacle | 2 | 12×10 | 10 | 400 | single |
-| 8 | Clam | 2 | 16×14 | 16 | 800 | pair |
+| 8 | Clam | 2 | 16×14 | 14 | 800 | pair |
 | 9 | Mote | 2 | 4×4 | 1 | 50 | cloud of 10 |
 | 10 | Arc Gate | 2 | pylons 10×16 | 40 per pylon | 600 per pylon | single |
 
@@ -350,8 +359,8 @@ within 80 px horizontally (`bellbuoy.trigger_range: 80.0`), and is still to
 its left, it **rings**: it flashes for 0.4 s
 (`bellbuoy.telegraph_seconds: 0.4`) and then fires a fan of 3
 (`bellbuoy.fan_count: 3`) aimed at the Hero, ±15° (`bellbuoy.fan_degrees: 15.0`),
-at 90 px/s (`bellbuoy.shot_speed: 90.0`). Cooldown 2.5 s
-(`bellbuoy.cooldown: 2.5`). Once the Hero has passed it, it stays silent. It
+at 90 px/s (`bellbuoy.shot_speed: 90.0`). Cooldown 2.0 s
+(`bellbuoy.cooldown: 2.0`; 2.5 before #65). Once the Hero has passed it, it stays silent. It
 teaches the player that hugging the bottom isn't free.
 
 ### 4. Lamplighter: the gunner
@@ -365,10 +374,12 @@ A squat craft with a lamp on its nose. It comes in from the right at 80 px/s
 (`lamplighter.bob_period: 1.5`).
 It lights its lamp **as soon as it stops**. After 0.4 s
 (`lamplighter.telegraph_seconds: 0.4`) it fires one aimed shot at
-100 px/s (`lamplighter.shot_speed: 100.0`), and it fires 2 shots in all
-(`lamplighter.shots: 2`), 1.2 s apart (`lamplighter.fire_interval: 1.2`).
+100 px/s (`lamplighter.shot_speed: 100.0`), and it fires 3 shots in all
+(`lamplighter.shots: 3`), 1.0 s apart (`lamplighter.fire_interval: 1.0`;
+2 shots 1.2 s apart before #65).
 It reaches its stop about 1.2 s after appearing, so its first shot comes at
-about 1.6 s, just before a typical player kills it (1.8 s). Then it leaves
+about 1.6 s and its second at 2.6 s. A typical player kills it in about
+2.25 s, so expect one shot, and two from a slow start. Then it leaves
 upward or downward at 80 px/s (`lamplighter.exit_speed: 80.0`), away from the
 Hero's half of the screen. It's the first enemy worth focusing fire on.
 
@@ -398,7 +409,7 @@ tall (`side_shooter.terrain.hook_min_gap: 120.0`), so the pass rows have room.
 A wide barge. The whole hull takes damage, and it flashes on each hit. It
 crawls in from the right at 25 px/s (`ferry.speed: 25.0`) and stops with its
 centre at x = +60 (`ferry.hold_x: 60.0`), about 5 s after appearing. It holds
-there for up to 15 s (`ferry.hold_seconds: 15.0`) and then sinks off the
+there for up to 18 s (`ferry.hold_seconds: 18.0`; 15 before #65) and then sinks off the
 bottom at 20 px/s (`ferry.sink_speed: 20.0`), taking its Power-up with it.
 
 - It launches 2 Skiffs from its deck (`ferry.launch_count: 2`), 12 px ahead
@@ -408,12 +419,13 @@ bottom at 20 px/s (`ferry.sink_speed: 20.0`), taking its Power-up with it.
   (`ferry.launch_interval: 3.0`).
 - It fires a ring of 8 bullets (`ferry.ring_count: 8`) at 70 px/s
   (`ferry.ring_speed: 70.0`) 2.0 s after appearing
-  (`ferry.first_ring_delay: 2.0`), then every 3.0 s
-  (`ferry.ring_interval: 3.0`). The ring is slow and evenly spaced, so it is a
+  (`ferry.first_ring_delay: 2.0`), then every 2.5 s
+  (`ferry.ring_interval: 2.5`; 3.0 before #65). The ring is slow and evenly spaced, so it is a
   pattern to thread through, not a wall.
-- HP 400 in Stage 1 (`ferry.hp: 400`) and 640 in Stage 2
-  (`ferry.hp_stage2: 640`). At perfect power it lasts about 8 s, which is
-  three launches and two or three rings.
+- HP 360 in Stage 1 (`ferry.hp: 360`; 400 before #65) and 640 in Stage 2
+  (`ferry.hp_stage2: 640`). At perfect power it lasts about 10 s, which is
+  three or four launches and four rings. The longer hold leaves a typical
+  player (about 18 s) the time the weaker gun needs.
 
 A Ferry counts as a one-member Formation and **always** drops a Power-up. A
 Ferry is a set piece. One appears near the end of each Stage half.
@@ -423,8 +435,8 @@ Ferry is a set piece. One appears near the end of each Stage half.
 A dome cannon fixed to the floor or ceiling terrain and scrolling with it. Its
 barrel tracks the Hero at 120°/s (`barnacle.turn_rate: 120.0`). It flashes for
 0.3 s (`barnacle.telegraph_seconds: 0.3`) and then fires one shot **along its
-barrel**, not straight at the Hero, at 110 px/s (`barnacle.shot_speed: 110.0`) every 1.6 s
-(`barnacle.fire_interval: 1.6`). Because the barrel lags, a Hero who moves
+barrel**, not straight at the Hero, at 110 px/s (`barnacle.shot_speed: 110.0`) every 1.3 s
+(`barnacle.fire_interval: 1.3`; 1.6 before #65). Because the barrel lags, a Hero who moves
 fast across its face makes it miss. **It never fires backward:** once the Hero has
 passed it, it falls silent. You can deal with a Barnacle by killing it or by
 getting past it.
@@ -475,8 +487,8 @@ the player is.
   (Slate). Near layer: a wave crest strip along the bottom 16 px (Sea and
   Slate). The waves are scenery only, with no collision.
 - **Scroll:** 30 px/s, rising to 36 px/s for the final minute (Stage file).
-- **Length:** about 210 s (3:30) at normal speed.
-- **Restart Points:** 0:00, 1:10, 2:20.
+- **Length:** about 172 s (2:52) at normal speed; 3:30 before #65.
+- **Restart Points:** 0:00, 0:54, 1:52.
 - **New ideas:** every enemy from 1 to 6 is introduced here, one at a time.
 
 Pacing outline (times at normal speed; "→ X" means the Formation drops
@@ -485,28 +497,26 @@ Power-up X):
 | Time | Beat | What happens |
 |---|---|---|
 | 0:00 | calm | Restart Point. Open water, music starts, the Wren flies in. |
-| 0:05 | teach | One Skiff V, middle. |
-| 0:12 | test | Skiff Vs high and low, then middle → **G** (gun 2). |
-| 0:28 | teach | Gull snake, top to bottom. |
-| 0:36 | twist | Two Gull snakes crossing in opposite phase → **D**. |
-| 0:46 | teach | First Bellbuoys on the wave line, three in a row, nothing else. |
-| 0:55 | test | Skiff V over the Bellbuoys → Formation bonus. |
-| 1:04 | breathe | Quiet sea. The lighthouse passes. |
-| 1:10 | calm | **Restart Point.** |
-| 1:14 | teach | One Lamplighter alone. |
-| 1:24 | test | Lamplighter pair plus a Gull snake → **S**. |
-| 1:38 | test | Skiff Vs from alternating sides of centre, Bellbuoys below → **G** (gun 3). |
-| 1:52 | set piece | **Ferry** with Skiff launches → **B**. |
-| 2:14 | breathe | Wreckage drifts past. |
-| 2:20 | calm | **Restart Point.** Scroll rises to 36 px/s. |
-| 2:24 | teach | Hook warning chevron, then one Hook pair from behind. |
-| 2:34 | twist | Hooks behind while a Lamplighter holds the front → **W**. |
-| 2:48 | test | Gull snakes plus Bellbuoys plus a Skiff V → **D** (second drone). |
-| 3:02 | set piece | **Ferry** with Hook pairs. The finale → **G** (gun 4). |
-| 3:24 | end | The sea stacks close in toward cliffs ahead (a hint of Stage 2). The scroll ends: Stage clear. |
+| 0:04 | test | Skiff Vs high and low, then middle → **G** (gun 2). The first V is the teach. |
+| 0:20 | teach | Gull snake, top to bottom. |
+| 0:26 | twist | Two Gull snakes crossing in opposite phase → **D**. |
+| 0:36 | teach | First Bellbuoys on the wave line, three in a row, nothing else. |
+| 0:41 | test | Skiff V over the Bellbuoys → Formation bonus. |
+| 0:50 | breathe | Quiet sea. The lighthouse passes. |
+| 0:54 | calm | **Restart Point.** |
+| 0:58 | teach | One Lamplighter alone. |
+| 1:06 | test | Lamplighter pair plus a Gull snake → **S**. |
+| 1:16 | test | Skiff Vs from alternating sides of centre, Bellbuoys below, a Gull snake through them → **G** (gun 3). |
+| 1:28 | set piece | **Ferry** with Skiff launches → **B**. |
+| 1:52 | calm | **Restart Point.** Scroll rises to 36 px/s. |
+| 1:54 | teach | Hook warning chevron, then one Hook pair from behind. |
+| 2:01 | twist | Hooks behind while a Lamplighter holds the front, then a Skiff V → **W**. |
+| 2:14 | test | Gull snakes, Bellbuoys, a Lamplighter and a Skiff V → **D** (second drone). |
+| 2:26 | set piece | **Ferry** with Hook pairs and a Gull snake. The finale → **G** (gun 4). |
+| 2:52 | end | The sea stacks close in toward cliffs ahead (a hint of Stage 2). The scroll ends: Stage clear. |
 
-The Ferry beats (1:52 and 3:02) leave up to about 20 s for the Ferry to hold
-and sink. Nothing else is scheduled over a Ferry except its named escorts.
+The Ferry beats (1:28 and 2:26) leave about 24 s for the Ferry to come in,
+hold and sink. Nothing else is scheduled over a Ferry except its named escorts.
 
 A player who clears everything leaves Stage 1 with gun 4, 2 drones, Speed 1,
 Ward, and 3 bombs. That is near full power, which Stage 2's new threats then
@@ -532,8 +542,8 @@ or two drones.
   - Shorter breathers (about 4 s instead of 6 s).
 - **Scroll:** 32 px/s, dropping to 26 px/s in the narrow passages so the
   terrain stays fair, and rising to 40 px/s for the run-out (Stage file).
-- **Length:** about 225 s (3:45) at normal speed.
-- **Restart Points:** 0:00, 1:00, 2:00, 2:55. There are more than in Stage 1
+- **Length:** about 178 s (2:58) at normal speed; 3:45 before #65.
+- **Restart Points:** 0:00, 0:50, 1:46, 2:24. There are more than in Stage 1
   because terrain deaths come in clusters.
 
 | Time | Beat | What happens |
@@ -543,22 +553,24 @@ or two drones.
 | 0:14 | test | Ceiling appears. Barnacles above and below, plus a Skiff V → **T**. |
 | 0:28 | twist | Firing Gulls (Stage 2 variant) in an open hall. |
 | 0:40 | teach | One Clam pair in open space. |
-| 0:52 | breathe | Wide chamber, gantries in the background. |
-| 1:00 | calm | **Restart Point.** |
-| 1:04 | teach | First Mote cloud, open space → **S**. |
-| 1:16 | test | The corridor narrows to 100 px (the nearest the tile grid allows to 96). Barnacles plus a Lamplighter. Scroll 26 px/s. |
-| 1:30 | teach | First Arc Gate, alone, in a straight corridor. |
-| 1:40 | test | Two Arc Gates 80 px apart with a Mote cloud → **G**. |
-| 1:52 | breathe | The corridor opens out. |
-| 2:00 | calm | **Restart Point.** |
-| 2:04 | twist | Hooks from behind in a 132 px corridor (the Tail pays off) → **W**. |
-| 2:16 | test | Clams high in an open hall (the ceiling lifts away), firing Gulls below. |
-| 2:30 | set piece | **Ferry** in the great furnace hall, with Barnacles on the floor → **D**. |
-| 2:50 | breathe | Short. Steam vents (scenery only). |
-| 2:55 | calm | **Restart Point.** |
-| 2:58 | test | The gauntlet: a 76 px corridor (the narrowest in the Stage) with an Arc Gate, Barnacles, then a Mote cloud → **B**. |
-| 3:20 | run-out | Scroll rises to 40 px/s. The ceiling lifts away and the terrain ramps up into a vertical shaft full of rising Motes (no collision, scenery). |
-| 3:42 | end | The scroll ends at the shaft. Stage clear, then the Cabinet Transition (the Wren banks upward). |
+| 0:46 | breathe | Wide chamber, gantries in the background. |
+| 0:50 | calm | **Restart Point.** |
+| 0:54 | teach | First Mote cloud, open space → **S**. |
+| 1:06 | test | The corridor narrows to 100 px (the nearest the tile grid allows to 96). Barnacles plus a Lamplighter. Scroll 26 px/s. |
+| 1:20 | teach | First Arc Gate, alone, in a straight corridor. |
+| 1:30 | test | Two Arc Gates 80 px apart with a Mote cloud → **G**. |
+| 1:42 | breathe | The corridor opens out. |
+| 1:46 | calm | **Restart Point.** |
+| 1:54 | twist | Hooks from behind in a 132 px corridor (the Tail pays off), a Skiff V ahead → **W**. |
+| 1:59 | set piece | **Ferry** in the great furnace hall, with Barnacles on the floor and a firing Gull snake → **D**. |
+| 2:20 | breathe | Short. Steam vents (scenery only). |
+| 2:24 | calm | **Restart Point.** |
+| 2:27 | test | The gauntlet: a 76 px corridor (the narrowest in the Stage) with an Arc Gate, Barnacles, then a Mote cloud → **B**. |
+| 2:49 | run-out | Scroll rises to 40 px/s. The ceiling lifts away and the terrain ramps up into a vertical shaft full of rising Motes (no collision, scenery). |
+| 2:58 | end | The scroll ends at the shaft. Stage clear, then the Cabinet Transition (the Wren banks upward). |
+
+#65 cut the second Clam beat (Clams high in an open hall) and shortened the
+breathers and the run-out.
 
 For a perfect player, the T, the second S and the fourth bomb are new in
 Stage 2. G and D are already at their maximum and become medals, and the W is
@@ -580,21 +592,58 @@ The Stage clear and no-miss bonuses are awarded at the end of the scroll,
 before the Stage Card, through `ScoreGained`. Score from a section replayed
 after a Restart Point counts normally.
 
-**Measured totals** (#11; the test
+**Measured totals** (#11, remeasured for #65; the test
 `extra_lives_land_where_the_design_doc_says` recomputes them from the Stage
 files and tuning). A perfect Stage, bombed bullets left out:
 
 | | Enemies | Formation bonus | Clear + no miss | Core total | Every Power-up already maxed | Ferries left to launch every Skiff | Most |
 |---|---|---|---|---|---|---|---|
-| Stage 1 | 17,500 | 5,400 | 8,000 | 30,900 | +8,000 | +2,800 | 41,700 |
-| Stage 2 | 19,900 | 2,000 | 8,000 | 29,900 | +6,000 | +1,400 | 37,300 |
+| Stage 1 | 19,200 | 6,600 | 8,000 | 33,800 | +8,000 | +3,200 | 45,000 |
+| Stage 2 | 18,800 | 2,500 | 8,000 | 29,300 | +6,000 | +1,600 | 36,900 |
 
-Stage 2 comes in under the first rough target of 40–50k. It was left there,
-because the extra lives land where they should. A flawless Stage 1 earns 22,900
-before its clear bonus, so it passes the first extra life (20,000) near the
-end, and a decent player gets it with the clear bonus. The second (70,000) needs more than both core
-totals (60,800), so only a player squeezing out the extras gets it before
-Cabinet 2.
+The shorter Stages lost some enemies, but the denser second halves added
+others, so the totals barely moved. The extra lives still land where they
+should. A flawless Stage 1 earns 25,800 before its clear bonus, so it passes
+the first extra life (20,000) in the second half. The second (70,000) needs
+more than both core totals (63,100), so only a player squeezing out the
+extras gets it before Cabinet 2.
+
+## Playtest changes (#65)
+
+The user's Cabinet 1 playtest (#12) found the Stages "a little long" and "a
+little easy", the firing "a little much (made it too easy)", and the
+scrolling "great". So the scroll speeds are unchanged, and:
+
+| Change | Before | After | Key |
+|---|---|---|---|
+| Stage 1 length | 3:30 | 2:52 | Stage file |
+| Stage 2 length | 3:45 | 2:58 | Stage file |
+| Fire rate | 10 volleys/s | 8 volleys/s | `shot.fire_interval` |
+| Drone shots | every volley | every second volley | `shot.drone_every` |
+| Full power DPS (narrow / large) | 40 / 80 | 32 / 56 | (follows) |
+| Lamplighter shots | 2, 1.2 s apart | 3, 1.0 s apart | `lamplighter.shots`, `fire_interval` |
+| Bellbuoy cooldown | 2.5 s | 2.0 s | `bellbuoy.cooldown` |
+| Barnacle fire interval | 1.6 s | 1.3 s | `barnacle.fire_interval` |
+| Ferry ring interval | 3.0 s | 2.5 s | `ferry.ring_interval` |
+| Ferry hold | 15 s | 18 s | `ferry.hold_seconds` |
+| Ferry HP, Stage 1 | 400 | 360 | `ferry.hp` |
+| Clam HP | 16 | 14 | `clam.hp` |
+
+- **Cut, not compressed.** Stage 1 lost its lone first Skiff V (the first V
+  of the next beat teaches it now) and about a third of each breather.
+  Stage 2 lost its second Clam beat, part of the first and third breathers,
+  and most of the run-out. The scroll speeds are as they were.
+- **Denser second halves.** Stage 1 adds a Gull snake to the 1:16 beat, a
+  Skiff V after the 2:01 Hooks, a Lamplighter at 2:16 and a Gull snake in
+  the finale. Stage 2 adds a Skiff V ahead of the Hooks and a firing Gull
+  snake over the Ferry.
+- **Kept fair.** No new bullet is faster than before (rule 1's caps still
+  hold). The Ferry and Clam changes keep each role's time-to-kill target
+  reachable with the weaker gun. Restart Points still sit in quiet moments
+  and pass the terrain checks.
+- **Stage length is now under DESIGN.md's 3–4 minutes.** This ticket only
+  changes Cabinet 1. Whether the new length applies to every Cabinet is
+  asked in a `needs-human` issue.
 
 ## Sound and music (for #10)
 
@@ -623,10 +672,10 @@ side_shooter: (
         respawn_invulnerable_seconds: 2.0, hit_stop_seconds: 0.15,
     ),
     shot: (
-        fire_interval: 0.1, speed: 360.0, damage: 1, size: (8.0, 2.0),
+        fire_interval: 0.125, speed: 360.0, damage: 1, size: (8.0, 2.0),
         twin_spacing: 6.0, spread_degrees: 10.0,
         lance_size: (12.0, 3.0), lance_damage: 2,
-        tail_every: 2, max_on_screen: 96,
+        tail_every: 2, drone_every: 2, max_on_screen: 96,
     ),
     bomb: (starting: 2, max: 4, ring_speed: 420.0, damage: 12, invulnerable_seconds: 1.0),
     power_up: (
@@ -649,20 +698,20 @@ side_shooter: (
                speed: 70.0, amplitude: 28.0, period: 1.6, shot_speed: 80.0, fire_x: 0.0),
         bellbuoy: (hp: 10, score: 300, wave_y: -104.0, bob_amplitude: 2.0, bob_period: 1.4,
                    trigger_range: 80.0, telegraph_seconds: 0.4, fan_count: 3,
-                   fan_degrees: 15.0, shot_speed: 90.0, cooldown: 2.5),
+                   fan_degrees: 15.0, shot_speed: 90.0, cooldown: 2.0),
         lamplighter: (hp: 36, score: 500, speed: 80.0, brake_distance: 24.0, stop_x: 100.0,
                       hover_seconds: 3.0, bob_amplitude: 2.0, bob_period: 1.5, telegraph_seconds: 0.4,
-                      shots: 2, shot_speed: 100.0, fire_interval: 1.2, exit_speed: 80.0),
+                      shots: 3, shot_speed: 100.0, fire_interval: 1.0, exit_speed: 80.0),
         hook: (hp: 2, score: 200, formation_size: 2, warning_seconds: 0.75, speed: 150.0,
                pass_offset: 50.0, terrain_clearance: 12.0, turn_x: 110.0, turn_radius: 14.0,
                charge_speed: 170.0, charge_steer_speed: 85.0, pair_spread: 0.5),
-        ferry: (hp: 400, hp_stage2: 640, score: 2000, speed: 25.0, hold_x: 60.0,
-                hold_seconds: 15.0, sink_speed: 20.0,
+        ferry: (hp: 360, hp_stage2: 640, score: 2000, speed: 25.0, hold_x: 60.0,
+                hold_seconds: 18.0, sink_speed: 20.0,
                 launch_count: 2, first_launch_delay: 1.0, launch_interval: 3.0,
-                ring_count: 8, ring_speed: 70.0, first_ring_delay: 2.0, ring_interval: 3.0),
+                ring_count: 8, ring_speed: 70.0, first_ring_delay: 2.0, ring_interval: 2.5),
         barnacle: (hp: 10, score: 400, turn_rate: 120.0, telegraph_seconds: 0.3,
-                   shot_speed: 110.0, fire_interval: 1.6),
-        clam: (hp: 16, score: 800, formation_size: 2, pair_spacing: (0.0, -48.0),
+                   shot_speed: 110.0, fire_interval: 1.3),
+        clam: (hp: 14, score: 800, formation_size: 2, pair_spacing: (0.0, -48.0),
                bob_amplitude: 3.0, bob_period: 2.0,
                closed_seconds: 2.0, open_seconds: 1.0, fan_count: 5, fan_degrees: 60.0,
                shot_speed: 100.0),
@@ -714,9 +763,10 @@ side_shooter: (
   then, so it can't bomb either.
 - **Drones are numbered:** the first flies above the Wren and the second
   below, so losing "the lower one first" removes the second.
-- **The gun keeps its leftover time** between volleys, so it fires 10
-  volleys a second at any frame rate (30 to 144 fps are tested). A frame long
-  enough to owe two volleys still fires only one.
+- **The gun keeps its leftover time** between volleys, so it fires a
+  steady number of volleys a second at any frame rate (30 to 144 fps are tested). A frame long
+  enough to owe two volleys still fires only one. (10 volleys a second
+  then; 8 since #65.)
 - **The Undertow is a ring, not a disc.** Each frame it touches only what its
   edge sweeps over (a band two frames wide, so slower enemy bullets flying
   inward can't slip through). Bullets fired into the area it has already
