@@ -305,3 +305,15 @@ fn the_frame_between_cabinets_is_safe() {
     app.world_mut().resource_mut::<Session>().cabinet = CABINET;
     seconds(&mut app, 0.2);
 }
+
+#[test]
+fn the_designed_length_counts_each_standoff_in_full() {
+    let mut app = app();
+    seconds(&mut app, 0.2);
+    let stage = app.world().resource::<StageRun>();
+    let scroll = stage.timeline.duration();
+    let standoffs = standoff_seconds(&stage.timeline);
+    assert!(standoffs > 0.0, "the stand-in Stage has a Standoff");
+    let clock = app.world().resource::<crate::kit::StageClock>();
+    assert_eq!(clock.designed, scroll + standoffs);
+}

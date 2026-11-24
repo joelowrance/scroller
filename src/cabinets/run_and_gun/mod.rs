@@ -103,6 +103,31 @@ fn spawn_requested(
     }
 }
 
+/// Seconds the Stage's Standoffs hold the scroll when each runs its full
+/// length.
+fn standoff_seconds(timeline: &crate::kit::StageTimeline) -> f32 {
+    timeline
+        .spawns
+        .iter()
+        .filter(|s| s.kind == standoff::KIND)
+        .filter_map(|s| {
+            ron::Value::Map(s.params.clone())
+                .into_rust::<StandoffParams>()
+                .ok()
+        })
+        .map(|p| p.max_seconds.max(0.0))
+        .sum()
+}
+
+/// The Stage's designed length is its pace time: the scroll plus each
+/// Standoff at its full length, as the doc's tables count it. Runs in
+/// `PostUpdate`, after the kit has started the clock for the new Stage.
+fn clock_counts_standoffs(stage: Res<StageRun>, mut clock: ResMut<crate::kit::StageClock>) {
+    if stage.is_added() {
+        clock.designed += standoff_seconds(&stage.timeline);
+    }
+}
+
 /// Keeps `Session.power_ups` up to date, so a Save at the Stage clear
 /// records the Power-ups.
 fn save_power_ups(power: Res<PowerUps>, mut session: ResMut<Session>) {
@@ -161,6 +186,13 @@ impl Plugin for RunAndGunPlugin {
                     .run_if(resource_exists::<PowerUps>)
                     .run_if(resource_exists::<Terrain>)
                     .run_if(stage_live),
+            )
+            .add_systems(
+                PostUpdate,
+                clock_counts_standoffs
+                    .run_if(cabinet_is(CABINET))
+                    .run_if(in_state(Screen::Playing))
+                    .run_if(resource_exists::<StageRun>),
             )
             .add_systems(OnExit(Screen::Playing), end_stage);
     }
