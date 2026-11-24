@@ -357,7 +357,7 @@ mod playthrough {
 /// The most a perfect Stage can score, by source (bombed bullets left out:
 /// they depend on how much is on screen when the Undertow goes off).
 #[derive(Debug, Default)]
-struct ScoreBudget {
+pub(crate) struct ScoreBudget {
     enemies: u64,
     formation_bonus: u64,
     /// Skiffs a Ferry launches if it is left alive until it sinks.
@@ -368,7 +368,12 @@ struct ScoreBudget {
 }
 
 impl ScoreBudget {
-    fn total(&self) -> u64 {
+    /// A perfect Stage without the extras (maxed Power-ups, milked Ferries).
+    pub(crate) fn core(&self) -> u64 {
+        self.enemies + self.formation_bonus + self.clear_and_no_miss
+    }
+
+    pub(crate) fn total(&self) -> u64 {
         self.enemies
             + self.formation_bonus
             + self.ferry_skiffs
@@ -377,7 +382,7 @@ impl ScoreBudget {
     }
 }
 
-fn score_budget(stage: usize) -> ScoreBudget {
+pub(crate) fn score_budget(stage: usize) -> ScoreBudget {
     use crate::cabinets::side_shooter::enemies::{Kind, layout};
     let tuning = Tuning::default();
     let s = &tuning.side_shooter;
@@ -430,7 +435,7 @@ fn extra_lives_land_where_the_design_doc_says() {
     assert!((32_000..=42_000).contains(&two.total()), "Stage 2");
     // Without the extras (maxed Power-ups, Ferries milked for Skiffs), a
     // flawless Stage 1 still passes the first extra life...
-    let core = |b: &ScoreBudget| b.enemies + b.formation_bonus + b.clear_and_no_miss;
+    let core = ScoreBudget::core;
     assert!(core(&one) >= tuning.first_extra_life);
     // ...and only a player squeezing out the extras gets the second one
     // before Cabinet 2.
