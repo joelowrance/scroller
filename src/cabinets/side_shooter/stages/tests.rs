@@ -6,21 +6,6 @@ use crate::display::HALF_W;
 use crate::kit::SpawnRequested;
 use crate::kit::timeline::SpawnEntry;
 
-/// How long a timeline takes at normal speed, in seconds.
-fn duration(timeline: &StageTimeline) -> f32 {
-    let keys = &timeline.speed;
-    let mut seconds = 0.0;
-    for (i, key) in keys.iter().enumerate() {
-        let end = keys
-            .get(i + 1)
-            .map_or(timeline.length, |k| k.from.min(timeline.length));
-        if end > key.from {
-            seconds += (end - key.from) / key.speed;
-        }
-    }
-    seconds
-}
-
 fn params(spawn: &SpawnEntry) -> SpawnParams {
     SpawnRequested {
         kind: spawn.kind.clone(),
@@ -38,8 +23,8 @@ fn under(at: f32, x: f32) -> f32 {
 
 #[test]
 fn both_stages_last_three_to_four_minutes() {
-    let one = duration(&timeline(0));
-    let two = duration(&timeline(1));
+    let one = timeline(0).duration();
+    let two = timeline(1).duration();
     assert!((205.0..=215.0).contains(&one), "Stage 1 takes {one} s");
     assert!((220.0..=230.0).contains(&two), "Stage 2 takes {two} s");
 }
@@ -82,7 +67,7 @@ fn restart_points_match_the_pacing_outline() {
             .map(|r| {
                 let mut cut = t.clone();
                 cut.length = r.at.max(0.001);
-                (duration(&cut) * 10.0).round() / 10.0
+                (cut.duration() * 10.0).round() / 10.0
             })
             .collect()
     };
