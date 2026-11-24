@@ -70,15 +70,14 @@ impl PowerUp {
         format!("{KIND_PREFIX}{}", self.letter())
     }
 
-    /// The chirp when it is picked up. Cabinet 3's own chirps come with its
-    /// sound (#20); until then the nearest ship chirp stands in.
+    /// The chirp when it is picked up (G and W share the ship Cabinets').
     pub fn sfx(self) -> Sfx {
         match self {
             PowerUp::Gun => Sfx::PowerUpGun,
-            PowerUp::Flare => Sfx::PowerUpBomb,
-            PowerUp::Jet => Sfx::PowerUpTail,
+            PowerUp::Flare => Sfx::PowerUpFlare,
+            PowerUp::Jet => Sfx::PowerUpJet,
             PowerUp::Ward => Sfx::PowerUpWard,
-            PowerUp::Hustle => Sfx::PowerUpSpeed,
+            PowerUp::Hustle => Sfx::PowerUpHustle,
         }
     }
 }

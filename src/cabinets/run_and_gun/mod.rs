@@ -81,6 +81,7 @@ fn spawn_requested(
     tuning: Res<Tuning>,
     stage: Res<StageRun>,
     mut requests: MessageReader<SpawnRequested>,
+    mut sfx: MessageWriter<crate::audio::PlaySfx>,
 ) {
     for request in requests.read() {
         if let Some(power_up) = PowerUp::from_kind(&request.kind) {
@@ -97,6 +98,7 @@ fn spawn_requested(
                 StandoffParams::default()
             });
             commands.insert_resource(Standoff::new(params));
+            sfx.write(crate::audio::PlaySfx(crate::audio::Sfx::StandoffLock));
         }
     }
 }

@@ -940,10 +940,12 @@ and write new code only where Cabinet 3 differs.
   against Cabinet 1's 10, 24/48 at gun 4 against 40/60 before drones, and no
   bomb. If its playtest (#22) agrees with #65, lower the volley rates in
   tuning.
+- **Sounds (#66)** are sent from their events: footsteps, jump, Jet,
+  landing, Flares, the fall, the ledge creak, the Standoff stings, each
+  enemy's warning as it begins, the Strider's stomp, and the machinery.
 - **Not yet done** (needs flow or #20):
   - the 1 s walk-off at the Stage clear;
   - conveyors carrying walkers (they carry only the Hero);
-  - Cabinet 3's own Power-up chirps (ship chirps stand in);
   - the `stage_checks` gap test, which comes with #20's Stage files.
 
 ## Stage files and art (for #20)

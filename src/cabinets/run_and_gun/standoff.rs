@@ -15,6 +15,7 @@ use serde::Deserialize;
 
 use super::enemies::{Leaving, StandoffMember};
 use super::power_ups::PowerUp;
+use crate::audio::{PlaySfx, Sfx};
 use crate::cabinets::ScoreGained;
 use crate::kit::{SpawnRequested, StageRestarted};
 use crate::tuning::Tuning;
@@ -130,6 +131,7 @@ pub(super) fn run_standoff(
     hero: Single<&Transform, With<crate::kit::Hero>>,
     mut spawns: MessageWriter<SpawnRequested>,
     mut score: MessageWriter<ScoreGained>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let Some(mut standoff) = standoff else {
         return;
@@ -146,6 +148,9 @@ pub(super) fn run_standoff(
             pos: Vec2::new(wave.pos.0, wave.pos.1),
             params,
         });
+    }
+    if outcome.is_some() {
+        sfx.write(PlaySfx(Sfx::StandoffRelease));
     }
     match outcome {
         Some(Outcome::Cleared { seconds_left }) => {

@@ -298,6 +298,8 @@ pub(super) fn run(
         &mut Shield,
     )>,
     mut struck: MessageWriter<HeroStruck>,
+    mut sfx: MessageWriter<PlaySfx>,
+    mut footstep: Local<f32>,
 ) {
     let t = &tuning.run_and_gun;
     let dt = time.delta_secs();
@@ -348,6 +350,23 @@ pub(super) fn run(
     let moved = platform::step(&mut runner.body, input, &t.jump.params(), &*terrain, dt);
     if moved.air_jumped {
         runner.jet_used = true;
+        sfx.write(PlaySfx(Sfx::JetPuff));
+    }
+    if moved.jumped && !runner.entering {
+        sfx.write(PlaySfx(Sfx::Jump));
+    }
+    if moved.landed {
+        sfx.write(PlaySfx(Sfx::Land));
+    }
+    // A soft step about every other run frame while running on the ground.
+    if runner.body.grounded && input.run != 0.0 {
+        *footstep -= dt;
+        if *footstep <= 0.0 {
+            *footstep = 0.25;
+            sfx.write(PlaySfx(Sfx::Footstep));
+        }
+    } else {
+        *footstep = 0.0;
     }
     if runner.body.grounded {
         runner.jet_used = false;
@@ -376,7 +395,13 @@ pub(super) fn run(
         .grounded
         .then(|| terrain.ledge_under(runner.body.x - half, runner.body.x + half, runner.body.feet))
         .flatten();
+    let was_whole = standing_on.map(|i| terrain.crumbles[i]);
     terrain.tick_crumbles(standing_on, &t.terrain, dt);
+    if let (Some(i), Some(super::terrain::Crumble::Whole)) = (standing_on, was_whole)
+        && matches!(terrain.crumbles[i], super::terrain::Crumble::Shaking(_))
+    {
+        sfx.write(PlaySfx(Sfx::LedgeCreak));
+    }
 
     // Fell into a pit.
     if runner.body.feet < -crate::display::HALF_H {
@@ -396,6 +421,7 @@ pub(super) fn run(
             runner.fell = true;
             shield.charges = 0;
             invulnerable.0 = 0.0;
+            sfx.write(PlaySfx(Sfx::FallWhistle));
             struck.write(HeroStruck { from: None });
         }
     }
@@ -455,6 +481,7 @@ pub(super) fn fire(
     if power.flare && runner.flare_cooldown <= 0.0 && flares.iter().count() < t.flare.max_on_screen
     {
         runner.flare_cooldown = (runner.flare_cooldown + t.flare.interval).max(0.0);
+        sfx.write(PlaySfx(Sfx::FlareLob));
         let (fwd, up) = t.flare.launch;
         let vel = if runner.aim.y > 0.9 {
             Vec2::new(0.0, up)
@@ -525,6 +552,7 @@ pub(super) fn fly_flares(
     >,
     mut hurt: MessageWriter<Hurt>,
     mut explode: MessageWriter<Explode>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.run_and_gun;
     let dt = time.delta_secs();
@@ -548,6 +576,7 @@ pub(super) fn fly_flares(
             continue;
         }
         commands.entity(entity).despawn();
+        sfx.write(PlaySfx(Sfx::FlareBurst));
         explode.write(Explode {
             at,
             color: palette::EMBER,

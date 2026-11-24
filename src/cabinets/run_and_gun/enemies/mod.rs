@@ -518,6 +518,7 @@ fn think(
         Has<Leaving>,
     )>,
     bullets: Query<(), With<EnemyBullet>>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let tt = &tuning.run_and_gun;
     let t = &tt.enemies;
@@ -572,7 +573,23 @@ fn think(
             hero: hero_here,
             terrain: &terrain,
         };
+        let warned = brain.0.telegraph(t);
         let out: Out = brain.0.step(&mut pos.0, &ctx, t, rules);
+        // Each warning's sound, as the warning begins.
+        if !warned && brain.0.telegraph(t) {
+            let warning = match &brain.0 {
+                Brain::Sentry(_) => Some(Sfx::SentryRise),
+                Brain::Burrower(_) => Some(Sfx::BurrowerDust),
+                Brain::Dropper(_) => Some(Sfx::DropperHatch),
+                Brain::Strider(s) if s.cycle < t.strider.stomp_telegraph_seconds => {
+                    Some(Sfx::StriderLegLift)
+                }
+                _ => None,
+            };
+            if let Some(w) = warning {
+                sfx.write(PlaySfx(w));
+            }
+        }
         let at = screen_centre(enemy.kind, pos.0, camera, t);
         transform.translation.x = at.x.round();
         transform.translation.y = at.y.round();
@@ -608,6 +625,8 @@ fn think(
             }
         }
         if out.stomp {
+            sfx.write(PlaySfx(Sfx::StriderStomp));
+            sfx.write(PlaySfx(Sfx::StriderShockwave));
             for dir in [-1.0, 1.0] {
                 commands.spawn((
                     look::hazard(Vec2::new(6.0, t.strider.wave_height)),
@@ -916,10 +935,14 @@ fn run_hazards(
     )>,
     mut hero: Option<Single<&mut super::hero::Runner>>,
     victims: Query<(Entity, &Transform, &Hitbox), (With<Enemy>, Without<Hazard>)>,
+    mut sfx: MessageWriter<PlaySfx>,
+    mut hum: Local<f32>,
 ) {
     let h = &tuning.run_and_gun.hazards;
     let dt = time.delta_secs();
     let camera = stage.cursor.position;
+    // A conveyor on screen hums about once a second.
+    *hum -= dt;
     for (entity, mut hazard, wx, mut transform, mut sprite, has_layer) in &mut hazards {
         transform.translation.x = screen_x(wx.0, camera).round();
         let mut live = false;
@@ -944,6 +967,9 @@ fn run_hazards(
                     0.0
                 };
                 live = p >= up_until;
+                if live && !has_layer {
+                    sfx.write(PlaySfx(Sfx::CrusherSlam));
+                }
                 transform.translation.y = *ground + 16.0 + lift;
                 let warn = p >= c.up_seconds && p < up_until;
                 sprite.color = if warn && ((*age * 16.0) as u32).is_multiple_of(2) {
@@ -973,6 +999,9 @@ fn run_hazards(
                     telegraph_seconds: a.telegraph_seconds,
                 };
                 let at = *age + *offset;
+                if pulse.telegraph(at) && !pulse.telegraph(at - dt) {
+                    sfx.write(PlaySfx(Sfx::ArcFloorCrackle));
+                }
                 live = pulse.live(at);
                 sprite.color = if live {
                     palette::ICE
@@ -984,6 +1013,10 @@ fn run_hazards(
                 let _ = length;
             }
             Hazard::Conveyor { length, speed } => {
+                if *hum <= 0.0 && transform.translation.x.abs() <= HALF_W {
+                    *hum = 1.0;
+                    sfx.write(PlaySfx(Sfx::ConveyorHum));
+                }
                 if let Some(runner) = hero.as_mut() {
                     let b = &mut runner.body;
                     let top = transform.translation.y + 1.5;

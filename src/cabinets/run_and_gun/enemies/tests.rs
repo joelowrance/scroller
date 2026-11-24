@@ -391,3 +391,37 @@ fn the_gallery_names_only_known_kinds() {
         );
     }
 }
+
+#[derive(Resource, Default)]
+struct Heard(Vec<Sfx>);
+
+fn hear(mut heard: ResMut<Heard>, mut sfx: MessageReader<PlaySfx>) {
+    heard.0.extend(sfx.read().map(|s| s.0));
+}
+
+#[test]
+fn warnings_and_machinery_play_their_sounds() {
+    let mut app = app();
+    app.init_resource::<Heard>().add_systems(Last, hear);
+    request(&mut app, "sentry", Vec2::new(100.0, -88.0), "{}");
+    request(&mut app, "burrower", Vec2::new(-40.0, -88.0), "{}");
+    request(&mut app, "crusher", Vec2::new(40.0, 0.0), "{}");
+    request(
+        &mut app,
+        "arc_floor",
+        Vec2::new(-20.0, 0.0),
+        r#"{"length": 32.0}"#,
+    );
+    request(&mut app, "conveyor", Vec2::new(0.0, 0.0), "{}");
+    run(&mut app, 2.5);
+    let heard = &app.world().resource::<Heard>().0;
+    for want in [
+        Sfx::SentryRise,
+        Sfx::BurrowerDust,
+        Sfx::CrusherSlam,
+        Sfx::ArcFloorCrackle,
+        Sfx::ConveyorHum,
+    ] {
+        assert!(heard.contains(&want), "no {want:?} in {heard:?}");
+    }
+}
