@@ -306,9 +306,7 @@ tuning_struct!(ArcFloor {
     telegraph_seconds: f32 = 0.4,
 });
 
-tuning_struct!(Conveyor {
-    speed: f32 = 24.0,
-});
+tuning_struct!(Conveyor { speed: f32 = 24.0 });
 
 tuning_struct!(ScoreTuning {
     formation_bonus_per_enemy: u64 = 100,

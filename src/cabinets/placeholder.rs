@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 
-use super::{CABINETS, Scroll, run_and_gun};
+use super::{CABINETS, Scroll};
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
 use crate::input::{Button, Controls};
@@ -53,24 +53,7 @@ fn ahead(scroll: Scroll) -> Vec2 {
 }
 
 fn stage_for(session: &Session) -> StageTimeline {
-    if session.cabinet == run_and_gun::CABINET {
-        return run_and_gun_stage(session.stage);
-    }
     stage_timeline(CABINETS[session.cabinet].scroll)
-}
-
-/// Cabinet 3's real Stages (#20), flown on the placeholder until its
-/// gameplay (#19) replaces it: the scenery, terrain and length are real, and
-/// the enemy kinds are skipped. The terrain is drawn as scenery.
-fn run_and_gun_stage(stage: usize) -> StageTimeline {
-    let text = run_and_gun::STAGES[stage.min(1)];
-    let mut timeline = StageTimeline::parse(text).expect("Cabinet 3 Stage files must be valid");
-    let terrain =
-        run_and_gun::terrain::StageTerrain::parse(text).expect("Cabinet 3 terrain must be valid");
-    timeline.spawns.extend(terrain.scenery());
-    // The timeline plays its spawns in order.
-    timeline.spawns.sort_by(|a, b| a.at.total_cmp(&b.at));
-    timeline
 }
 
 fn stage_timeline(scroll: Scroll) -> StageTimeline {
@@ -87,13 +70,7 @@ fn spawn_stage(mut commands: Commands, session: Res<Session>, sprites: Res<Sprit
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
-    // (Cabinet 3's Stages bring their own scenery and terrain.)
-    let stripes = if session.cabinet == run_and_gun::CABINET {
-        0
-    } else {
-        STRIPE_COUNT
-    };
-    for i in 0..stripes {
+    for i in 0..STRIPE_COUNT {
         let depth = (i % 3) as f32 + 1.0;
         let along = (i as f32 * 37.0) % (HALF_W * 2.0) - HALF_W;
         let across = (i as f32 * 53.0) % (HALF_H * 2.0) - HALF_H;
@@ -294,7 +271,9 @@ fn update_progress(
 /// Cabinets without their own code yet use the placeholder.
 fn uses_placeholder(session: Option<Res<Session>>) -> bool {
     session.is_some_and(|s| {
-        s.cabinet != super::side_shooter::CABINET && s.cabinet != super::vertical_shooter::CABINET
+        s.cabinet != super::side_shooter::CABINET
+            && s.cabinet != super::vertical_shooter::CABINET
+            && s.cabinet != super::run_and_gun::CABINET
     })
 }
 

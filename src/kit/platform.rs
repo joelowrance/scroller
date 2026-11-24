@@ -92,7 +92,11 @@ impl Body {
     /// just below its feet.
     pub fn support(&self, x: f32, world: &impl TileQuery) -> Option<f32> {
         let (x0, x1) = self.span(x);
-        let ground = world.ground_top(x0, x1).filter(|t| *t <= self.feet + SNAP);
+        // Only ground at the feet holds a body up: lower ground means a
+        // fall (walking off a step down).
+        let ground = world
+            .ground_top(x0, x1)
+            .filter(|t| (*t - self.feet).abs() <= SNAP);
         let ledges = if self.dropping > 0.0 {
             None
         } else {
@@ -139,7 +143,9 @@ pub fn step(
     let want = body.x + input.run * dt;
     let blocked = |x: f32| {
         let (x0, x1) = body.span(x);
-        world.ground_top(x0, x1).is_some_and(|t| t > body.feet + SNAP)
+        world
+            .ground_top(x0, x1)
+            .is_some_and(|t| t > body.feet + SNAP)
     };
     if blocked(want) {
         moved.blocked = true;
@@ -182,13 +188,14 @@ pub fn step(
         body.buffer = 0.0;
         body.cut_done = false;
         moved.jumped = true;
-    } else if input.jump_pressed && !body.grounded {
-        if let Some(speed) = input.air_jump {
-            body.vy = speed;
-            body.buffer = 0.0;
-            body.cut_done = false;
-            moved.air_jumped = true;
-        }
+    } else if input.jump_pressed
+        && !body.grounded
+        && let Some(speed) = input.air_jump
+    {
+        body.vy = speed;
+        body.buffer = 0.0;
+        body.cut_done = false;
+        moved.air_jumped = true;
     }
 
     if body.grounded {
@@ -437,14 +444,27 @@ mod tests {
     #[test]
     fn walls_stop_a_runner_and_a_jump_clears_a_step() {
         let w = World {
-            walls: vec![(20.0, 100.0, 24.0)],
+            walls: vec![(20.0, 400.0, 24.0)],
             ..flat()
         };
         let mut b = standing(&w);
         for _ in 0..240 {
-            step(&mut b, Control { run: 72.0, ..Control::default() }, &p(), &w, DT);
+            step(
+                &mut b,
+                Control {
+                    run: 72.0,
+                    ..Control::default()
+                },
+                &p(),
+                &w,
+                DT,
+            );
         }
-        assert!((b.x + b.half_width - 20.0).abs() < 0.3, "against the wall: {}", b.x);
+        assert!(
+            (b.x + b.half_width - 20.0).abs() < 0.3,
+            "against the wall: {}",
+            b.x
+        );
         // Jump onto it.
         for i in 0..400 {
             let input = Control {
@@ -456,6 +476,32 @@ mod tests {
             step(&mut b, input, &p(), &w, DT);
         }
         assert!(b.grounded && b.feet == 24.0, "on the step: {b:?}");
+    }
+
+    #[test]
+    fn walking_off_a_step_down_falls_to_the_lower_ground() {
+        let w = World {
+            walls: vec![(-100.0, 0.0, 24.0)],
+            ..flat()
+        };
+        let mut b = Body::new(-20.0, 24.0, 5.0);
+        b.grounded = true;
+        for _ in 0..240 {
+            step(
+                &mut b,
+                Control {
+                    run: 72.0,
+                    ..Control::default()
+                },
+                &p(),
+                &w,
+                DT,
+            );
+        }
+        assert!(
+            b.grounded && b.feet == 0.0,
+            "down on the lower ground: {b:?}"
+        );
     }
 
     #[test]

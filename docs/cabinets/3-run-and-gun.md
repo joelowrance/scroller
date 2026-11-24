@@ -904,6 +904,48 @@ and write new code only where Cabinet 3 differs.
     pace length (3:10 and 3:15). Standoffs end early only if the autopilot
     happens to clear them.
 
+## Decisions made while building the gameplay (#19)
+
+- **Where the code is:** `src/cabinets/run_and_gun/`, with the platform
+  physics in `src/kit/platform.rs`: a `Body`, a `step` function and the
+  `TileQuery` trait, with fixed-step tests for the jump numbers above.
+- **Kit additions:**
+  - `DrivenScroll`: the Cabinet sets how far the camera may move each frame.
+  - `Layer::Hazard`: it hurts the Hero on touch and ignores shots. Crushers,
+    arc floors, shockwaves and the Strider's legs and cab use it.
+  - `Pierce`: the gun-4 bolt passes through its first enemy.
+- **Jumping at the camera cap.** A Hero held at `max_x` only advances at
+  the camera's speed, so a jump from there would cover 29 px. That is short
+  of rule 1's 40 px gaps. So the cap only stops the Hero going further right
+  *on the ground*. A jump keeps its full length, and the camera catches up
+  after the landing.
+- **Walkers use the same platform physics as the Hero.** They hop with
+  their own jump heights, and a walker checks the floor ahead before each
+  step, so it never walks off an edge.
+- **The Hauler's plough** is a separate immune part, a box covering the
+  lower 10 px of its front. The Hauler's own box is its core, above that.
+- **The Strider** is its core, the only damageable part, plus a frame of
+  legs and cab on the hazard layer. Its shockwaves are hazards that end
+  where the ground changes height.
+- **Enemies from behind.** A walker spawned left of the Hero waits off
+  screen while its chevron blinks, then comes in.
+- **Pit falls** set the Ward and any invulnerability aside, so a fall
+  always costs the life. With the debug invincible Hero, a fall becomes a
+  logged rescue (`Rescues`), and the autopilot tests require none.
+- **Autopilot** (`?autopilot`): it runs right, holds fire, and jumps at
+  pits, steps, ledge ends and shaking crumbling ledges, with the base jump.
+  It clears the stand-in Stage and the gallery with no rescues.
+- **Firepower stays at this doc's numbers.** #65 found Cabinet 1's firing
+  too strong. Cabinet 3's gun is already well below it: 8 DPS at gun 1
+  against Cabinet 1's 10, 24/48 at gun 4 against 40/60 before drones, and no
+  bomb. If its playtest (#22) agrees with #65, lower the volley rates in
+  tuning.
+- **Not yet done** (needs flow or #20):
+  - the 1 s walk-off at the Stage clear;
+  - conveyors carrying walkers (they carry only the Hero);
+  - Cabinet 3's own Power-up chirps (ship chirps stand in);
+  - the `stage_checks` gap test, which comes with #20's Stage files.
+
 ## Stage files and art (for #20)
 
 - **Files:** `assets/stages/3-1.ron` (3:10) and `3-2.ron` (3:15), one line
