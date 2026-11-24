@@ -34,6 +34,9 @@ pub fn stage_song(cabinet: usize, stage: usize, seconds_left: f32) -> Option<Son
         (2, 0) => Song::Wreckfall,
         (2, _) if run_out => Song::RootsClimb,
         (2, _) => Song::Roots,
+        (3, 0) => Song::Footings,
+        (3, _) if run_out => Song::CrownRise,
+        (3, _) => Song::Crown,
         _ => return None,
     })
 }
@@ -100,7 +103,12 @@ mod tests {
         // climb waits for the scroll to resume.
         assert_eq!(stage_song(2, 1, 20.0), Some(Song::Roots));
         assert_eq!(stage_song(2, 1, 19.9), Some(Song::RootsClimb));
-        assert_eq!(stage_song(3, 0, 60.0), None);
+        assert_eq!(stage_song(3, 0, 5.0), Some(Song::Footings));
+        assert_eq!(stage_song(3, 1, 60.0), Some(Song::Crown));
+        // Cabinet 4's Winch Standoff holds the scroll at exactly 20 s left.
+        assert_eq!(stage_song(3, 1, 20.0), Some(Song::Crown));
+        assert_eq!(stage_song(3, 1, 19.9), Some(Song::CrownRise));
+        assert_eq!(stage_song(4, 0, 60.0), None);
     }
 
     #[test]

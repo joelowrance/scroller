@@ -435,4 +435,127 @@
         (wave: Square(duty: 0.5), freq: 1600, gate: 0.8, slide: -30,
          env: (attack: 0.02, sustain: 0.9, release: 0.05), volume: 0.14),
     ],
+
+    // ---------------------------------------------------------- Cabinet 4
+    // A soft rung tick while climbing a ladder.
+    LadderRung: [
+        (wave: Square(duty: 0.5), freq: 420, gate: 0.02, slide: -4,
+         env: (decay: 0.02, sustain: 0.0, release: 0.005), volume: 0.07),
+    ],
+    // The canopy snaps open: a short noise pop and a rising flutter of tone.
+    CanopyOpen: [
+        (wave: Noise, freq: 4000, gate: 0.08,
+         env: (decay: 0.08, sustain: 0.0, release: 0.02), volume: 0.16),
+        (wave: Triangle, freq: 300, gate: 0.12, slide: 7,
+         env: (decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.20),
+    ],
+    // The open canopy fluttering; send about twice a second while it is open.
+    CanopyFlutter: [
+        (wave: Noise, freq: 1800, gate: 0.18,
+         env: (attack: 0.04, decay: 0.12, sustain: 0.0, release: 0.02), volume: 0.06),
+    ],
+    PowerUpCanopy: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 1245, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // Eb6
+    ],
+    PowerUpMag: [
+        (at: 0.00, wave: Square(duty: 0.25), freq: 659, gate: 0.04, volume: 0.25),
+        (at: 0.04, wave: Square(duty: 0.25), freq: 988, gate: 0.04, volume: 0.25),
+        (at: 0.08, wave: Square(duty: 0.25), freq: 2093, gate: 0.10, volume: 0.25,
+         vibrato: (depth: 0.2, rate: 12.0), env: (release: 0.08)),                    // C7
+        (wave: Triangle, freq: 110, gate: 0.10, slide: -5,
+         env: (decay: 0.10, sustain: 0.0, release: 0.01), volume: 0.20),
+    ],
+    // Warnings. (The Flit's below-chevron reuses HookWarning.)
+    // The Scrap chevron: two quick high pips.
+    ScrapChevron: [
+        (at: 0.00, wave: Square(duty: 0.125), freq: 1500, gate: 0.04,
+         env: (decay: 0.04, sustain: 0.0, release: 0.01), volume: 0.12),
+        (at: 0.08, wave: Square(duty: 0.125), freq: 1500, gate: 0.04,
+         env: (decay: 0.04, sustain: 0.0, release: 0.01), volume: 0.12),
+    ],
+    // A gust arrow appears: a soft rising breath.
+    GustArrow: [
+        (wave: Noise, freq: 1200, gate: 0.3, slide: 10,
+         env: (attack: 0.1, decay: 0.2, sustain: 0.0, release: 0.05), volume: 0.10),
+    ],
+    // The Picket's flash: a hard, flat blip.
+    PicketFlash: [
+        (wave: Square(duty: 0.5), freq: 700, gate: 0.06,
+         env: (release: 0.01), volume: 0.12),
+    ],
+    // The Plumb's flash: a blip that drops.
+    PlumbFlash: [
+        (wave: Square(duty: 0.5), freq: 900, gate: 0.08, slide: -12,
+         env: (decay: 0.08, sustain: 0.0, release: 0.01), volume: 0.12),
+    ],
+    // The Vent glows before it puffs: a rising hiss.
+    VentGlow: [
+        (wave: Noise, freq: 2500, gate: 0.4, slide: 8,
+         env: (attack: 0.3, decay: 0.1, sustain: 0.0, release: 0.02), volume: 0.10),
+    ],
+    // The Pitcher winds up: a creaking low swing.
+    PitcherWindUp: [
+        (wave: Square(duty: 0.25), freq: 140, gate: 0.3, slide: 6,
+         vibrato: (depth: 0.6, rate: 14.0),
+         env: (attack: 0.05, sustain: 0.7, release: 0.05), volume: 0.12),
+    ],
+    // The Winch's cable shakes before the drop: a fast rattle.
+    WinchShake: [
+        (wave: Square(duty: 0.125), freq: 90, gate: 0.4,
+         vibrato: (depth: 1.0, rate: 30.0),
+         env: (attack: 0.03, sustain: 0.8, release: 0.05), volume: 0.14),
+        (wave: Noise, freq: 2200, gate: 0.4,
+         env: (attack: 0.05, sustain: 0.4, release: 0.05), volume: 0.06),
+    ],
+    // Machinery.
+    // A Scrap shatters.
+    ScrapShatter: [
+        (wave: Noise, freq: 7000, gate: 0.15,
+         env: (decay: 0.15, sustain: 0.0, release: 0.02), volume: 0.20),
+        (wave: Square(duty: 0.125), freq: 2400, gate: 0.05, slide: -12,
+         env: (decay: 0.05, sustain: 0.0, release: 0.01), volume: 0.08),
+    ],
+    // The Vent's puff.
+    VentPuff: [
+        (wave: Noise, freq: 900, gate: 0.25, slide: -6,
+         env: (attack: 0.01, decay: 0.24, sustain: 0.0, release: 0.02), volume: 0.20),
+    ],
+    // The Plumb's cable paying out as it drops.
+    PlumbCable: [
+        (wave: Square(duty: 0.125), freq: 1200, gate: 0.3, slide: -18,
+         env: (decay: 0.3, sustain: 0.0, release: 0.02), volume: 0.08),
+    ],
+    // The Sweeper's hum; send about once a second while one is on screen.
+    SweeperHum: [
+        (wave: Triangle, freq: 85, gate: 0.6,
+         vibrato: (depth: 0.4, rate: 6.0),
+         env: (attack: 0.15, decay: 0.3, sustain: 0.3, release: 0.1), volume: 0.12),
+    ],
+    // A gust blows: a long whistle.
+    GustWhistle: [
+        (wave: Noise, freq: 3000, gate: 0.8,
+         vibrato: (depth: 1.0, rate: 3.0),
+         env: (attack: 0.25, sustain: 0.6, release: 0.2), volume: 0.08),
+    ],
+    // The Winch's hook drops with a heavy clank...
+    WinchDrop: [
+        (wave: Noise, freq: 500, gate: 0.2,
+         env: (decay: 0.2, sustain: 0.0, release: 0.03), volume: 0.30),
+        (wave: Triangle, freq: 120, gate: 0.25, slide: -12,
+         env: (decay: 0.25, sustain: 0.0, release: 0.03), volume: 0.40),
+    ],
+    // ...and reels back in with a slow ratchet.
+    WinchReel: [
+        (at: 0.00, wave: Square(duty: 0.125), freq: 300, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.005), volume: 0.10),
+        (at: 0.10, wave: Square(duty: 0.125), freq: 330, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.005), volume: 0.10),
+        (at: 0.20, wave: Square(duty: 0.125), freq: 360, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.005), volume: 0.10),
+        (at: 0.30, wave: Square(duty: 0.125), freq: 390, gate: 0.03,
+         env: (decay: 0.03, sustain: 0.0, release: 0.005), volume: 0.10),
+    ],
 }

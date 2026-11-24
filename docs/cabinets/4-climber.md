@@ -276,7 +276,7 @@ from nothing again, so the first drop comes in the first 10 s.
 | Stage 1, 0:46 (first Picket) | Gun 2 + Canopy: 10 | Gun 2: 10 |
 | Stage 1, 1:12 (first Standoff) | Gun 3 + Canopy: narrow 10, large 30 | Gun 2: 10 |
 | Stage 2, 0:00 | Gun 4 + Canopy, Jet, Ward: narrow 20, large 40 | Gun 3: narrow 10, large 30 |
-| Stage 2, 2:18 (the Winch) | Gun 4 + all five | Gun 3 + Mag boots |
+| Stage 2, 2:13 (the Winch) | Gun 4 + all five | Gun 3 + Mag boots |
 
 Time-to-kill targets by role, as in Cabinets 1–3:
 
@@ -662,9 +662,9 @@ typical player finishes at gun 3 with one or two of the others.
 | 1:54 | 1,632 | breathe | A landing. The Crown's beacon comes into view. |
 | 1:58 | 1,696 | calm | **Restart Point.** |
 | 2:02 | 1,760 | test | The gauntlet: a Sweeper, a Picket pair, a Pitcher and a gust zone → **W**. |
-| 2:14 | 1,952 | breathe | Short, on a ladder run. |
-| 2:18 | 2,016 | Standoff | **The Winch** (22 s): the Winch on the Crown's lower deck, with a Flit trio from each side at 7 s and 14 s → **G**. |
-| 2:40 | 2,016 | run-out | The scroll resumes. A last ladder up, no enemies. The sun clears the cloud sea. |
+| 2:09 | 1,872 | breathe | Short, on a ladder run. |
+| 2:13 | 1,936 | Standoff | **The Winch** (22 s, at exactly 20 s of scroll left): the Winch on the Crown's lower deck, with a Flit trio from each side at 7 s and 14 s → **G**. |
+| 2:35 | 1,936 | run-out | The scroll resumes. A last ladder up (20 s, 320 px), no enemies. The sun clears the cloud sea. |
 | 2:55 | 2,256 | end | The scroll ends on the Crown's deck: Stage clear (bonuses paid). The Ending (#28) follows. |
 
 ## Scoring
