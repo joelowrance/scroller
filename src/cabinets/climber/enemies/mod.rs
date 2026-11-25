@@ -453,6 +453,7 @@ pub(super) fn spawn_requested(
     sprites: Res<Sprites>,
     hero: Option<Single<&Transform, With<Hero>>>,
     mut requests: MessageReader<SpawnRequested>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     let t = &tuning.climber;
     let camera = stage.cursor.position;
@@ -545,6 +546,10 @@ pub(super) fn spawn_requested(
         }
         if kind == Kind::Scrap && !spawned.is_empty() {
             scrap_chevron(&mut commands, &sprites, t, request.pos.x);
+            sfx.write(PlaySfx(Sfx::ScrapChevron));
+        }
+        if below && !spawned.is_empty() {
+            sfx.write(PlaySfx(Sfx::HookWarning));
         }
         if spawned.len() > 1 || drop.is_some() {
             commands.spawn((

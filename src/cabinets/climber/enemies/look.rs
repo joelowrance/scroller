@@ -47,7 +47,7 @@ pub fn size(kind: Kind) -> Vec2 {
 pub fn frame(brain: &Brain, clock: f32) -> usize {
     let step = |rate: f32| (clock * rate) as usize % 2;
     match brain {
-        Brain::Flit(_) => step(8.0),
+        Brain::Flit(_) | Brain::Mote(_) => step(8.0),
         Brain::Limpet(_) => step(4.0),
         Brain::Picket(p) => match p.phase {
             PicketPhase::Walk => step(4.0),

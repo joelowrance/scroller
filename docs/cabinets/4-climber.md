@@ -760,6 +760,55 @@ new code only where Cabinet 4 differs.
   - `scripts/stages-web.sh 4` plays both Stages. The clear comes at 2:45 and
     2:55, a little sooner if the autopilot clears a Standoff early.
 
+### Gameplay decisions (#24)
+
+Where this doc left a choice open, #24 made these calls. Where any of them
+change a rule above, the rule above now reads with this note.
+
+- **Where the code is.** `src/cabinets/climber/`, as planned. Ladders,
+  solid ledges (stood on, never dropped through, and bumping a head from
+  below) and the climb live in the kit's `platform.rs`, behind `TileQuery`
+  methods that default to none, so Cabinet 3 is unchanged. The gun levels,
+  the aim, the muzzle and the Standoff clock moved to a shared
+  `cabinets/on_foot/` module, and Cabinet 3 uses it too. Each Cabinet keeps
+  its own tuning section.
+- **A gust doesn't move the Hero on a ladder.** A sideways push on a
+  one-tile ladder could only tear the Hero off it, which breaks rule 6 and
+  makes a ladder in a gust zone a trap. Gusts push on ledges (unless Mag
+  boots) and in the air, as the table says.
+- **The canopy drop falls through thin ledges** onto the Restart Point's
+  landing. The scroll is held from the rewind until it lands, and the 2 s
+  of respawn invulnerability start on landing.
+- **A Stage starts with the Hero standing** on its first landing at the
+  Restart Point (the 3 → 4 Transition has just shown the climb begin), so
+  the canopy drop only follows a lost life and the pace time is unchanged.
+- **Landings and solid ledges stop the Hero's shots too**, as Cabinet 3's
+  ground does; thin and crumbling ledges stop nothing. Crumbling ledges are
+  one-way, like thin ones.
+- **"Below the Hero"** (the no-fire rule) compares the bottom of the enemy's
+  sprite with the Hero's feet. A Pitcher's canister is a 1 HP enemy worth
+  no points: shooting it bursts it harmlessly, and touching it is a hit.
+- **Limpets crawl a continuous loop** 3 px out from the ledge on every side
+  (the ledge grown by half the Limpet's height), so they never jump at a
+  corner. A pair starts half a loop apart.
+- **A rising Flit** goes straight up for 64 px, then turns out through the
+  nearer side at 90°/s.
+- **The Winch's hook** hangs 24 px under the rail and drops to the highest
+  landing on screen below it.
+- **A scrapfall** picks its x with a fixed seed, so it falls the same way
+  every time the Stage is played or rewound.
+- **A gust zone's cycle** is 0.8 s of arrows, 2.0 s of wind, then calm until
+  its `period` is up. Its `offset` delays the first warning.
+- **The 1 s climb off the top at a Stage clear** (`hero.exit_seconds`) is
+  not played yet: the flow moves on at `StageCleared` at once, as it does
+  for Cabinet 3. The key stays for when it is.
+- **The autopilot** follows the route with the base moves, including the
+  stops part-way up a ladder. It waits under the lid until there is room to
+  land a jump, never stops on a crumbling ledge it would have to wait on,
+  and walks back against a gust that pushes it off its foothold. With it,
+  both Stages clear with no rescues; Stage 1 clears about 3 s before its
+  pace time because the autopilot finishes a Standoff early.
+
 ## Stage files and art (for #25)
 
 - **Files:** `assets/stages/4-1.ron` (2:45) and `4-2.ron` (2:55), one line per
