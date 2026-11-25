@@ -1487,4 +1487,56 @@
         },
         order: ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12"],
     ),
+
+    // "Upswing": original. The 3 -> 4 Cabinet Transition sting, about 5 s.
+    // Starts in Cabinet 3's D minor at its tempo (150 BPM), the Hero reaches
+    // the wall, then the line climbs in steps and opens onto a bright, held
+    // chord for Cabinet 4. Plays once.
+    Upswing: (
+        bpm: 150,
+        rows_per_beat: 4,
+        looping: false,
+        channels: [
+            // Lead
+            (instrument: (wave: Square(duty: 0.25), volume: 0.18,
+                          env: (attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.35),
+                          vibrato: (depth: 0.2, rate: 5.0))),
+            // Counter-line
+            (instrument: (wave: Square(duty: 0.125), volume: 0.08,
+                          env: (decay: 0.08, sustain: 0.4, release: 0.30))),
+            // Bass
+            (instrument: (wave: Triangle, volume: 0.30,
+                          env: (decay: 0.1, sustain: 0.7, release: 0.30))),
+            // Drums
+            (kit: {
+                "k": (freq: 120, gate: 0.12, instrument: (wave: Triangle, volume: 0.34, slide: -30,
+                      env: (decay: 0.12, sustain: 0.0, release: 0.01))),
+                "h": (freq: 12000, gate: 0.03, instrument: (wave: Noise, volume: 0.10,
+                      env: (decay: 0.03, sustain: 0.0, release: 0.01))),
+                "c": (freq: 7000, gate: 0.9, instrument: (wave: Noise, volume: 0.16,
+                      env: (decay: 0.9, sustain: 0.0, release: 0.1))),
+            }),
+        ],
+        patterns: {
+        "reach": [ // Dm, walking to the wall
+            "D4 - - - F4 - A4 - - - G4 - F4 - E4 -",
+            "A3 - - - D4 - - - C4 - - - A3 - - -",
+            "D2 - - - D2 - - - A1 - - - A1 - D2 -",
+            "k . h . k . h . k . h . k . h h",
+        ],
+        "climb": [ // up in steps
+            "D5 - E5 - F5 - G5 - A5 - - - Bb5 - C6 -",
+            "F4 A4 F4 A4 G4 Bb4 G4 Bb4 A4 C5 A4 C5 Bb4 D5 Bb4 D5",
+            "Bb1 - - - C2 - - - D2 - - - E2 - - -",
+            "k . h . k . h . k h k h k h k h",
+        ],
+        "top": [ // D major, held open
+            "D6 - - - - - A5 - - - F#5 - - - - -",
+            "A4 - D5 - F#5 - - - - - - - . . . .",
+            "D2 - - - A2 - D3 - - - - - . . . .",
+            "k . . . . . c . . . . . . . . .",
+        ],
+        },
+        order: ["reach", "climb", "top"],
+    ),
 }
