@@ -11,8 +11,9 @@
     attract_panel_seconds: 8.0,
 
     // Developer keys: K loses a life, P adds 1000 points, C clears the Stage,
-    // F2 shows the sprite sheet.
-    debug_keys: true,
+    // F2 shows the sprite sheet. Off for players: `cargo run` (a dev build)
+    // forces them on, and on the web `?debug` in the URL turns them on.
+    debug_keys: false,
     // Debug aids, only with debug_keys on: a Hero nothing can hit, and a game
     // speed multiplier during Stages (2.0 = twice as fast). In the browser,
     // `?invincible&time_scale=8` on the URL overrides these.

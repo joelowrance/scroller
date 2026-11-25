@@ -8,14 +8,21 @@
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
     #game { display: block; width: 100%; height: 100%; outline: none; }
     #loading {
-      position: fixed; inset: 0; display: grid; place-items: center;
+      position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
       color: #ffd933; font: 16px monospace; letter-spacing: 2px; pointer-events: none;
     }
+    #loading .bar { width: min(320px, 60vw); height: 10px; border: 2px solid #ffd933; padding: 2px; }
+    #loading .fill { width: 0; height: 100%; background: #ffd933; }
+    #loading.indeterminate .fill { width: 30%; animation: slide 1s linear infinite alternate; }
+    @keyframes slide { to { margin-left: 70%; } }
   </style>
 </head>
 <body>
   <canvas id="game" tabindex="0"></canvas>
-  <div id="loading">LOADING...</div>
+  <div id="loading" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100">
+    <div id="loading-text">LOADING...</div>
+    <div class="bar"><div class="fill" id="loading-fill"></div></div>
+  </div>
   <script>
     // The game opens audio on the first input (src/audio). Escape and gamepads
     // don't count as a gesture for the browser, so a context opened by one
@@ -37,13 +44,50 @@
     import init from "./scroller.js";
     const canvas = document.getElementById("game");
     canvas.addEventListener("pointerdown", () => canvas.focus());
-    init().catch((e) => {
+
+    // Download the wasm ourselves so the loading bar can show real progress.
+    const loading = document.getElementById("loading");
+    const fill = document.getElementById("loading-fill");
+    const text = document.getElementById("loading-text");
+    const setProgress = (fraction) => {
+      const pct = Math.min(99, Math.floor(fraction * 100));
+      fill.style.width = `${pct}%`;
+      text.textContent = `LOADING ${pct}%`;
+      loading.setAttribute("aria-valuenow", pct);
+    };
+    async function fetchWasm() {
+      const response = await fetch("./scroller_bg.wasm");
+      if (!response.ok) throw new Error(`Could not load the game (${response.status})`);
+      const total = Number(response.headers.get("content-length"));
+      if (!response.body || !total) {
+        loading.classList.add("indeterminate");
+        return response;
+      }
+      let loaded = 0;
+      const counted = response.body.pipeThrough(new TransformStream({
+        transform(chunk, controller) {
+          loaded += chunk.byteLength;
+          setProgress(loaded / total);
+          controller.enqueue(chunk);
+        },
+      }));
+      return new Response(counted, { headers: { "content-type": "application/wasm" } });
+    }
+
+    let downloaded = false;
+    fetchWasm().then((wasm) => { downloaded = true; return init({ module_or_path: wasm }); }).catch((e) => {
       // winit uses an exception to hand control to the browser's event loop.
-      if (!String(e).includes("Using exceptions for control flow")) throw e;
+      if (!String(e).includes("Using exceptions for control flow")) {
+        text.textContent = "COULD NOT LOAD THE GAME";
+        loading.classList.remove("indeterminate");
+        throw e;
+      }
     });
-    // Hide the loading text once the game has drawn its first frames.
+    // Hide the loading bar once the game has started: the canvas keeps the
+    // browser's default 300x150 size until the game sizes it for the page.
     const ready = setInterval(() => {
-      if (canvas.width > 0 && document.readyState === "complete") {
+      const sized = canvas.width !== 300 || canvas.height !== 150;
+      if (downloaded && sized && document.readyState === "complete") {
         document.getElementById("loading").remove();
         clearInterval(ready);
         canvas.focus();

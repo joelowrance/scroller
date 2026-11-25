@@ -26,7 +26,7 @@ const context = await browser.newContext({ viewport: { width: 960, height: 720 }
 const page = await context.newPage();
 page.on("console", (m) => {
   if (m.type() === "error") fail(`console error: ${m.text()}`);
-  else if (m.type() === "warning") console.log(`[warning] ${m.text()}`);
+  else if (m.type() === "warning") fail(`console warning: ${m.text()}`);
 });
 page.on("pageerror", (e) => fail(`page error: ${e.message}`));
 
@@ -47,7 +47,26 @@ const shot = async (name) => {
 const stored = (key) => page.evaluate((k) => localStorage.getItem(`scroller.${k}`), key);
 
 try {
+  // Release behaviour first: without ?debug the developer keys do nothing.
   await page.goto(url);
+  await page.waitForSelector("#loading", { state: "detached", timeout: 60_000 });
+  await page.click("#game");
+  await wait(500);
+  await shot("title-release");
+  await tap("Space"); // NEW RUN
+  await tap("Space"); // play 1-1
+  await wait(1500);
+  await tap("KeyC"); // developer key: must do nothing
+  await tap("KeyP");
+  await wait(800);
+  if ((await stored("debug.stage")) !== null) fail("debug.stage was written without ?debug");
+  if ((await stored("save")) !== null) fail("the C key cleared a Stage without ?debug");
+  await shot("release-no-debug-keys");
+
+  // Debug mode: the rest of the flow uses the developer keys.
+  await context.clearCookies();
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(`${url}?debug`);
   // index.html removes the loading text once the game has drawn.
   await page.waitForSelector("#loading", { state: "detached", timeout: 60_000 });
   await page.click("#game");
