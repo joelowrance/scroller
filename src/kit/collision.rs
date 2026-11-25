@@ -29,6 +29,9 @@ pub enum Layer {
     Hazard,
 }
 
+/// How many [`Layer`]s there are (keep in step with the enum).
+const LAYER_COUNT: usize = 10;
+
 /// The layer pairs that interact. In each [`Contact`], `a` is on the first
 /// layer of its pair and `b` on the second.
 pub const PAIRS: [(Layer, Layer); 11] = [
@@ -135,11 +138,20 @@ impl Collider {
 }
 
 /// Every contact between the given boxes, pair by pair in [`PAIRS`] order.
+///
+/// The boxes are grouped by layer once, so a pair only walks the two layers it
+/// tests instead of scanning every box for each box (Cabinet 4's tower has
+/// hundreds of Terrain boxes against a handful of shots).
 pub fn find_contacts(colliders: &[Collider]) -> Vec<Contact> {
+    let mut by_layer: [Vec<&Collider>; LAYER_COUNT] = Default::default();
+    for c in colliders {
+        by_layer[c.layer as usize].push(c);
+    }
     let mut contacts = Vec::new();
     for (a_layer, b_layer) in PAIRS {
-        for a in colliders.iter().filter(|c| c.layer == a_layer) {
-            for b in colliders.iter().filter(|c| c.layer == b_layer) {
+        let bs = &by_layer[b_layer as usize];
+        for a in &by_layer[a_layer as usize] {
+            for b in bs {
                 let b_box = if a_layer == Layer::Terrain {
                     &b.terrain_aabb
                 } else {
@@ -185,6 +197,26 @@ mod tests {
 
     fn at(x: f32, y: f32, w: f32, h: f32) -> Aabb {
         Hitbox::new(w, h).aabb(Vec2::new(x, y))
+    }
+
+    #[test]
+    fn layer_count_matches_the_enum() {
+        // Hazard is the last variant; find_contacts indexes buckets by layer.
+        assert_eq!(Layer::Hazard as usize + 1, LAYER_COUNT);
+    }
+
+    #[test]
+    fn contacts_come_in_pair_then_box_order() {
+        let e = |i| Entity::from_raw_u32(i).unwrap();
+        let boxes = [
+            Collider::new(e(1), Layer::Enemy, at(0.0, 0.0, 4.0, 4.0)),
+            Collider::new(e(2), Layer::HeroShot, at(0.0, 0.0, 2.0, 2.0)),
+            Collider::new(e(3), Layer::HeroShot, at(1.0, 1.0, 2.0, 2.0)),
+            Collider::new(e(4), Layer::Hero, at(0.0, 0.0, 2.0, 2.0)),
+        ];
+        let got: Vec<_> = find_contacts(&boxes).iter().map(|c| (c.a, c.b)).collect();
+        // (HeroShot, Enemy) pairs come before (Enemy, Hero).
+        assert_eq!(got, [(e(2), e(1)), (e(3), e(1)), (e(1), e(4))]);
     }
 
     #[test]
