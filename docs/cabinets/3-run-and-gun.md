@@ -822,10 +822,20 @@ short end.
 | Stage 1 | 11,250 | 3,100 | 8,000 | **22,350** | 0 | about +550 | **about 22,900** |
 | Stage 2 | 16,900 | 3,200 | 8,000 | **28,100** | +6,000 | about +700 | **about 34,800** |
 
-Both Stages land below the targets. Whether the third extra life (120,000)
-still comes in this Cabinet depends on what Cabinets 1 and 2 actually pay,
-so #19 checks it in play and raises enemy scores in `tuning.ron` if needed,
-instead of adding enemies back to the shortened Stages.
+Both Stages land below the targets. They are left there (#19), because the
+extra lives still land where they should:
+
+- A flawless core through Cabinets 1 and 2 is about 140,700 (63,100 and
+  77,600), so a strong player gets the third extra life (120,000) late in
+  Cabinet 2.
+- A player taking about 70% of each core reaches Cabinet 3 near 98,500 and
+  gets the third extra life during Stage 2 here.
+- A perfect Cabinet 3 core (50,450) takes a strong player past the fourth
+  (170,000) during Stage 2, with lives capped at 5.
+
+The unattended run's score is no guide: the autopilot never crouches, so its
+chest-height shots pass over the low enemies (Skitters, Ticks), as the
+design intends for a standing Hero.
 
 ## Sound and music (for #20)
 
@@ -943,10 +953,22 @@ and write new code only where Cabinet 3 differs.
 - **Sounds (#66)** are sent from their events: footsteps, jump, Jet,
   landing, Flares, the fall, the ledge creak, the Standoff stings, each
   enemy's warning as it begins, the Strider's stomp, and the machinery.
-- **Not yet done** (needs flow or #20):
+- **Terrain** (after #71): `terrain.rs` keeps #71's `StageTerrain` (the
+  file format, its checks and the ground tiles on the scenery layer) and
+  adds the gameplay's `Terrain` resource on top: crumbling-ledge state and
+  the platform physics' tile queries. Ledges are drawn by the gameplay
+  from the Stage's tile sprites, so a crumbling ledge can shake and fall.
+- **The Stage clock's designed length counts each Standoff at its full
+  length**, the doc's pace time. The unattended run then checks a clear
+  against 3:10 and 3:15, not against the scrolling alone.
+- **The stand-in Stage is gone**; the tests and the unattended run play
+  `3-1.ron` and `3-2.ron`. The gallery's terrain is snapped to whole tiles
+  for #71's checks.
+- **Not yet done** (needs flow, or a follow-up):
   - the 1 s walk-off at the Stage clear;
   - conveyors carrying walkers (they carry only the Hero);
-  - the `stage_checks` gap test, which comes with #20's Stage files.
+  - the Hero and enemies still draw as plain shapes; #71's `c3_*` sprites
+    for them are not wired in yet.
 
 ## Stage files and art (for #20)
 
