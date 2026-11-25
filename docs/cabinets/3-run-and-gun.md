@@ -964,11 +964,26 @@ and write new code only where Cabinet 3 differs.
 - **The stand-in Stage is gone**; the tests and the unattended run play
   `3-1.ron` and `3-2.ron`. The gallery's terrain is snapped to whole tiles
   for #71's checks.
-- **Not yet done** (needs flow, or a follow-up):
-  - the 1 s walk-off at the Stage clear;
-  - conveyors carrying walkers (they carry only the Hero);
-  - the Hero and enemies still draw as plain shapes; #71's `c3_*` sprites
-    for them are not wired in yet.
+- **Drawn with sprites (#75):** the Hero uses `c3_hero` (frames by state: stand,
+  run, jump, fall, crouch, aim up, aim diagonal; mirrored to face left), and
+  every enemy its `c3_*` sprite with the frame its state calls for (warnings
+  are frames, so there are no eye or outline shapes). The sprites face left
+  except the Turret's, which is turned to its barrel. The Mote has no sprite
+  and stays a plain Ice dot; a Hauler's plough and a Strider's core are drawn
+  by the Hauler's and the Strider's cab sprites. Crushers, arc floors and
+  conveyors use their tile sprites. Decisions:
+  - The Hero's sprite stays 12×20 when crouching (the crouch frame sits at
+    the bottom of it), so the hitbox moves down instead of the sprite being
+    squashed.
+  - Hit flashes tint the sprite white, which shows little on the light sprites
+    (the same as Cabinet 2).
+- **The walk-off (#75):** a Cabinet can set `flow::WalkOffSeconds`; the flow
+  then holds a Stage clear for that long before the Stage Card. Cabinet 3 sets
+  it from `hero.exit_seconds` (1.0 s). The Hero has no control and can't be
+  hurt meanwhile, and the right wall and `camera.max_x` no longer hold it.
+- **Conveyors carry walkers (#75):** a Skitter, Tick or Hauler standing on a
+  belt moves with it, like the Hero. The belt's top is the ground's: the old
+  check looked 3 px above the ground, and the new test fixes it for both.
 
 ## Stage files and art (for #20)
 

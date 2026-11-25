@@ -116,9 +116,11 @@ fn begin_stage(session: Res<Session>, mut paused: ResMut<Paused>) {
     }
 }
 
-fn end_stage(mut paused: ResMut<Paused>, mut time: ResMut<Time<Virtual>>) {
+fn end_stage(mut commands: Commands, mut paused: ResMut<Paused>, mut time: ResMut<Time<Virtual>>) {
     paused.0 = false;
     time.unpause();
+    commands.remove_resource::<WalkingOff>();
+    commands.remove_resource::<WalkOffSeconds>();
 }
 
 fn on_score(
@@ -144,9 +146,54 @@ fn on_life_lost(
     }
 }
 
+/// A Cabinet that wants the Hero to walk off before the Stage Card sets this
+/// when its Stage starts: the flow waits this many seconds after the clear.
+/// The Cabinet moves the Hero meanwhile (see `StageRun`'s `is_cleared`).
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct WalkOffSeconds(pub f32);
+
+/// A clear is waiting for the Hero to finish walking off: seconds left.
+#[derive(Resource, Debug)]
+pub struct WalkingOff(pub f32);
+
+/// The walk-off is over: carry out the clear now.
+#[derive(Message)]
+struct ClearNow;
+
+/// Starts the walk-off when a Stage clears in a Cabinet that has one, and
+/// ends it after its time. Without one, the clear is carried out at once.
+fn hold_clear_for_walk_off(
+    mut commands: Commands,
+    time: Res<Time>,
+    walk: Option<Res<WalkOffSeconds>>,
+    mut walking: Option<ResMut<WalkingOff>>,
+    mut cleared: MessageReader<StageCleared>,
+    mut now: MessageWriter<ClearNow>,
+) {
+    if let Some(walking) = walking.as_mut() {
+        // A second clear (the debug key) while walking changes nothing.
+        cleared.clear();
+        walking.0 -= time.delta_secs();
+        if walking.0 <= 0.0 {
+            commands.remove_resource::<WalkingOff>();
+            now.write(ClearNow);
+        }
+        return;
+    }
+    if cleared.read().last().is_none() {
+        return;
+    }
+    match walk {
+        Some(walk) if walk.0 > 0.0 => commands.insert_resource(WalkingOff(walk.0)),
+        _ => {
+            now.write(ClearNow);
+        }
+    }
+}
+
 fn on_stage_cleared(
     mut commands: Commands,
-    mut cleared: MessageReader<StageCleared>,
+    mut cleared: MessageReader<ClearNow>,
     mut session: ResMut<Session>,
     mut progress: ResMut<Progress>,
     mut next: ResMut<NextState<Screen>>,
@@ -190,14 +237,83 @@ impl Plugin for FlowPlugin {
             .insert_resource(storage::load::<Progress>(PROGRESS_KEY).unwrap_or_default())
             .init_state::<Screen>()
             .init_resource::<Paused>()
+            .add_message::<ClearNow>()
             .add_systems(OnEnter(Screen::Playing), begin_stage)
             .add_systems(OnExit(Screen::Playing), end_stage)
             .add_systems(
                 Update,
-                (on_score, on_life_lost, on_stage_cleared)
+                (
+                    on_score,
+                    on_life_lost,
+                    hold_clear_for_walk_off,
+                    on_stage_cleared,
+                )
                     .chain()
                     .in_set(FlowSet)
                     .run_if(in_state(Screen::Playing)),
             );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use bevy::state::app::StatesPlugin;
+    use bevy::time::TimeUpdateStrategy;
+
+    use super::*;
+
+    const DT: f32 = 1.0 / 60.0;
+
+    fn app(walk_off: Option<f32>) -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, StatesPlugin))
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_secs_f32(
+                DT,
+            )))
+            .insert_resource(Session::new_run(&Tuning::default()))
+            .init_resource::<Progress>()
+            .init_state::<Screen>()
+            .add_message::<StageCleared>()
+            .add_message::<ClearNow>()
+            .add_systems(Update, (hold_clear_for_walk_off, on_stage_cleared).chain());
+        if let Some(seconds) = walk_off {
+            app.insert_resource(WalkOffSeconds(seconds));
+        }
+        app.world_mut()
+            .resource_mut::<NextState<Screen>>()
+            .set(Screen::Playing);
+        app.update();
+        app
+    }
+
+    fn screen(app: &App) -> Screen {
+        *app.world().resource::<State<Screen>>().get()
+    }
+
+    #[test]
+    fn a_clear_goes_straight_to_the_next_screen_without_a_walk_off() {
+        let mut app = app(None);
+        app.world_mut().write_message(StageCleared);
+        app.update();
+        app.update();
+        assert_ne!(screen(&app), Screen::Playing);
+    }
+
+    #[test]
+    fn a_walk_off_holds_the_clear_for_its_seconds() {
+        let mut app = app(Some(1.0));
+        app.world_mut().write_message(StageCleared);
+        for _ in 0..50 {
+            app.update();
+        }
+        assert_eq!(screen(&app), Screen::Playing, "still walking at 0.8 s");
+        // A second clear while walking changes nothing.
+        app.world_mut().write_message(StageCleared);
+        for _ in 0..20 {
+            app.update();
+        }
+        assert_ne!(screen(&app), Screen::Playing, "done after 1 s");
     }
 }

@@ -24,6 +24,7 @@ use crate::kit::{
     Damage, DrivenScroll, Explode, Hero, HeroStruck, HitStop, Hitbox, Hurt, Invulnerable, Layer,
     Pierce, Shield, ShieldAbsorbed, StageRestarted, StageRun, combat::hero_invincible, projectile,
 };
+use crate::sprites::Sprites;
 use crate::tuning::Tuning;
 
 /// The Hero's state on foot.
@@ -41,6 +42,8 @@ pub struct Runner {
     pub entering: bool,
     /// Fell into a pit; the life is being lost.
     pub fell: bool,
+    /// Running on the ground this frame (for the run animation).
+    pub running: bool,
     gun_cooldown: f32,
     flare_cooldown: f32,
 }
@@ -177,25 +180,80 @@ pub fn autopilot(body: &Body, terrain: &Terrain) -> (Vec2, bool, bool) {
     (Vec2::X, pit || step || off_ledge || shaking, true)
 }
 
-/// The Hero's look until #20's `c3_hero` sprite lands: a Foam suit with a
-/// Sprout visor, and the Ward frame.
-fn hero_visual(t: &RunAndGunTuning) -> impl Bundle {
+/// The Hero: the `c3_hero` sprite (12x20, facing right) and the Ward frame.
+/// Frames: 0 stand, 1-4 run, 5 jump, 6 fall, 7 crouch, 8 aim up, 9 aim
+/// diagonal.
+fn hero_visual(t: &RunAndGunTuning, sprites: &Sprites) -> impl Bundle {
     let body = vec2(t.hero.body);
     (
-        Sprite::from_color(palette::FOAM, body),
-        children![
-            (
-                Sprite::from_color(palette::SPROUT, Vec2::new(6.0, 3.0)),
-                Transform::from_xyz(2.0, body.y / 2.0 - 4.0, 0.1),
-                Visor,
-            ),
-            (ward_visual(body), Visibility::Hidden, WardGlow,),
-        ],
+        sprites.frame("c3_hero", super::CABINET, frame::STAND),
+        children![(ward_visual(body), Visibility::Hidden, WardGlow,)],
     )
 }
 
-#[derive(Component)]
-pub(super) struct Visor;
+/// The frames of `c3_hero`.
+mod frame {
+    pub const STAND: usize = 0;
+    pub const RUN: [usize; 4] = [1, 2, 3, 4];
+    pub const JUMP: usize = 5;
+    pub const FALL: usize = 6;
+    pub const CROUCH: usize = 7;
+    pub const AIM_UP: usize = 8;
+    pub const AIM_DIAGONAL: usize = 9;
+}
+
+/// Seconds each run frame shows.
+const RUN_FRAME_SECONDS: f32 = 0.08;
+
+/// Which `c3_hero` frame the Hero shows. `clock` is seconds of run time.
+pub fn frame_for(runner: &Runner, clock: f32) -> usize {
+    let body = &runner.body;
+    if body.grounded && runner.crouching {
+        return frame::CROUCH;
+    }
+    if runner.aim.y > 0.5 {
+        return if runner.aim.x.abs() > 0.1 {
+            frame::AIM_DIAGONAL
+        } else {
+            frame::AIM_UP
+        };
+    }
+    if !body.grounded {
+        return if body.vy > 0.0 {
+            frame::JUMP
+        } else {
+            frame::FALL
+        };
+    }
+    if runner.running {
+        return frame::RUN[(clock / RUN_FRAME_SECONDS) as usize % frame::RUN.len()];
+    }
+    frame::STAND
+}
+
+/// Draws the Hero: the frame for what it is doing, turned the way it faces.
+pub(super) fn animate(
+    time: Res<Time>,
+    mut hero: Single<(&Runner, &mut Sprite)>,
+    mut clock: Local<f32>,
+) {
+    let (runner, sprite) = &mut *hero;
+    *clock = if runner.running {
+        *clock + time.delta_secs()
+    } else {
+        0.0
+    };
+    let facing_left = runner.facing < 0.0;
+    if sprite.flip_x != facing_left {
+        sprite.flip_x = facing_left;
+    }
+    let index = frame_for(runner, *clock);
+    if let Some(atlas) = &mut sprite.texture_atlas
+        && atlas.index != index
+    {
+        atlas.index = index;
+    }
+}
 
 fn ward_visual(body: Vec2) -> impl Bundle {
     let (w, h) = (body.x + 6.0, body.y + 6.0);
@@ -230,6 +288,7 @@ impl Runner {
             jet_used: false,
             entering: false,
             fell: false,
+            running: false,
             gun_cooldown: 0.0,
             flare_cooldown: 0.0,
         }
@@ -248,6 +307,7 @@ fn entering_runner(x: f32, camera: f32, t: &RunAndGunTuning) -> Runner {
         jet_used: false,
         entering: true,
         fell: false,
+        running: false,
         gun_cooldown: 0.0,
         flare_cooldown: 0.0,
     }
@@ -259,10 +319,11 @@ pub(super) fn spawn_hero(
     power: &PowerUps,
     start_x: f32,
     camera: f32,
+    sprites: &Sprites,
 ) {
     let hitbox = vec2(t.hero.hitbox);
     commands.spawn((
-        hero_visual(t),
+        hero_visual(t, sprites),
         Transform::from_xyz(start_x, t.hero.entry_from_y, 5.0),
         (Hero, Layer::Hero),
         Hitbox::new(hitbox.x, hitbox.y),
@@ -309,7 +370,11 @@ pub(super) fn run(
         return;
     }
     let auto = tuning.debug_keys && t.debug_autopilot;
-    let (dir, jump_pressed, jump_held) = if auto {
+    let walking_off = stage.cursor.is_cleared();
+    let (dir, jump_pressed, jump_held) = if walking_off {
+        // The Stage is clear: no control, the Hero walks off to the right.
+        (Vec2::X, false, false)
+    } else if auto {
         let (d, jump, _) = autopilot(&runner.body, &terrain);
         (d, jump, true)
     } else {
@@ -346,6 +411,7 @@ pub(super) fn run(
         };
         runner.aim = aim_for(dir, runner.facing, runner.body.grounded);
     }
+    runner.running = runner.body.grounded && input.run != 0.0;
     let before_x = runner.body.x;
     let moved = platform::step(&mut runner.body, input, &t.jump.params(), &*terrain, dt);
     if moved.air_jumped {
@@ -383,8 +449,16 @@ pub(super) fn run(
     let min_x = world_x(-HALF_W + t.hero.edge_margin + half, camera);
     let max_x = world_x(t.camera.max_x, camera);
     let right_wall = world_x(HALF_W - t.hero.edge_margin - half, camera);
-    let mut x = runner.body.x.clamp(min_x, right_wall);
-    if runner.body.grounded && x > max_x {
+    // Walking off at the Stage's end, nothing holds the Hero in.
+    let mut x = if walking_off {
+        runner.body.x
+    } else {
+        runner.body.x.clamp(min_x, right_wall)
+    };
+    if walking_off {
+        // Nothing can hurt the Hero on its way out.
+        invulnerable.0 = invulnerable.0.max(1.0);
+    } else if runner.body.grounded && x > max_x {
         x = x.min(before_x.max(max_x));
     }
     runner.body.x = x;
@@ -441,10 +515,12 @@ pub(super) fn run(
     } else {
         (vec2(t.hero.body), vec2(t.hero.hitbox))
     };
+    // The sprite is the standing size even when crouching (the crouch frame
+    // sits at the bottom of it), so the hitbox moves down instead.
     hitbox.size = hit;
+    hitbox.offset.y = (body.y - t.hero.body.1) / 2.0;
     transform.translation.x = sx.round();
-    transform.translation.y = (runner.body.feet + body.y / 2.0).round();
-    transform.scale = Vec3::new(1.0, body.y / t.hero.body.1, 1.0);
+    transform.translation.y = (runner.body.feet + t.hero.body.1 / 2.0).round();
 }
 
 /// Fires volleys and Flares while B is held.
@@ -467,7 +543,11 @@ pub(super) fn fire(
     runner.gun_cooldown -= dt;
     runner.flare_cooldown -= dt;
     let auto = tuning.debug_keys && t.debug_autopilot;
-    if runner.entering || runner.fell || !(auto || controls.held(Button::B)) {
+    if runner.entering
+        || runner.fell
+        || stage.cursor.is_cleared()
+        || !(auto || controls.held(Button::B))
+    {
         runner.gun_cooldown = runner.gun_cooldown.max(0.0);
         runner.flare_cooldown = runner.flare_cooldown.max(0.0);
         return;
@@ -598,15 +678,14 @@ pub(super) fn fly_flares(
     }
 }
 
-/// Keeps the Ward frame in step with the Power-ups, and the visor facing.
+/// Keeps the Ward frame in step with the Power-ups.
 pub(super) fn sync_equipment(
     tuning: Res<Tuning>,
     power: Res<PowerUps>,
     mut hero: Single<(&Runner, &mut Shield)>,
     mut glow: Single<&mut Visibility, With<WardGlow>>,
-    mut visor: Single<&mut Transform, With<Visor>>,
 ) {
-    let (runner, shield) = &mut *hero;
+    let (_, shield) = &mut *hero;
     if power.is_changed() {
         shield.charges = power.ward as u32;
         shield.invulnerable_seconds = tuning.run_and_gun.power_up.ward_invulnerable_seconds;
@@ -616,7 +695,6 @@ pub(super) fn sync_equipment(
     } else {
         Visibility::Hidden
     });
-    visor.translation.x = 2.0 * runner.facing;
 }
 
 /// The Ward took a hit: it's gone.
@@ -670,6 +748,29 @@ mod tests {
 
     fn t() -> RunAndGunTuning {
         RunAndGunTuning::default()
+    }
+
+    #[test]
+    fn the_hero_shows_the_frame_for_what_it_is_doing() {
+        let mut r = Runner::standing(0.0, 0.0);
+        assert_eq!(frame_for(&r, 0.0), frame::STAND);
+        r.running = true;
+        assert_eq!(frame_for(&r, 0.0), 1);
+        assert_eq!(frame_for(&r, RUN_FRAME_SECONDS * 1.5), 2);
+        assert_eq!(frame_for(&r, RUN_FRAME_SECONDS * 4.0), 1, "the run loops");
+        r.crouching = true;
+        assert_eq!(frame_for(&r, 0.0), frame::CROUCH);
+        r.crouching = false;
+        r.aim = Vec2::Y;
+        assert_eq!(frame_for(&r, 0.0), frame::AIM_UP);
+        r.aim = Vec2::new(1.0, 1.0).normalize();
+        assert_eq!(frame_for(&r, 0.0), frame::AIM_DIAGONAL);
+        r.aim = Vec2::X;
+        r.body.grounded = false;
+        r.body.vy = 50.0;
+        assert_eq!(frame_for(&r, 0.0), frame::JUMP);
+        r.body.vy = -50.0;
+        assert_eq!(frame_for(&r, 0.0), frame::FALL);
     }
 
     fn power(gun: u32) -> PowerUps {
