@@ -80,3 +80,12 @@ after `Timeline`; movement and AI run before `Move`.
 - **`TerrainHitbox`:** a second, larger box on the Hero, used only against
   `Layer::Terrain`.
 - **`Layer::ShotBlocker`:** stops enemy shots and nothing else (drones).
+
+## Added for the presentation pass (#30)
+
+- **Big explosions:** an enemy worth at least `kit.big_explosion_score`
+  points (800: the heavy enemies and the big set pieces) shakes the screen
+  by `shake_on_big_explosion` and freezes the Stage for
+  `big_explosion_hit_stop` seconds (`ImpactFreeze`). The explosion spawns
+  first, so the blast hangs on screen during the freeze. `stage_live` is
+  false during it, like the Hero's `HitStop`, and the Stage clock stops.

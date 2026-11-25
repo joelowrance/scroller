@@ -1,15 +1,29 @@
 //! Score, Stage and lives along the top of the screen during play.
+//!
+//! Every Cabinet gets the same HUD: a dark strip across the top (the 12
+//! pixels above each Cabinet's play area) edged underneath in the Cabinet's
+//! accent colour, with grey labels and white numbers, so it reads the same
+//! over any scenery.
 
 use bevy::prelude::*;
 
 use crate::cabinets::CABINETS;
-use crate::display::{HALF_H, HALF_W};
+use crate::display::{HALF_H, HALF_W, WIDTH};
 use crate::flow::Screen;
-use crate::font::{Align, PixelText, text_at};
+use crate::font::{Align, CELL_W, PixelText, text_at};
 use crate::run::{Mode, Session};
 
 const HUD_Y: f32 = HALF_H - 6.0;
 const HUD_Z: f32 = 50.0;
+/// Height of the strip: the band above every Cabinet's play area.
+const STRIP_H: f32 = 12.0;
+/// The strip overhangs the screen's top and sides, so screen shake never
+/// shows a gap.
+const OVERHANG: f32 = 8.0;
+const STRIP_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.85);
+const LABEL_COLOR: Color = Color::srgb(0.55, 0.55, 0.6);
+const SCORE_LABEL: &str = "SCORE";
+const LIVES_LABEL: &str = "LIVES";
 
 #[derive(Component)]
 enum HudField {
@@ -33,15 +47,38 @@ fn spawn(mut commands: Commands, session: Res<Session>) {
         Mode::Practice => format!("PRACTICE {}-{}", session.cabinet + 1, session.stage + 1),
     };
     let at = |x: f32| Transform::from_xyz(x, HUD_Y, HUD_Z);
+    let width = WIDTH as f32 + 2.0 * OVERHANG;
+    commands.spawn((
+        Sprite::from_color(STRIP_COLOR, Vec2::new(width, STRIP_H + OVERHANG)),
+        Transform::from_xyz(0.0, HALF_H - (STRIP_H - OVERHANG) / 2.0, HUD_Z - 1.0),
+        DespawnOnExit(Screen::Playing),
+    ));
+    commands.spawn((
+        Sprite::from_color(accent, Vec2::new(width, 1.0)),
+        Transform::from_xyz(0.0, HALF_H - STRIP_H - 0.5, HUD_Z - 1.0),
+        DespawnOnExit(Screen::Playing),
+    ));
+    let label_w = |label: &str| (label.len() + 1) as f32 * CELL_W as f32;
+    commands.spawn((
+        PixelText::new(SCORE_LABEL, LABEL_COLOR).aligned(Align::Left),
+        at(-HALF_W + 4.0),
+        DespawnOnExit(Screen::Playing),
+    ));
     commands.spawn((
         HudField::Score,
         PixelText::new("", Color::WHITE).aligned(Align::Left),
-        at(-HALF_W + 4.0),
+        at(-HALF_W + 4.0 + label_w(SCORE_LABEL)),
         DespawnOnExit(Screen::Playing),
     ));
     commands.spawn((
         PixelText::new(stage, accent),
         at(0.0),
+        DespawnOnExit(Screen::Playing),
+    ));
+    // Lives is one digit (at most five), right-aligned under its label.
+    commands.spawn((
+        PixelText::new(LIVES_LABEL, LABEL_COLOR).aligned(Align::Right),
+        at(HALF_W - 4.0 - CELL_W as f32 * 2.0),
         DespawnOnExit(Screen::Playing),
     ));
     commands.spawn((
@@ -64,7 +101,7 @@ fn update(
     for (field, mut text) in &mut fields {
         let wanted = match field {
             HudField::Score => format!("{:06}", session.score),
-            HudField::Lives => format!("LIVES {}", session.lives),
+            HudField::Lives => session.lives.to_string(),
         };
         if text.text != wanted {
             text.text = wanted;

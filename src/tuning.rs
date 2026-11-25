@@ -11,6 +11,7 @@ use crate::cabinets::climber::tuning::ClimberTuning;
 use crate::cabinets::run_and_gun::tuning::RunAndGunTuning;
 use crate::cabinets::side_shooter::tuning::SideShooterTuning;
 use crate::cabinets::vertical_shooter::tuning::VerticalShooterTuning;
+use crate::presentation::PresentationTuning;
 
 const EMBEDDED: &str = include_str!("../assets/tuning.ron");
 
@@ -38,6 +39,7 @@ pub struct Tuning {
     /// Debug aid (needs `debug_keys`): game speed multiplier during a Stage.
     pub time_scale: f32,
     pub kit: KitTuning,
+    pub presentation: PresentationTuning,
     pub placeholder: PlaceholderTuning,
     pub side_shooter: SideShooterTuning,
     pub vertical_shooter: VerticalShooterTuning,
@@ -62,6 +64,13 @@ pub struct KitTuning {
     pub shake_max_offset: f32,
     /// Shake lost per second.
     pub shake_decay: f32,
+    /// An enemy worth at least this many points goes out with a big
+    /// explosion: screen shake and a brief hit-stop.
+    pub big_explosion_score: u64,
+    /// Shake added by a big explosion (1.0 is the most).
+    pub shake_on_big_explosion: f32,
+    /// Seconds the Stage freezes on a big explosion.
+    pub big_explosion_hit_stop: f32,
 }
 
 /// Values for the placeholder Cabinet used until the real ones are built.
@@ -94,6 +103,7 @@ impl Default for Tuning {
             invincible_hero: false,
             time_scale: 1.0,
             kit: KitTuning::default(),
+            presentation: PresentationTuning::default(),
             placeholder: PlaceholderTuning::default(),
             side_shooter: SideShooterTuning::default(),
             vertical_shooter: VerticalShooterTuning::default(),
@@ -129,6 +139,9 @@ impl Default for KitTuning {
             shake_on_hero_down: 0.7,
             shake_max_offset: 4.0,
             shake_decay: 1.5,
+            big_explosion_score: 800,
+            shake_on_big_explosion: 0.5,
+            big_explosion_hit_stop: 0.07,
         }
     }
 }

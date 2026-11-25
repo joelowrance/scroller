@@ -53,8 +53,13 @@ pub fn stage_live(
     paused: Res<Paused>,
     stage: Option<Res<StageRun>>,
     hit_stop: Res<HitStopTimer>,
+    impact: Res<super::effects::ImpactFreeze>,
 ) -> bool {
-    *screen.get() == Screen::Playing && !paused.0 && stage.is_some() && hit_stop.0.is_none()
+    *screen.get() == Screen::Playing
+        && !paused.0
+        && stage.is_some()
+        && hit_stop.0.is_none()
+        && impact.0 <= 0.0
 }
 
 /// The Hero was hit. A [`Shield`] charge absorbs it; otherwise, after the

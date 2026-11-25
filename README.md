@@ -49,6 +49,9 @@ The version and short git hash are shown small on the title screen.
 **M** mutes the sound. The setting is kept with the high scores. In the browser,
 sound starts with the first key press or click.
 
+**V** turns the CRT effect (scanlines and a slight vignette) on or off. It
+starts off, and the choice is remembered.
+
 ### Developer keys
 
 Off in release builds and on the live site. They are on in dev builds

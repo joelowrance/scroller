@@ -44,7 +44,7 @@ pub use combat::{
     Damage, EnemyDestroyed, Health, Hero, HeroStruck, HitStop, Hurt, Immune, Invulnerable, Pickup,
     PickupCollected, Pierce, ScoreValue, Shield, ShieldAbsorbed,
 };
-pub use effects::{Explode, Flash, Shake};
+pub use effects::{Explode, Flash, ImpactFreeze, Shake};
 pub use motion::{DespawnOffscreen, Lifetime, Velocity, projectile};
 pub use stage::{HitStopTimer, StageRestarted, stage_live};
 pub use timeline::{DrivenScroll, SpawnRequested, StageRun, StageTimeline};
@@ -66,8 +66,8 @@ pub enum KitSet {
     Effects,
 }
 
-fn not_frozen(hit_stop: Res<stage::HitStopTimer>) -> bool {
-    hit_stop.0.is_none()
+fn not_frozen(hit_stop: Res<stage::HitStopTimer>, impact: Res<effects::ImpactFreeze>) -> bool {
+    hit_stop.0.is_none() && impact.0 <= 0.0
 }
 
 pub struct KitPlugin;
@@ -89,6 +89,7 @@ impl Plugin for KitPlugin {
             .init_resource::<stage::HitStopTimer>()
             .init_resource::<clock::StageClock>()
             .init_resource::<effects::Trauma>()
+            .init_resource::<effects::ImpactFreeze>()
             .init_resource::<effects::EffectRng>()
             .configure_sets(
                 Update,
@@ -114,6 +115,7 @@ impl Plugin for KitPlugin {
                         .in_set(Move),
                     collision::detect.in_set(Collide),
                     (
+                        effects::tick_impact_freeze,
                         combat::resolve_contacts,
                         combat::apply_hurt,
                         stage::restart_after_hit,
@@ -122,6 +124,7 @@ impl Plugin for KitPlugin {
                         .in_set(Resolve),
                     (
                         effects::spawn_explosions,
+                        effects::start_impact_freeze,
                         effects::fade_particles,
                         effects::start_flashes,
                         effects::run_flashes,
