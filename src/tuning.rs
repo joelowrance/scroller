@@ -22,8 +22,6 @@ pub struct Tuning {
     pub extra_life_every: u64,
     /// Seconds of idle time before Attract Mode flips between panels.
     pub attract_panel_seconds: f32,
-    /// Length of a Cabinet Transition (placeholder until each is built).
-    pub transition_seconds: f32,
     /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage,
     /// F2: sprite sheet).
     pub debug_keys: bool,
@@ -81,7 +79,6 @@ impl Default for Tuning {
             first_extra_life: 20_000,
             extra_life_every: 50_000,
             attract_panel_seconds: 8.0,
-            transition_seconds: 3.0,
             debug_keys: true,
             invincible_hero: false,
             time_scale: 1.0,
