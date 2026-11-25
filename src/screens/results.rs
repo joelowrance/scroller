@@ -84,6 +84,8 @@ fn update_result(
     }
     let target = match session.mode {
         Mode::Practice => Screen::PracticeSelect,
+        // Never reached (a demo ends itself), but harmless if it were.
+        Mode::Demo => Screen::Title,
         Mode::Run if scores.qualifies(session.score) => Screen::NameEntry,
         Mode::Run => {
             commands.insert_resource(ShowScoresFirst);

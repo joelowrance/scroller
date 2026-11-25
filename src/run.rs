@@ -18,6 +18,8 @@ pub enum Mode {
     Run,
     /// Practice on a single cleared Cabinet: no Save, no High Score Table.
     Practice,
+    /// Attract Mode's scripted gameplay: nothing is Saved, scored or kept.
+    Demo,
 }
 
 /// The state of the current Run or Practice session.
@@ -66,6 +68,11 @@ impl Session {
         Self::fresh(Mode::Run, 0, tuning)
     }
 
+    /// A demo of one Cabinet for Attract Mode, with full lives so it runs on.
+    pub fn new_demo(cabinet: usize, tuning: &Tuning) -> Self {
+        Self::fresh(Mode::Demo, cabinet, tuning)
+    }
+
     pub fn new_practice(cabinet: usize, tuning: &Tuning) -> Self {
         Self::fresh(Mode::Practice, cabinet, tuning)
     }
@@ -76,7 +83,11 @@ impl Session {
             cabinet,
             stage: 0,
             score: 0,
-            lives: tuning.starting_lives,
+            lives: if mode == Mode::Demo {
+                tuning.max_lives
+            } else {
+                tuning.starting_lives
+            },
             next_extra_life: tuning.first_extra_life,
             power_ups: serde_json::Value::Null,
         }
@@ -114,7 +125,7 @@ impl Session {
             return Advance::NextStage;
         }
         match self.mode {
-            Mode::Practice => Advance::PracticeComplete,
+            Mode::Practice | Mode::Demo => Advance::PracticeComplete,
             Mode::Run if self.cabinet + 1 >= CABINET_COUNT => Advance::Ending,
             Mode::Run => {
                 let from = self.cabinet;

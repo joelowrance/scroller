@@ -121,6 +121,7 @@ pub fn hero_invincible(tuning: &Tuning) -> bool {
 pub(super) fn resolve_contacts(
     mut commands: Commands,
     tuning: Res<Tuning>,
+    demo: Option<Res<crate::demo::Demo>>,
     mut contacts: MessageReader<Contact>,
     damage: Query<&Damage>,
     mut pierce: Query<&mut Pierce>,
@@ -163,7 +164,8 @@ pub(super) fn resolve_contacts(
                     spent.insert(c.a);
                     commands.entity(c.a).try_despawn();
                 }
-                if !hero_invincible(&tuning) && hero_hit.is_none() {
+                // A demo's Hero is never hit: the teaser shows the Cabinet, not a death.
+                if !hero_invincible(&tuning) && demo.is_none() && hero_hit.is_none() {
                     hero_hit = Some(c.a);
                 }
             }

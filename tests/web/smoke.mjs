@@ -53,6 +53,23 @@ try {
   await page.click("#game");
   await wait(500);
   await shot("title-release");
+
+  // Attract Mode: left idle, the title gives way to a gameplay demo, which must
+  // not touch storage; any button then returns to the title.
+  const snapshot = () =>
+    page.evaluate(() =>
+      JSON.stringify(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)])),
+    );
+  const before = await snapshot();
+  await wait(9_000); // attract_panel_seconds is 8
+  await shot("attract-demo");
+  await wait(4_000);
+  if ((await snapshot()) !== before) fail("the Attract Mode demo changed localStorage");
+  await wait(8_000); // the demo ends (10 s), then the High Score Table
+  await shot("attract-after-demo");
+  if ((await snapshot()) !== before) fail("localStorage changed after the Attract Mode demo");
+  await tap("Space"); // back to the title menu (a demo, if still on, ends)
+  await wait(500);
   await tap("Space"); // NEW RUN
   await tap("Space"); // play 1-1
   await wait(1500);

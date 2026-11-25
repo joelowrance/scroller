@@ -66,7 +66,11 @@ Score Table.
 ## High Score Table and Attract Mode
 
 Local top ten with three initials, recorded at Game Over or after the
-Ending. Attract Mode cycles the title and the High Score Table.
+Ending. Attract Mode cycles title, a gameplay demo, then the High Score Table.
+The demo plays a scripted slice of one Cabinet (a different one each round,
+Practice-locked ones included) through the real game systems, with the
+Session in `Mode::Demo`: no Save, score, High Score or Progress is written.
+Any button returns to the title menu.
 
 ## Controls
 

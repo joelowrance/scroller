@@ -16,6 +16,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::cabinets::{CABINET_COUNT, LifeLost, ScoreGained, StageCleared};
+use crate::demo;
 use crate::highscore::HighScoreTable;
 use crate::run::{Advance, LifeOutcome, Mode, Session};
 use crate::storage::{self, HIGH_SCORES_KEY, PROGRESS_KEY, SAVE_KEY};
@@ -134,12 +135,17 @@ fn on_score(
 }
 
 fn on_life_lost(
+    mut commands: Commands,
     mut lost: MessageReader<LifeLost>,
     mut session: ResMut<Session>,
     mut next: ResMut<NextState<Screen>>,
 ) {
     for _ in lost.read() {
         if session.lose_life() == LifeOutcome::GameOver {
+            if session.mode == Mode::Demo {
+                demo::finish(&mut commands, &mut next, true);
+                break;
+            }
             next.set(Screen::GameOver);
             break;
         }
@@ -200,6 +206,11 @@ fn on_stage_cleared(
 ) {
     // A Stage cleared in the same frame as the last life was lost is still Game Over.
     if cleared.read().last().is_none() || session.lives == 0 {
+        return;
+    }
+    // A demo that clears its Stage just ends: nothing is Saved or marked cleared.
+    if session.mode == Mode::Demo {
+        demo::finish(&mut commands, &mut next, true);
         return;
     }
     let cabinet = session.cabinet;

@@ -23,6 +23,9 @@ pub struct Tuning {
     pub extra_life_every: u64,
     /// Seconds of idle time before Attract Mode flips between panels.
     pub attract_panel_seconds: f32,
+    /// Seconds of Cabinet gameplay Attract Mode shows between the title and
+    /// the High Score Table.
+    pub attract_demo_seconds: f32,
     /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage,
     /// F2: sprite sheet) and the other debug aids. Off in release builds;
     /// dev builds force it on (`enable_dev_debug`) and the web build turns it
@@ -83,6 +86,7 @@ impl Default for Tuning {
             first_extra_life: 20_000,
             extra_life_every: 50_000,
             attract_panel_seconds: 8.0,
+            attract_demo_seconds: 10.0,
             debug_keys: false,
             invincible_hero: false,
             time_scale: 1.0,
