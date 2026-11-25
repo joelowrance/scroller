@@ -105,6 +105,7 @@ Then:
 ./scripts/smoke-web.sh                                  # build, serve and test
 SMOKE_SKIP_BUILD=1 ./scripts/smoke-web.sh               # test the existing dist/
 ./scripts/smoke-web.sh http://joelowrance.com/scroller/ # test a deployed site
+./scripts/perf-web.sh [cabinet...]                      # frame times per Stage (fps-log build)
 ```
 
 CI runs it too, as the `smoke` job, on the web build from the `check` job. Its

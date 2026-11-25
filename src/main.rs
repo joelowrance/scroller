@@ -60,6 +60,7 @@ fn main() {
     #[cfg(feature = "fps-log")]
     app.add_plugins((
         bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
+        bevy::diagnostic::EntityCountDiagnosticsPlugin::default(),
         bevy::diagnostic::LogDiagnosticsPlugin::default(),
     ));
 
