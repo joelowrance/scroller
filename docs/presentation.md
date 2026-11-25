@@ -36,8 +36,14 @@ briefly and the choice is stored as the `display` setting. The title shows
 `V: CRT` small in the corner.
 
 - The dark third of every canvas pixel row is a scanline (at least one
-  window row). The texture is rebuilt only when the integer scale changes.
-  Below 2× there's no room for a scanline, so only the vignette shows.
+  window row). Below 2× there's no room for a scanline, so only the
+  vignette shows.
+- Scanlines and vignette are one texture, one texel per window pixel of the
+  canvas, so the effect costs a single full-screen blend. It is rebuilt
+  only when the integer scale changes (capped at 8×, about 20 MB).
+- Cost: nothing while off. On, in the headless software renderer, it took
+  frame rate from about 40 to 28 fps at 960×720 (a real GPU won't notice one
+  textured quad). That's why it is opt-in.
 - `crt_scanline_alpha` and `crt_vignette_alpha` set the strength.
 
 ## Fades between screens
