@@ -5,11 +5,12 @@ use bevy::prelude::*;
 
 use super::menu::Menu;
 use crate::demo::{self, DemoCursor};
-use crate::display::Backdrop;
+use crate::display::{Backdrop, HALF_W};
 use crate::flow::{Progress, Screen, continue_run, save_exists, start_new_run};
-use crate::font::{Blink, PixelText, text_at};
+use crate::font::{Align, Blink, PixelText, text_at};
 use crate::highscore::HighScoreTable;
 use crate::input::{Button, Controls};
+use crate::presentation::logo;
 use crate::tuning::Tuning;
 
 const CONTINUE: &str = "CONTINUE";
@@ -26,6 +27,9 @@ struct TitlePanel;
 
 /// Version and short git hash, shown small on the title screen.
 const VERSION_LINE: &str = concat!("V", env!("CARGO_PKG_VERSION"), " ", env!("GIT_HASH"));
+
+/// The display toggle, shown small beside the version.
+const CRT_HINT: &str = "V: CRT";
 
 #[derive(Component)]
 struct ScoresPanel;
@@ -53,6 +57,8 @@ fn spawn(
     progress: Res<Progress>,
     show_scores: Option<Res<ShowScoresFirst>>,
     mut backdrop: ResMut<Backdrop>,
+    mut images: ResMut<Assets<Image>>,
+    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     backdrop.0 = Color::srgb(0.02, 0.0, 0.06);
     let showing_scores = show_scores.is_some();
@@ -94,11 +100,9 @@ fn spawn(
         ))
         .add_child(menu)
         .with_children(|p| {
-            p.spawn(text_at(
-                PixelText::new("SCROLLER", TITLE_COLOR),
-                0.0,
-                70.0,
-                4,
+            p.spawn((
+                logo::bundle(&mut images, &mut layouts),
+                Transform::from_xyz(0.0, 68.0, 10.0),
             ));
             p.spawn(text_at(
                 PixelText::new("AN 80S ARCADE MASHUP", Color::WHITE),
@@ -107,8 +111,14 @@ fn spawn(
                 1,
             ));
             p.spawn(text_at(
-                PixelText::new(VERSION_LINE, Color::srgb(0.5, 0.5, 0.5)),
-                0.0,
+                PixelText::new(VERSION_LINE, Color::srgb(0.5, 0.5, 0.5)).aligned(Align::Left),
+                -HALF_W + 4.0,
+                -112.0,
+                1,
+            ));
+            p.spawn(text_at(
+                PixelText::new(CRT_HINT, Color::srgb(0.5, 0.5, 0.5)).aligned(Align::Right),
+                HALF_W - 4.0,
                 -112.0,
                 1,
             ));

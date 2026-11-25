@@ -10,6 +10,7 @@ mod font;
 mod highscore;
 mod input;
 mod kit;
+mod presentation;
 mod run;
 mod screens;
 mod sprites;
@@ -55,6 +56,7 @@ fn main() {
         cabinets::CabinetsPlugin,
         screens::ScreensPlugin,
         audio::AudioPlugin,
+        presentation::PresentationPlugin,
     ));
 
     #[cfg(feature = "fps-log")]

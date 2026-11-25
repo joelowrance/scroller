@@ -37,6 +37,19 @@
         shake_on_hero_down: 0.7,   // 0 to 1
         shake_max_offset: 4.0,     // pixels at full shake
         shake_decay: 1.5,          // per second
+        // Enemies worth this many points or more go out with a big explosion:
+        // a screen shake and a hit-stop (the whole Stage freezes briefly).
+        big_explosion_score: 800,
+        shake_on_big_explosion: 0.5, // 0 to 1
+        big_explosion_hit_stop: 0.07, // seconds
+    ),
+
+    // How the game looks around the play (docs/DESIGN.md, "Look and sound").
+    presentation: (
+        fade_seconds: 0.35,        // each screen fades in from black; 0 = hard cut
+        // The optional CRT effect (V turns it on or off, remembered).
+        crt_scanline_alpha: 0.35,  // 0 to 1
+        crt_vignette_alpha: 0.45,  // darkness in the corners, 0 to 1
     ),
 
     // The stand-in Cabinet used until the real Cabinets are built.

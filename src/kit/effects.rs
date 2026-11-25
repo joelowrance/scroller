@@ -2,10 +2,13 @@
 //!
 //! Each effect is asked for with a message, so any system (kit or Cabinet)
 //! can trigger one: [`Explode`], [`Flash`] and [`Shake`].
+//!
+//! Destroying a big enemy (one worth at least `big_explosion_score`) adds a
+//! shake and a brief [`ImpactFreeze`], the hit-stop that sells the blast.
 
 use bevy::prelude::*;
 
-use super::combat::Invulnerable;
+use super::combat::{EnemyDestroyed, Invulnerable};
 use super::motion::{Lifetime, Velocity};
 use crate::display::GameCamera;
 use crate::flow::Screen;
@@ -37,9 +40,40 @@ pub(super) struct Particle {
     total: f32,
 }
 
+/// Seconds left of a big explosion's hit-stop. While it runs the Stage is
+/// frozen like the Hero's own hit-stop (see [`stage_live`](super::stage_live)).
+#[derive(Resource, Default, Debug)]
+pub struct ImpactFreeze(pub f32);
+
+/// Starts the shake and hit-stop for each big enemy destroyed this frame.
+/// Runs after the explosion is spawned, so the blast shows during the freeze.
+pub(super) fn start_impact_freeze(
+    tuning: Res<Tuning>,
+    mut destroyed: MessageReader<EnemyDestroyed>,
+    mut freeze: ResMut<ImpactFreeze>,
+    mut shake: MessageWriter<Shake>,
+) {
+    let k = &tuning.kit;
+    let big = destroyed
+        .read()
+        .filter(|d| d.score >= k.big_explosion_score)
+        .count();
+    if big > 0 {
+        shake.write(Shake(k.shake_on_big_explosion));
+        freeze.0 = freeze.0.max(k.big_explosion_hit_stop);
+    }
+}
+
+/// Counts down the hit-stop. Runs while frozen.
+pub(super) fn tick_impact_freeze(time: Res<Time>, mut freeze: ResMut<ImpactFreeze>) {
+    if freeze.0 > 0.0 {
+        freeze.0 = (freeze.0 - time.delta_secs()).max(0.0);
+    }
+}
+
 /// Current screen-shake strength, 0 to 1, fading over time.
 #[derive(Resource, Default)]
-pub(super) struct Trauma(f32);
+pub(super) struct Trauma(pub(super) f32);
 
 /// Small deterministic random numbers for effects (xorshift).
 #[derive(Resource)]
@@ -156,9 +190,11 @@ pub(super) fn shake_camera(
 
 pub(super) fn reset_camera(
     mut trauma: ResMut<Trauma>,
+    mut freeze: ResMut<ImpactFreeze>,
     mut camera: Single<&mut Transform, With<GameCamera>>,
 ) {
     trauma.0 = 0.0;
+    freeze.0 = 0.0;
     camera.translation.x = 0.0;
     camera.translation.y = 0.0;
 }

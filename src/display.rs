@@ -19,7 +19,7 @@ pub const HALF_W: f32 = WIDTH as f32 / 2.0;
 pub const HALF_H: f32 = HEIGHT as f32 / 2.0;
 
 /// Layer for things drawn at window resolution (just the canvas itself).
-const WINDOW_LAYER: RenderLayers = RenderLayers::layer(1);
+pub const WINDOW_LAYER: RenderLayers = RenderLayers::layer(1);
 
 /// The camera that draws the game onto the canvas.
 #[derive(Component)]
@@ -67,8 +67,18 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     ));
 }
 
-/// Scales the canvas by the largest whole number that fits the window.
-/// Windows smaller than 320×240 shrink the canvas instead.
+/// How many window pixels one canvas pixel covers: the largest whole number
+/// that fits the window. Windows smaller than 320×240 shrink the canvas instead.
+pub fn canvas_scale(window: &Window) -> f32 {
+    let fit = (window.width() / WIDTH as f32).min(window.height() / HEIGHT as f32);
+    if fit >= 1.0 {
+        fit.floor()
+    } else {
+        fit.max(0.01)
+    }
+}
+
+/// Scales the canvas to fit the window (see [`canvas_scale`]).
 fn fit_canvas(
     window: Single<&Window>,
     mut projection: Single<&mut Projection, With<WindowCamera>>,
@@ -76,13 +86,7 @@ fn fit_canvas(
     let Projection::Orthographic(projection) = &mut **projection else {
         return;
     };
-    let fit = (window.width() / WIDTH as f32).min(window.height() / HEIGHT as f32);
-    let scale = if fit >= 1.0 {
-        fit.floor()
-    } else {
-        fit.max(0.01)
-    };
-    let wanted = 1.0 / scale;
+    let wanted = 1.0 / canvas_scale(&window);
     if projection.scale != wanted {
         projection.scale = wanted;
     }

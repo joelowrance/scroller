@@ -376,3 +376,43 @@ fn ground_targets_take_shots_and_rockets_but_never_touch_the_hero() {
     assert_eq!(log.score, [300, 300]);
     assert_eq!(log.lives_lost, 0);
 }
+
+#[test]
+fn a_big_explosion_shakes_and_freezes_the_stage_briefly() {
+    let mut tuning = quiet_tuning();
+    tuning.kit.big_explosion_score = 800;
+    tuning.kit.big_explosion_hit_stop = 0.1;
+    let mut app = app(0.04, tuning);
+    app.update(); // first frame has no delta
+    let small = spawn_enemy(&mut app, Vec2::new(40.0, 0.0), 1, 100);
+    spawn_shot(&mut app, Layer::HeroShot, Vec2::new(40.0, 0.0));
+    app.update();
+    assert!(!alive(&app, small));
+    assert_eq!(
+        app.world().resource::<ImpactFreeze>().0,
+        0.0,
+        "small: no hit-stop"
+    );
+
+    let big = spawn_enemy(&mut app, Vec2::new(40.0, 0.0), 1, 800);
+    spawn_shot(&mut app, Layer::HeroShot, Vec2::new(40.0, 0.0));
+    app.update();
+    assert!(!alive(&app, big));
+    assert!(app.world().resource::<ImpactFreeze>().0 > 0.0);
+    assert!(
+        app.world().resource::<effects::Trauma>().0 > 0.0,
+        "the camera shakes"
+    );
+    let frozen_at = app.world().resource::<StageRun>().cursor.position;
+    app.update();
+    app.update();
+    assert_eq!(
+        app.world().resource::<StageRun>().cursor.position,
+        frozen_at,
+        "the timeline doesn't move during the hit-stop"
+    );
+    app.update();
+    app.update();
+    assert_eq!(app.world().resource::<ImpactFreeze>().0, 0.0);
+    assert!(app.world().resource::<StageRun>().cursor.position > frozen_at);
+}
