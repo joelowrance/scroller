@@ -317,3 +317,24 @@ fn the_designed_length_counts_each_standoff_in_full() {
     let clock = app.world().resource::<crate::kit::StageClock>();
     assert_eq!(clock.designed, scroll + standoffs);
 }
+
+#[test]
+fn the_hero_walks_off_to_the_right_when_the_stage_clears() {
+    let mut app = app();
+    let (start, ..) = runner(&mut app);
+    // The player holds left; the clear takes the control away.
+    press(&mut app, &[Button::Left]);
+    app.world_mut()
+        .resource_mut::<StageRun>()
+        .cursor
+        .force_clear();
+    seconds(&mut app, 1.0);
+    let (x, _, grounded) = runner(&mut app);
+    let speed = Tuning::default().run_and_gun.hero.run_speed;
+    assert!(grounded);
+    assert!(
+        x - start > speed * 0.8,
+        "walked {} px in 1 s at {speed} px/s",
+        x - start
+    );
+}

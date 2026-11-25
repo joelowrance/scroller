@@ -33,12 +33,13 @@ use crate::cabinets::shooter::formation::{Formation, Member, Reward};
 use crate::cabinets::shooter::pattern::Pulse;
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
-use crate::kit::platform::TileQuery;
+use crate::kit::platform::{Body, TileQuery};
 use crate::kit::{
     DespawnOffscreen, EnemyDestroyed, Flash, Health, Hero, Hitbox, Hurt, Immune, KitSet, Layer,
     ScoreValue, SpawnRequested, StageRestarted, StageRun, Velocity, projectile, stage_live,
 };
 use crate::run::Session;
+use crate::sprites::Sprites;
 use crate::tuning::Tuning;
 
 pub mod brain;
@@ -313,6 +314,7 @@ fn spawn_enemy(
     pos: Vec2,
     brain: Brain,
     camera: f32,
+    sprites: &Sprites,
 ) -> Entity {
     let (hp, score) = hp_and_score(kind, &tt.enemies);
     let size = look::size(kind);
@@ -338,7 +340,7 @@ fn spawn_enemy(
     if kind == Kind::Sentry {
         e.insert(Immune);
     }
-    look::body(&mut e, kind);
+    look::body(&mut e, kind, sprites);
     e.id()
 }
 
@@ -348,6 +350,7 @@ pub(super) fn spawn_requested(
     tuning: Res<Tuning>,
     stage: Res<StageRun>,
     terrain: Res<Terrain>,
+    sprites: Res<Sprites>,
     hero: Option<Single<&Transform, With<Hero>>>,
     mut requests: MessageReader<SpawnRequested>,
 ) {
@@ -366,6 +369,7 @@ pub(super) fn spawn_requested(
                 &params,
                 camera,
                 &terrain,
+                &sprites,
             );
             continue;
         }
@@ -392,7 +396,7 @@ pub(super) fn spawn_requested(
             if on_screen(at) && hero.is_some_and(|h| h.distance(at) < tt.enemy.no_spawn_radius) {
                 continue;
             }
-            let e = spawn_enemy(&mut commands, tt, kind, pos, brain, camera);
+            let e = spawn_enemy(&mut commands, tt, kind, pos, brain, camera, &sprites);
             if behind {
                 commands
                     .entity(e)
@@ -410,6 +414,7 @@ pub(super) fn spawn_requested(
                         pos,
                         Brain::Mote(Mote::new()),
                         camera,
+                        &sprites,
                     );
                     commands.entity(plough).insert((
                         Immune,
@@ -427,7 +432,7 @@ pub(super) fn spawn_requested(
                 }
                 Kind::Strider => {
                     commands.spawn((
-                        look::strider_frame(),
+                        look::strider_frame(&sprites),
                         Transform::from_translation(at.extend(3.9)),
                         Hitbox::new(28.0, 44.0),
                         Layer::Hazard,
@@ -446,8 +451,9 @@ pub(super) fn spawn_requested(
         if behind && !spawned.is_empty() {
             commands.spawn((
                 Chevron(tt.enemy.behind_warning_seconds),
-                look::chevron(),
-                Transform::from_xyz(-HALF_W + 3.0, request.pos.y.max(-90.0), 30.0),
+                look::chevron(&sprites),
+                Transform::from_xyz(-HALF_W + 3.0, request.pos.y.max(-90.0), 30.0)
+                    .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
                 EnemyPart,
                 DespawnOnExit(Screen::Playing),
             ));
@@ -507,6 +513,7 @@ fn think(
     session: Res<Session>,
     stage: Res<StageRun>,
     terrain: Res<Terrain>,
+    sprites: Res<Sprites>,
     hero: Option<Single<(&Transform, &super::hero::Runner), Without<Enemy>>>,
     mut enemies: Query<(
         Entity,
@@ -620,7 +627,15 @@ fn think(
             ) {
                 live += out.shots.len();
                 for shot in &out.shots {
-                    fire(&mut commands, rules, t, base + shot.offset, shot, scale);
+                    fire(
+                        &mut commands,
+                        &sprites,
+                        rules,
+                        t,
+                        base + shot.offset,
+                        shot,
+                        scale,
+                    );
                 }
             }
         }
@@ -652,6 +667,7 @@ fn think(
 
 fn fire(
     commands: &mut Commands,
+    sprites: &Sprites,
     rules: &EnemyRules,
     t: &EnemyTypes,
     at: Vec2,
@@ -680,7 +696,7 @@ fn fire(
         EnemyBullet,
     ));
     e.insert(Hitbox::new(hit.x, hit.y))
-        .insert(look::bullet(size));
+        .insert(look::bullet(sprites, shot.burst));
     if shot.gravity > 0.0 {
         e.insert(Falling {
             gravity: shot.gravity,
@@ -699,6 +715,7 @@ fn shots_and_ground(
     session: Res<Session>,
     stage: Res<StageRun>,
     terrain: Res<Terrain>,
+    sprites: Res<Sprites>,
     mut shots: Query<(
         Entity,
         &Layer,
@@ -742,6 +759,7 @@ fn shots_and_ground(
             for dir in [-1.0, 1.0] {
                 fire(
                     &mut commands,
+                    &sprites,
                     &tt.enemy,
                     &tt.enemies,
                     from,
@@ -800,24 +818,71 @@ fn parts_and_waves(
     }
 }
 
-/// Eyes flash before an attack; a Sentry is short and immune while down; a
-/// buried Burrower's box sits under the ground.
+/// Each enemy shows the frame its state calls for (the warnings are in the
+/// frames) and turns to face the way it goes; a Turret turns its barrel. A
+/// Sentry is short and immune while down; a buried Burrower's box sits under
+/// the ground.
 #[allow(clippy::type_complexity)]
 fn show_parts(
     mut commands: Commands,
     tuning: Res<Tuning>,
-    mut enemies: Query<(Entity, &Enemy, &EnemyBrain, &mut Hitbox, Has<Immune>)>,
-    mut eyes: Query<(&ChildOf, &mut Sprite), With<look::Eye>>,
+    hero: Option<Single<&super::hero::Runner>>,
+    mut enemies: Query<(
+        Entity,
+        &Enemy,
+        &EnemyBrain,
+        &EnemyPos,
+        &mut Hitbox,
+        &mut Transform,
+        Option<&mut Sprite>,
+        Has<Immune>,
+    )>,
+    legs: Query<(&ChildOf, &mut Sprite), (With<look::Leg>, Without<Enemy>)>,
+    frames: Query<&Follows>,
+    brains: Query<&EnemyBrain>,
 ) {
     let tt = &tuning.run_and_gun;
     let t = &tt.enemies;
-    for (parent, mut sprite) in &mut eyes {
-        if let Ok((_, enemy, brain, ..)) = enemies.get(parent.parent()) {
-            sprite.color = look::eye_color(brain.0.telegraph(t), enemy.clock);
+    let hero_x = hero.map_or(f32::MIN, |h| h.body.x);
+    for (_, enemy, brain, pos, _, mut transform, sprite, _) in &mut enemies {
+        if let Brain::Turret(turret) = &brain.0 {
+            transform.rotation = Quat::from_rotation_z(turret.barrel);
+        }
+        let Some(mut sprite) = sprite else {
+            continue;
+        };
+        if sprite.texture_atlas.is_none() {
+            continue;
+        }
+        let (frame, mirror) = look::frame_for(
+            &brain.0,
+            enemy.clock,
+            brain.0.telegraph(t),
+            hero_x,
+            pos.0.x,
+            t,
+        );
+        if sprite.flip_x != mirror {
+            sprite.flip_x = mirror;
+        }
+        if let Some(atlas) = &mut sprite.texture_atlas
+            && atlas.index != frame
+        {
+            atlas.index = frame;
+        }
+    }
+    // A Strider's legs lift while its stomp is telegraphed.
+    for (parent, mut sprite) in legs {
+        let raised = frames
+            .get(parent.parent())
+            .and_then(|f| brains.get(f.owner))
+            .is_ok_and(|b| matches!(&b.0, Brain::Strider(s) if s.stomp_telegraph(t)));
+        if let Some(atlas) = &mut sprite.texture_atlas {
+            atlas.index = usize::from(raised);
         }
     }
     let inset = 2.0 * tt.enemy.hitbox_inset;
-    for (entity, enemy, brain, mut hitbox, immune) in &mut enemies {
+    for (entity, enemy, brain, _, mut hitbox, _, _, immune) in &mut enemies {
         match &brain.0 {
             Brain::Sentry(s) => {
                 let up = s.phase(t) == SentryPhase::Up;
@@ -869,6 +934,7 @@ fn spawn_hazard(
     params: &SpawnParams,
     camera: f32,
     terrain: &Terrain,
+    sprites: &Sprites,
 ) {
     let wx = world_x(pos.x, camera);
     let ground = terrain.ground_at(wx).unwrap_or(-96.0);
@@ -907,14 +973,24 @@ fn spawn_hazard(
             )
         }
     };
-    commands.spawn((
-        look::hazard(size),
+    let mut e = commands.spawn((
         Transform::from_xyz(screen_x(wx, camera), ground + size.y / 2.0, 3.0),
         WorldX(wx),
-        hazard,
         EnemyPart,
         DespawnOnExit(Screen::Playing),
     ));
+    match &hazard {
+        Hazard::Crusher { .. } => {
+            e.insert(look::crusher(sprites));
+        }
+        Hazard::ArcFloor { length, .. } => {
+            e.insert(look::strip(sprites, "c3_arc_floor", *length, 0.5));
+        }
+        Hazard::Conveyor { length, .. } => {
+            e.insert(look::strip(sprites, "c3_conveyor", *length, -5.5));
+        }
+    }
+    e.insert(hazard);
 }
 
 /// Crushers cycle and slam (killing enemies under them, for no points); arc
@@ -925,16 +1001,22 @@ fn run_hazards(
     time: Res<Time>,
     tuning: Res<Tuning>,
     stage: Res<StageRun>,
-    mut hazards: Query<(
-        Entity,
-        &mut Hazard,
-        &WorldX,
-        &mut Transform,
-        &mut Sprite,
-        Has<Layer>,
-    )>,
+    mut hazards: Query<
+        (
+            Entity,
+            &mut Hazard,
+            &WorldX,
+            &mut Transform,
+            Option<&mut Sprite>,
+            Option<&Children>,
+            Has<Layer>,
+        ),
+        Without<look::Tile>,
+    >,
+    mut tiles: Query<&mut Sprite, (With<look::Tile>, Without<Hazard>)>,
     mut hero: Option<Single<&mut super::hero::Runner>>,
     victims: Query<(Entity, &Transform, &Hitbox), (With<Enemy>, Without<Hazard>)>,
+    mut walkers: Query<(&mut EnemyBrain, &mut EnemyPos), With<Enemy>>,
     mut sfx: MessageWriter<PlaySfx>,
     mut hum: Local<f32>,
 ) {
@@ -943,7 +1025,9 @@ fn run_hazards(
     let camera = stage.cursor.position;
     // A conveyor on screen hums about once a second.
     *hum -= dt;
-    for (entity, mut hazard, wx, mut transform, mut sprite, has_layer) in &mut hazards {
+    for (entity, mut hazard, wx, mut transform, sprite, children, has_layer) in &mut hazards {
+        // The frame the hazard's sprite (or each of its tiles) shows.
+        let frame;
         transform.translation.x = screen_x(wx.0, camera).round();
         let mut live = false;
         match &mut *hazard {
@@ -972,11 +1056,7 @@ fn run_hazards(
                 }
                 transform.translation.y = *ground + 16.0 + lift;
                 let warn = p >= c.up_seconds && p < up_until;
-                sprite.color = if warn && ((*age * 16.0) as u32).is_multiple_of(2) {
-                    palette::ICE
-                } else {
-                    palette::IRON
-                };
+                frame = usize::from(warn && ((*age * 16.0) as u32).is_multiple_of(2));
                 if live {
                     let box_ = Hitbox::new(22.0, 30.0).aabb(transform.translation.truncate());
                     for (victim, vt, vh) in &victims {
@@ -1003,12 +1083,11 @@ fn run_hazards(
                     sfx.write(PlaySfx(Sfx::ArcFloorCrackle));
                 }
                 live = pulse.live(at);
-                sprite.color = if live {
-                    palette::ICE
-                } else if pulse.telegraph(at) && ((at * 20.0) as u32).is_multiple_of(2) {
-                    palette::ICE.with_alpha(0.5)
+                // Off, crackling (the warning), live.
+                frame = if live {
+                    2
                 } else {
-                    palette::IRON
+                    usize::from(pulse.telegraph(at) && ((at * 20.0) as u32).is_multiple_of(2))
                 };
                 let _ = length;
             }
@@ -1017,16 +1096,40 @@ fn run_hazards(
                     *hum = 1.0;
                     sfx.write(PlaySfx(Sfx::ConveyorHum));
                 }
-                if let Some(runner) = hero.as_mut() {
-                    let b = &mut runner.body;
-                    let top = transform.translation.y + 1.5;
-                    if b.grounded
-                        && (b.feet - top).abs() <= 2.0
-                        && (b.x - wx.0).abs() <= *length / 2.0
+                // The belt runs the way it carries.
+                let step = (time.elapsed_secs() * 8.0) as usize % 2;
+                frame = if *speed > 0.0 { 1 - step } else { step };
+                // The belt is a strip 3 px deep: its top is the ground's.
+                let top = transform.translation.y - 1.5;
+                let carries = |b: &Body| {
+                    b.grounded && (b.feet - top).abs() <= 2.0 && (b.x - wx.0).abs() <= *length / 2.0
+                };
+                if let Some(runner) = hero.as_mut()
+                    && carries(&runner.body)
+                {
+                    runner.body.x += *speed * dt;
+                }
+                // Walkers standing on the belt ride it too.
+                for (mut brain, mut pos) in &mut walkers {
+                    if let Some(b) = brain.0.carried_body()
+                        && carries(b)
                     {
                         b.x += *speed * dt;
+                        pos.0.x = b.x;
                     }
                 }
+            }
+        }
+        if let Some(mut sprite) = sprite
+            && let Some(atlas) = &mut sprite.texture_atlas
+        {
+            atlas.index = frame;
+        }
+        for child in children.into_iter().flatten() {
+            if let Ok(mut tile) = tiles.get_mut(*child)
+                && let Some(atlas) = &mut tile.texture_atlas
+            {
+                atlas.index = frame;
             }
         }
         let size = match &*hazard {

@@ -100,6 +100,17 @@ impl Brain {
         }
     }
 
+    /// The physics body of a walker that can be carried along by a conveyor
+    /// (the Skitter, Tick and Hauler); the rest stand fixed or fly.
+    pub fn carried_body(&mut self) -> Option<&mut Body> {
+        match self {
+            Brain::Skitter(b) => b.body.as_mut(),
+            Brain::Tick(b) => b.body.as_mut(),
+            Brain::Hauler(b) => b.body.as_mut(),
+            _ => None,
+        }
+    }
+
     /// True while the enemy flashes a warning.
     pub fn telegraph(&self, t: &EnemyTypes) -> bool {
         match self {
@@ -777,6 +788,11 @@ impl Default for Strider {
 }
 
 impl Strider {
+    /// A leg is lifted for the stomp.
+    pub fn stomp_telegraph(&self, t: &EnemyTypes) -> bool {
+        self.hold.is_some() && self.cycle < t.strider.stomp_telegraph_seconds
+    }
+
     fn telegraph(&self, t: &EnemyTypes) -> bool {
         let s = &t.strider;
         if self.hold.is_none() {

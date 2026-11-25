@@ -43,6 +43,7 @@ fn app() -> App {
         .insert_resource(session)
         .insert_resource(terrain())
         .init_resource::<PowerUps>()
+        .init_resource::<Sprites>()
         .init_resource::<Paused>()
         .init_resource::<ButtonInput<KeyCode>>()
         .insert_state(Screen::Playing)
@@ -214,6 +215,7 @@ fn a_canister_bursts_into_two_ankle_shots_on_the_ground() {
     let mut commands_world = app.world_mut().commands();
     fire(
         &mut commands_world,
+        &Sprites::default(),
         &rules,
         &t,
         Vec2::new(60.0, 0.0),
@@ -423,5 +425,87 @@ fn warnings_and_machinery_play_their_sounds() {
         Sfx::ConveyorHum,
     ] {
         assert!(heard.contains(&want), "no {want:?} in {heard:?}");
+    }
+}
+
+/// Where a lone Skitter ends up after a second, with or without a belt
+/// under it.
+fn skitter_after_a_second(belt: Option<&str>) -> f32 {
+    let mut app = app();
+    if let Some(params) = belt {
+        request(&mut app, "conveyor", Vec2::new(40.0, -96.0), params);
+    }
+    request(&mut app, "skitter", Vec2::new(40.0, -96.0), "{\"size\": 1}");
+    run(&mut app, 1.0);
+    let skitter = of_kind(&mut app, Kind::Skitter)[0];
+    app.world().get::<EnemyPos>(skitter).unwrap().0.x
+}
+
+#[test]
+fn conveyors_carry_walkers_standing_on_them() {
+    let plain = skitter_after_a_second(None);
+    let right = skitter_after_a_second(Some("{\"length\": 400.0, \"dir\": \"right\"}"));
+    let left = skitter_after_a_second(Some("{\"length\": 400.0, \"dir\": \"left\"}"));
+    let speed = Tuning::default().run_and_gun.hazards.conveyor.speed;
+    assert!(
+        (right - plain - speed).abs() < speed * 0.2,
+        "right belt: plain {plain}, on belt {right}, belt {speed}"
+    );
+    assert!(
+        (plain - left - speed).abs() < speed * 0.2,
+        "left belt: plain {plain}, on belt {left}, belt {speed}"
+    );
+}
+
+#[test]
+fn enemy_frames_follow_their_state() {
+    use super::brain::{Sentry, Skitter};
+    let t = Tuning::default().run_and_gun.enemies;
+    let sentry = Brain::Sentry(Sentry::default());
+    // Down and hidden: frame 0, turned toward a Hero on its right.
+    assert_eq!(
+        look::frame_for(&sentry, 0.0, false, 50.0, 0.0, &t),
+        (0, true)
+    );
+    assert_eq!(
+        look::frame_for(&sentry, 0.0, false, -50.0, 0.0, &t),
+        (0, false)
+    );
+    // A Skitter runs its two leg frames, and mirrors when it heads right.
+    let skitter = Brain::Skitter(Skitter::new(1.0));
+    assert_eq!(
+        look::frame_for(&skitter, 0.0, false, 0.0, 0.0, &t),
+        (0, true)
+    );
+    assert_eq!(
+        look::frame_for(&skitter, 0.13, false, 0.0, 0.0, &t),
+        (1, true)
+    );
+    // A warning shows the second frame.
+    let dropper = Brain::Dropper(Dropper::new(&t));
+    assert_eq!(look::frame_for(&dropper, 0.0, true, 0.0, 0.0, &t).0, 1);
+}
+
+#[test]
+fn every_enemy_sprite_exists_and_has_the_frames_its_look_uses() {
+    for kind in [
+        Kind::Skitter,
+        Kind::Tick,
+        Kind::Kite,
+        Kind::Sentry,
+        Kind::Burrower,
+        Kind::Dropper,
+        Kind::Hauler,
+        Kind::Turret,
+        Kind::Strider,
+    ] {
+        let name = look::sprite_name(kind).unwrap();
+        let text = crate::sprites::sprite_text(name).unwrap_or_else(|| panic!("no sprite {name}"));
+        let frames = text
+            .split("\n\n")
+            .filter(|f| f.lines().any(|l| !l.starts_with('#') && !l.is_empty()))
+            .count();
+        let needed = if kind == Kind::Sentry { 3 } else { 2 };
+        assert!(frames >= needed, "{name} has {frames} frames");
     }
 }

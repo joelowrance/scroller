@@ -66,12 +66,20 @@ fn spawn_stage(
     let power = PowerUps::from_session(&session.power_ups, t);
     let stage = StageRun::new(timeline);
     let start = stage.start_point().hero_pos();
-    hero::spawn_hero(&mut commands, t, &power, start.x, stage.cursor.position);
+    hero::spawn_hero(
+        &mut commands,
+        t,
+        &power,
+        start.x,
+        stage.cursor.position,
+        &sprites,
+    );
     terrain::spawn_ledges(&mut commands, &terrain, &sprites, CABINET);
     commands.insert_resource(stage);
     commands.insert_resource(terrain);
     commands.insert_resource(power);
     commands.insert_resource(DrivenScroll(0.0));
+    commands.insert_resource(crate::flow::WalkOffSeconds(t.hero.exit_seconds));
     commands.insert_resource(hero::Rescues::default());
 }
 
@@ -162,6 +170,7 @@ impl Plugin for RunAndGunPlugin {
                         hero::fire,
                         hero::fly_flares,
                         hero::sync_equipment,
+                        hero::animate,
                         power_ups::move_capsules,
                         terrain::place_ledges,
                     )
