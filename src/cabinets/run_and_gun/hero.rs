@@ -6,8 +6,6 @@
 //! running right of the push line pushes the camera forward (the kit's
 //! [`DrivenScroll`]).
 
-use std::f32::consts::FRAC_PI_4;
-
 use bevy::prelude::*;
 
 use super::palette;
@@ -16,6 +14,7 @@ use super::standoff::Standoff;
 use super::terrain::{Terrain, screen_x, world_x};
 use super::tuning::{RunAndGunTuning, vec2};
 use crate::audio::{PlaySfx, Sfx};
+use crate::cabinets::on_foot;
 use crate::display::HALF_W;
 use crate::flow::Screen;
 use crate::input::{Button, Controls};
@@ -63,94 +62,22 @@ pub struct Flare {
 #[derive(Component)]
 pub(super) struct WardGlow;
 
-/// One shot of a volley, relative to the Hero's feet.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct ShotSpec {
-    pub offset: Vec2,
-    pub direction: Vec2,
-    pub size: Vec2,
-    pub damage: u32,
-    /// A bolt passes through the first enemy it hits.
-    pub pierce: bool,
-}
+pub use crate::cabinets::on_foot::{ShotSpec, aim_for};
 
 /// Where shots leave from, relative to the feet: chest height, a little in
 /// front, or knee height when crouching.
 pub fn muzzle(aim: Vec2, facing: f32, crouching: bool, t: &RunAndGunTuning) -> Vec2 {
-    if crouching {
-        let (x, y) = t.shot.crouch_muzzle;
-        return Vec2::new(x * facing, y);
-    }
-    let (x, y) = t.shot.muzzle;
-    Vec2::new(aim.x * x, y + aim.y * x)
+    on_foot::muzzle(aim, facing, crouching, t.shot.muzzle, t.shot.crouch_muzzle)
 }
 
 /// The shots of one volley along `aim` (a unit vector).
 pub fn volley(power: &PowerUps, aim: Vec2, from: Vec2, t: &RunAndGunTuning) -> Vec<ShotSpec> {
-    let s = &t.shot;
-    let mut shots = vec![if power.gun >= 4 {
-        ShotSpec {
-            offset: from,
-            direction: aim,
-            size: vec2(s.bolt_size),
-            damage: s.bolt_damage,
-            pierce: true,
-        }
-    } else {
-        ShotSpec {
-            offset: from,
-            direction: aim,
-            size: vec2(s.size),
-            damage: s.damage,
-            pierce: false,
-        }
-    }];
-    if power.gun >= 3 {
-        for sign in [1.0, -1.0] {
-            shots.push(ShotSpec {
-                offset: from,
-                direction: Vec2::from_angle(
-                    aim.to_angle() + (sign * s.spread_degrees).to_radians(),
-                ),
-                size: vec2(s.size),
-                damage: s.damage,
-                pierce: false,
-            });
-        }
-    }
-    shots
+    on_foot::volley(power.gun, aim, from, &t.shot.gun())
 }
 
 /// Seconds between volleys at this gun level.
 pub fn fire_interval(power: &PowerUps, t: &RunAndGunTuning) -> f32 {
-    if power.gun >= 2 {
-        t.shot.fire_interval_fast
-    } else {
-        t.shot.fire_interval
-    }
-}
-
-/// The aim for a held direction: up, up-diagonal, forward; down and
-/// down-diagonal only in the air (down on the ground crouches).
-pub fn aim_for(dir: Vec2, facing: f32, grounded: bool) -> Vec2 {
-    let up = dir.y > 0.5;
-    let down = dir.y < -0.5 && !grounded;
-    let side = if dir.x.abs() > 0.5 {
-        dir.x.signum()
-    } else {
-        0.0
-    };
-    match (up, down, side) {
-        (true, _, 0.0) => Vec2::Y,
-        (true, _, s) => Vec2::from_angle(if s > 0.0 { FRAC_PI_4 } else { 3.0 * FRAC_PI_4 }),
-        (_, true, 0.0) => Vec2::NEG_Y,
-        (_, true, s) => Vec2::from_angle(if s > 0.0 {
-            -FRAC_PI_4
-        } else {
-            -3.0 * FRAC_PI_4
-        }),
-        _ => Vec2::new(facing, 0.0),
-    }
+    on_foot::fire_interval(power.gun, &t.shot.gun())
 }
 
 /// The autopilot's input: run right, hold fire, and jump at every pit,
@@ -408,6 +335,7 @@ pub(super) fn run(
             drop_through: jump_pressed && down,
             air_jump: (power.jet && !runner.jet_used)
                 .then_some(t.jump.speed * t.power_up.jet_speed_fraction),
+            ..Control::default()
         };
         runner.aim = aim_for(dir, runner.facing, runner.body.grounded);
     }

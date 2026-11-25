@@ -105,6 +105,21 @@ tuning_struct!(ShotTuning {
     max_on_screen: usize = 64,
 });
 
+impl ShotTuning {
+    /// The gun's keys, for the shared on-foot gun (`cabinets::on_foot`).
+    pub fn gun(&self) -> crate::cabinets::on_foot::Gun {
+        crate::cabinets::on_foot::Gun {
+            fire_interval: self.fire_interval,
+            fire_interval_fast: self.fire_interval_fast,
+            damage: self.damage,
+            size: vec2(self.size),
+            spread_degrees: self.spread_degrees,
+            bolt_size: vec2(self.bolt_size),
+            bolt_damage: self.bolt_damage,
+        }
+    }
+}
+
 tuning_struct!(FlareTuning {
     interval: f32 = 0.8,
     size: (f32, f32) = (4.0, 4.0),

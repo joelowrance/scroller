@@ -312,7 +312,7 @@ fn the_designed_length_counts_each_standoff_in_full() {
     seconds(&mut app, 0.2);
     let stage = app.world().resource::<StageRun>();
     let scroll = stage.timeline.duration();
-    let standoffs = standoff_seconds(&stage.timeline);
+    let standoffs = crate::cabinets::on_foot::standoff::standoff_seconds(&stage.timeline);
     assert!(standoffs > 0.0, "the stand-in Stage has a Standoff");
     let clock = app.world().resource::<crate::kit::StageClock>();
     assert_eq!(clock.designed, scroll + standoffs);
