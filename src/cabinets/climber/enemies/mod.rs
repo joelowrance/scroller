@@ -684,7 +684,17 @@ fn think(
             // Off the way it came: toward the nearer side edge, or up for
             // things that hang from above.
             let at = screen_centre(enemy.kind, pos.0, camera);
-            if matches!(enemy.kind, Kind::Winch | Kind::Plumb) {
+            if let Brain::Winch(w) = &mut brain.0 {
+                // The hook reels in, then the carriage runs off the rail.
+                let hang = e.winch.rail_y - brain::HOOK_HANG;
+                if pos.0.y < hang {
+                    pos.0.y = (pos.0.y + e.winch.reel_speed * dt).min(hang);
+                } else {
+                    let side = if w.carriage_x >= 0.0 { 1.0 } else { -1.0 };
+                    w.carriage_x += side * e.winch.speed * 2.0 * dt;
+                    pos.0.x = w.carriage_x;
+                }
+            } else if enemy.kind == Kind::Plumb {
                 pos.0.y += 80.0 * dt;
             } else {
                 pos.0.x += at.x.signum() * 80.0 * dt;
