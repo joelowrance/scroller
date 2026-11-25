@@ -28,6 +28,9 @@ const MAX_STAGE_SECONDS = 240;
 // One long frame (up to 2 game seconds at 8x) may overshoot the end.
 const SECONDS_SLACK = 3;
 // Score a Stage clear must have reached, where a Cabinet pays a clear bonus.
+// Cabinet 3's scroll follows the Hero's run, so the autopilot's pace says
+// nothing about the designed time: its clear time is not checked.
+const CHECK_TIME = cabinet !== 3;
 const CLEAR_BONUS = { 1: 3000 };
 
 const failures = [];
@@ -148,7 +151,7 @@ try {
     const seconds = end.seconds.toFixed(1);
     const designed = end.designed.toFixed(1);
     console.log(`Stage ${name} cleared after ${seconds} game seconds (designed: ${designed})`);
-    if (Math.abs(end.seconds - end.designed) > SECONDS_SLACK) {
+    if (CHECK_TIME && Math.abs(end.seconds - end.designed) > SECONDS_SLACK) {
       fail(`Stage ${name} took ${seconds} game seconds, not about ${designed}`);
     }
     await wait(600);

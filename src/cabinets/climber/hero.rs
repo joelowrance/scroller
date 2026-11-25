@@ -531,7 +531,15 @@ pub(super) fn run(
     let was_entering = c.entering;
     let was_open = c.canopy_open;
     let before_feet = c.body.feet;
-    let moved = advance(c, wants, &power, &tower, camera, t, dt);
+    // The Stage is clear: no control, the Hero climbs off the top.
+    let climbing_off = stage.cursor.is_cleared();
+    let moved = if climbing_off {
+        c.body.feet += t.ladder.climb_speed * dt;
+        c.body.vy = 0.0;
+        platform::Moved::default()
+    } else {
+        advance(c, wants, &power, &tower, camera, t, dt)
+    };
     if was_entering && !c.entering {
         invulnerable.0 = t.hero.respawn_invulnerable_seconds;
     }
@@ -557,7 +565,8 @@ pub(super) fn run(
     }
     // A rung about every 8 px climbed; a step about every other run frame.
     let climbing = c.on_ladder() && c.body.feet != before_feet;
-    let running = c.body.grounded && wants.dir.x.abs() > 0.5 && !c.crouching;
+    let running = !climbing_off && c.body.grounded && wants.dir.x.abs() > 0.5 && !c.crouching;
+    let climbing = climbing || climbing_off;
     if climbing || running {
         c.anim += dt;
         sounds.0 -= dt;
@@ -603,7 +612,7 @@ pub(super) fn run(
     }
 
     // The scroll waits for a canopy drop and stops for a Standoff.
-    let hold = c.entering || standoff.is_some_and(|s| s.active());
+    let hold = c.entering || climbing_off || standoff.is_some_and(|s| s.active());
     commands.insert_resource(DrivenScroll(if hold { 0.0 } else { f32::INFINITY }));
 
     let (body, hit) = if c.crouching {
@@ -616,7 +625,11 @@ pub(super) fn run(
     hitbox.offset.y = (body.y - t.hero.body.1) / 2.0;
     transform.translation.x = c.body.x.round();
     transform.translation.y = (screen_y(c.body.feet, camera) + t.hero.body.1 / 2.0).round();
-    let f = look_frame(c, running);
+    let f = if climbing_off {
+        frame::CLIMB[(c.anim * 6.0) as usize % 2]
+    } else {
+        look_frame(c, running)
+    };
     if sprite.texture_atlas.as_ref().is_some_and(|a| a.index != f) {
         *sprite.as_mut() = Sprite {
             flip_x: c.facing < 0.0,
