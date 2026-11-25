@@ -94,6 +94,7 @@ impl Plugin for CabinetsPlugin {
                 placeholder::PlaceholderCabinetPlugin,
                 side_shooter::SideShooterPlugin,
                 vertical_shooter::VerticalShooterPlugin,
+                run_and_gun::RunAndGunPlugin,
             ));
     }
 }

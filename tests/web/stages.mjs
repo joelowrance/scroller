@@ -86,7 +86,8 @@ const startStage = async (c, s) => {
 };
 
 try {
-  await page.goto(`${base}?invincible&time_scale=${SCALE}`);
+  // The autopilot runs Cabinet 3's Hero, whose run drives the scroll.
+  await page.goto(`${base}?invincible&autopilot&time_scale=${SCALE}`);
   await page.waitForSelector("#loading", { state: "detached", timeout: 60_000 });
   await page.click("#game");
   await wait(500);

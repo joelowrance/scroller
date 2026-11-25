@@ -32,6 +32,7 @@ pub mod collision;
 pub mod combat;
 pub mod effects;
 pub mod motion;
+pub mod platform;
 pub mod scenery;
 pub mod stage;
 pub mod timeline;
@@ -41,12 +42,12 @@ pub use collision::TerrainHitbox;
 pub use collision::{Contact, Hitbox, Layer};
 pub use combat::{
     Damage, EnemyDestroyed, Health, Hero, HeroStruck, HitStop, Hurt, Immune, Invulnerable, Pickup,
-    PickupCollected, ScoreValue, Shield, ShieldAbsorbed,
+    PickupCollected, Pierce, ScoreValue, Shield, ShieldAbsorbed,
 };
 pub use effects::{Explode, Flash, Shake};
 pub use motion::{DespawnOffscreen, Lifetime, Velocity, projectile};
 pub use stage::{HitStopTimer, StageRestarted, stage_live};
-pub use timeline::{SpawnRequested, StageRun, StageTimeline};
+pub use timeline::{DrivenScroll, SpawnRequested, StageRun, StageTimeline};
 
 use crate::flow::{Screen, gameplay_running};
 

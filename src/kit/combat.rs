@@ -47,6 +47,14 @@ pub struct Immune;
 #[derive(Component, Clone, Copy, Debug)]
 pub struct ScoreValue(pub u64);
 
+/// A shot that passes through `through` enemies before it is spent, hitting
+/// each enemy once (Cabinet 3's bolt).
+#[derive(Component, Clone, Debug, Default)]
+pub struct Pierce {
+    pub through: u32,
+    pub hit: Vec<Entity>,
+}
+
 /// Damage a shot deals. Shots without it deal 1.
 #[derive(Component, Clone, Copy, Debug)]
 pub struct Damage(pub u32);
@@ -109,11 +117,13 @@ pub fn hero_invincible(tuning: &Tuning) -> bool {
     tuning.debug_keys && tuning.invincible_hero
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn resolve_contacts(
     mut commands: Commands,
     tuning: Res<Tuning>,
     mut contacts: MessageReader<Contact>,
     damage: Query<&Damage>,
+    mut pierce: Query<&mut Pierce>,
     pickups: Query<(&Pickup, &Transform)>,
     mut hurt: MessageWriter<Hurt>,
     mut struck: MessageWriter<HeroStruck>,
@@ -128,14 +138,27 @@ pub(super) fn resolve_contacts(
         }
         match (c.a_layer, c.b_layer) {
             (Layer::HeroShot, Layer::Enemy | Layer::Ground) | (Layer::Rocket, Layer::Ground) => {
-                spent.insert(c.a);
-                commands.entity(c.a).try_despawn();
+                // A piercing shot passes through its first enemies, hitting
+                // each one once.
+                if let Ok(mut pierce) = pierce.get_mut(c.a) {
+                    if pierce.hit.contains(&c.b) {
+                        continue;
+                    }
+                    pierce.hit.push(c.b);
+                    if pierce.hit.len() as u32 > pierce.through {
+                        spent.insert(c.a);
+                        commands.entity(c.a).try_despawn();
+                    }
+                } else {
+                    spent.insert(c.a);
+                    commands.entity(c.a).try_despawn();
+                }
                 hurt.write(Hurt {
                     target: c.b,
                     damage: damage.get(c.a).map_or(1, |d| d.0),
                 });
             }
-            (Layer::EnemyShot | Layer::Enemy | Layer::Terrain, Layer::Hero) => {
+            (Layer::EnemyShot | Layer::Enemy | Layer::Terrain | Layer::Hazard, Layer::Hero) => {
                 if c.a_layer == Layer::EnemyShot {
                     spent.insert(c.a);
                     commands.entity(c.a).try_despawn();

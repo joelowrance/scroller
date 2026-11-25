@@ -138,6 +138,13 @@ pub struct TimelineCursor {
     cleared: bool,
 }
 
+/// Set by a Cabinet whose Hero pushes the camera (Cabinet 3): how far the
+/// scroll may move this frame, in pixels. The timeline moves by the smaller
+/// of this and the Stage's scroll speed. Without the resource the scroll
+/// runs at the Stage's speed, as in the ship Cabinets.
+#[derive(Resource, Clone, Copy, Debug, Default, PartialEq)]
+pub struct DrivenScroll(pub f32);
+
 /// What happened during one [`TimelineCursor::advance`].
 #[derive(Debug, Default, PartialEq)]
 pub struct Step {
@@ -154,11 +161,18 @@ impl TimelineCursor {
 
     /// Scrolls forward by `dt` seconds, firing any spawns passed.
     pub fn advance(&mut self, timeline: &StageTimeline, dt: f32) -> Step {
+        self.advance_at_most(timeline, dt, f32::INFINITY)
+    }
+
+    /// Like [`Self::advance`], but moves no more than `limit` pixels (a
+    /// Cabinet whose Hero drives the scroll, see [`DrivenScroll`]).
+    pub fn advance_at_most(&mut self, timeline: &StageTimeline, dt: f32, limit: f32) -> Step {
         if self.cleared {
             return Step::default();
         }
         let speed = timeline.speed_at(self.position).max(0.0);
-        self.position = (self.position + speed * dt).min(timeline.length);
+        let step = (speed * dt).min(limit.max(0.0));
+        self.position = (self.position + step).min(timeline.length);
         let first = self.next_spawn;
         while timeline
             .spawns
