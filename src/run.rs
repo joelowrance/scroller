@@ -40,6 +40,10 @@ pub struct Session {
     /// Cleared at every Cabinet Transition.
     #[serde(default)]
     pub power_ups: serde_json::Value,
+    /// Points earned in each Cabinet, for the Ending's tally. A Save from
+    /// before this was recorded loads as zeros.
+    #[serde(default)]
+    pub cabinet_scores: [u64; CABINET_COUNT],
 }
 
 /// What happens after the current Stage is cleared.
@@ -90,6 +94,7 @@ impl Session {
             },
             next_extra_life: tuning.first_extra_life,
             power_ups: serde_json::Value::Null,
+            cabinet_scores: [0; CABINET_COUNT],
         }
     }
 
@@ -97,6 +102,9 @@ impl Session {
     /// Extra lives beyond `max_lives` are not stored, but thresholds still advance.
     pub fn add_score(&mut self, points: u64, tuning: &Tuning) -> u32 {
         self.score = self.score.saturating_add(points);
+        if let Some(tally) = self.cabinet_scores.get_mut(self.cabinet) {
+            *tally = tally.saturating_add(points);
+        }
         let mut earned = 0;
         while self.score >= self.next_extra_life {
             earned += 1;
@@ -216,6 +224,28 @@ mod tests {
         assert_eq!(s.clear_stage(), Advance::NextStage);
         assert_eq!(s.clear_stage(), Advance::PracticeComplete);
         assert_eq!(s.cabinet, 2);
+    }
+
+    #[test]
+    fn points_are_tallied_by_cabinet() {
+        let t = tuning();
+        let mut s = Session::new_run(&t);
+        s.add_score(500, &t);
+        s.clear_stage();
+        s.add_score(250, &t);
+        s.clear_stage();
+        s.add_score(1000, &t);
+        assert_eq!(s.cabinet_scores, [750, 1000, 0, 0]);
+        assert_eq!(s.cabinet_scores.iter().sum::<u64>(), s.score);
+    }
+
+    #[test]
+    fn a_save_without_a_tally_still_loads() {
+        let t = tuning();
+        let mut json = serde_json::to_value(Session::new_run(&t)).unwrap();
+        json.as_object_mut().unwrap().remove("cabinet_scores");
+        let s: Session = serde_json::from_value(json).unwrap();
+        assert_eq!(s.cabinet_scores, [0; CABINET_COUNT]);
     }
 
     #[test]

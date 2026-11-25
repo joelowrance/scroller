@@ -32,15 +32,15 @@ fn into_cabinet_4(session: Res<Session>) -> bool {
 
 /// A stretch of the sequence, from `.0` to `.1` seconds.
 #[derive(Clone, Copy, Debug)]
-pub(super) struct Span(f32, f32);
+pub(super) struct Span(pub(super) f32, pub(super) f32);
 
 impl Span {
     /// 0 before the span, 1 after it, linear within.
-    fn at(self, t: f32) -> f32 {
+    pub(super) fn at(self, t: f32) -> f32 {
         ((t - self.0) / (self.1 - self.0)).clamp(0.0, 1.0)
     }
 
-    fn contains(self, t: f32) -> bool {
+    pub(super) fn contains(self, t: f32) -> bool {
         (self.0..self.1).contains(&t)
     }
 }

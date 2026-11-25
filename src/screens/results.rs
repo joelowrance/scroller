@@ -1,5 +1,5 @@
-//! The end of a Run: Game Over or the Ending, then initials for the High
-//! Score Table when the score earns a place.
+//! The end of a Run: Game Over (the Ending has its own screen, `ending.rs`),
+//! then initials for the High Score Table when the score earns a place.
 
 use bevy::prelude::*;
 
@@ -12,12 +12,12 @@ use crate::input::{Button, Controls};
 use crate::run::{Mode, Session};
 use crate::storage::{self, HIGH_SCORES_KEY};
 
-const GOLD: Color = Color::srgb(1.0, 0.85, 0.2);
+pub(super) const GOLD: Color = Color::srgb(1.0, 0.85, 0.2);
 const LETTERS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 
 /// Seconds before the result screen accepts input, so a button mashed
 /// during play doesn't skip it.
-const INPUT_DELAY: f32 = 1.0;
+pub(super) const INPUT_DELAY: f32 = 1.0;
 
 #[derive(Resource)]
 struct ResultDelay(Timer);
@@ -33,16 +33,11 @@ fn spawn_result(
         INPUT_DELAY,
         TimerMode::Once,
     )));
-    let (headline, subline, color) = match (screen, session.mode) {
-        (Screen::Ending, _) => ("YOU FINISHED!", "EVERY CABINET CLEARED", GOLD),
-        (_, Mode::Practice) => ("PRACTICE OVER", "", Color::WHITE),
-        _ => ("GAME OVER", "", Color::srgb(1.0, 0.25, 0.25)),
+    let (headline, color) = match session.mode {
+        Mode::Practice => ("PRACTICE OVER", Color::WHITE),
+        Mode::Run | Mode::Demo => ("GAME OVER", Color::srgb(1.0, 0.25, 0.25)),
     };
-    backdrop.0 = if screen == Screen::Ending {
-        Color::srgb(0.06, 0.03, 0.0)
-    } else {
-        Color::BLACK
-    };
+    backdrop.0 = Color::BLACK;
     commands
         .spawn((
             Transform::default(),
@@ -51,7 +46,6 @@ fn spawn_result(
         ))
         .with_children(|p| {
             p.spawn(text_at(PixelText::new(headline, color), 0.0, 50.0, 3));
-            p.spawn(text_at(PixelText::new(subline, Color::WHITE), 0.0, 20.0, 1));
             if session.mode == Mode::Run {
                 p.spawn(text_at(
                     PixelText::new(format!("SCORE {}", session.score), Color::WHITE),
@@ -82,7 +76,17 @@ fn update_result(
     if !(controls.just_pressed(Button::A) || controls.just_pressed(Button::Start)) {
         return;
     }
-    let target = match session.mode {
+    next.set(after_result(&mut commands, &session, &scores));
+}
+
+/// Where the end of a Run (or Practice) goes once the player moves on:
+/// initials if the score makes the High Score Table, otherwise the table.
+pub(super) fn after_result(
+    commands: &mut Commands,
+    session: &Session,
+    scores: &HighScoreTable,
+) -> Screen {
+    match session.mode {
         Mode::Practice => Screen::PracticeSelect,
         // Never reached (a demo ends itself), but harmless if it were.
         Mode::Demo => Screen::Title,
@@ -91,8 +95,7 @@ fn update_result(
             commands.insert_resource(ShowScoresFirst);
             Screen::Title
         }
-    };
-    next.set(target);
+    }
 }
 
 #[derive(Resource)]
@@ -205,21 +208,16 @@ fn update_name_entry(
     }
 }
 
-fn showing_result(state: Res<State<Screen>>) -> bool {
-    matches!(state.get(), Screen::GameOver | Screen::Ending)
-}
-
 pub struct ResultsPlugin;
 
 impl Plugin for ResultsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(Screen::GameOver), spawn_result)
-            .add_systems(OnEnter(Screen::Ending), spawn_result)
             .add_systems(OnEnter(Screen::NameEntry), spawn_name_entry)
             .add_systems(
                 Update,
                 (
-                    update_result.run_if(showing_result),
+                    update_result.run_if(in_state(Screen::GameOver)),
                     update_name_entry.run_if(in_state(Screen::NameEntry)),
                 ),
             );

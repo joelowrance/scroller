@@ -14,6 +14,9 @@
     // the High Score Table (one Cabinet per round).
     attract_demo_seconds: 10.0,
 
+    // The Ending pays this for every life left at the end of the Run.
+    ending_life_bonus: 10000,
+
     // Developer keys: K loses a life, P adds 1000 points, C clears the Stage,
     // F2 shows the sprite sheet. Off for players: `cargo run` (a dev build)
     // forces them on, and on the web `?debug` in the URL turns them on.
