@@ -10,6 +10,10 @@
     // Seconds before Attract Mode flips between the title and High Score Table.
     attract_panel_seconds: 8.0,
 
+    // Seconds of scripted gameplay Attract Mode plays between the title and
+    // the High Score Table (one Cabinet per round).
+    attract_demo_seconds: 10.0,
+
     // Developer keys: K loses a life, P adds 1000 points, C clears the Stage,
     // F2 shows the sprite sheet. Off for players: `cargo run` (a dev build)
     // forces them on, and on the web `?debug` in the URL turns them on.

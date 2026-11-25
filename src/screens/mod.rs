@@ -9,6 +9,7 @@ mod practice;
 mod results;
 mod stage_card;
 mod title;
+pub use title::ShowScoresFirst;
 mod transition;
 
 pub struct ScreensPlugin;

@@ -63,7 +63,7 @@ fn toggle(
 fn spawn_overlay(commands: &mut Commands, mode: Mode) {
     let (quit, warning) = match mode {
         Mode::Run => (QUIT_RUN, "QUITTING NOW ENDS THIS RUN"),
-        Mode::Practice => (QUIT_PRACTICE, ""),
+        Mode::Practice | Mode::Demo => (QUIT_PRACTICE, ""),
     };
     commands.spawn((
         PauseOverlay,

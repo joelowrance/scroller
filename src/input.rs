@@ -36,6 +36,11 @@ const ALL: [Button; 7] = [
 pub struct Controls {
     held: u8,
     previous: u8,
+    /// A button went down on a real device this frame, whatever a scripted
+    /// demo is feeding in as `held`.
+    fresh: bool,
+    /// The devices' state last frame.
+    raw: u8,
 }
 
 impl Controls {
@@ -45,7 +50,21 @@ impl Controls {
         Self {
             held: buttons.iter().fold(0, |held, b| held | bit(*b)),
             previous: 0,
+            fresh: false,
+            raw: 0,
         }
+    }
+
+    /// Replaces the device state with scripted buttons (Attract Mode's demo).
+    pub fn script(&mut self, buttons: &[Button]) {
+        self.previous = self.held;
+        self.held = buttons.iter().fold(0, |held, b| held | bit(*b));
+    }
+
+    /// Whether a real device button went down this frame, even while a demo
+    /// is scripting the controls.
+    pub fn device_pressed(&self) -> bool {
+        self.fresh
     }
 
     pub fn held(&self, button: Button) -> bool {
@@ -102,7 +121,7 @@ fn gamepad_held(pad: &Gamepad, button: Button) -> bool {
     }
 }
 
-fn read_controls(
+pub fn read_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     gamepads: Query<&Gamepad>,
     mut controls: ResMut<Controls>,
@@ -118,6 +137,9 @@ fn read_controls(
             held |= bit(button);
         }
     }
+    // Compared with the last device read, not a scripted frame.
+    controls.fresh = held & !controls.raw != 0;
+    controls.raw = held;
     controls.previous = controls.held;
     controls.held = held;
 }
@@ -139,7 +161,7 @@ mod tests {
     fn just_pressed_only_on_the_first_frame() {
         let mut c = Controls {
             held: bit(Button::A),
-            previous: 0,
+            ..default()
         };
         assert!(c.just_pressed(Button::A));
         c.previous = c.held;
@@ -151,7 +173,7 @@ mod tests {
     fn opposite_directions_cancel() {
         let c = Controls {
             held: bit(Button::Left) | bit(Button::Right) | bit(Button::Up),
-            previous: 0,
+            ..default()
         };
         assert_eq!(c.direction(), Vec2::new(0.0, 1.0));
     }

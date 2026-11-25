@@ -29,6 +29,7 @@ fn spawn(mut commands: Commands, session: Res<Session>) {
     let accent = CABINETS[session.cabinet].accent;
     let stage = match session.mode {
         Mode::Run => format!("{}-{}", session.cabinet + 1, session.stage + 1),
+        Mode::Demo => "DEMO".to_string(),
         Mode::Practice => format!("PRACTICE {}-{}", session.cabinet + 1, session.stage + 1),
     };
     let at = |x: f32| Transform::from_xyz(x, HUD_Y, HUD_Z);

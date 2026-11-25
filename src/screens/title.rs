@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 
 use super::menu::Menu;
+use crate::demo::{self, DemoCursor};
 use crate::display::Backdrop;
 use crate::flow::{Progress, Screen, continue_run, save_exists, start_new_run};
 use crate::font::{Blink, PixelText, text_at};
@@ -174,6 +175,7 @@ fn update(
     controls: Res<Controls>,
     tuning: Res<Tuning>,
     mut attract: ResMut<Attract>,
+    mut cursor: ResMut<DemoCursor>,
     mut next: ResMut<NextState<Screen>>,
     mut main_menu: Single<&mut Menu, (With<MainMenu>, Without<ConfirmPanel>)>,
     mut confirm_menu: Single<&mut Menu, Without<MainMenu>>,
@@ -196,15 +198,15 @@ fn update(
             return;
         }
     } else if !confirming && attract.idle.tick(time.delta()).just_finished() {
-        attract.showing_scores = !attract.showing_scores;
-        main_menu.active = !attract.showing_scores;
-        let (title, scores) = if attract.showing_scores {
-            (Visibility::Hidden, Visibility::Inherited)
-        } else {
-            (Visibility::Inherited, Visibility::Hidden)
-        };
-        **panels.p0() = title;
-        **panels.p1() = scores;
+        if !attract.showing_scores {
+            // Title, then a few seconds of gameplay, then the High Score Table.
+            demo::start(&mut commands, &mut cursor, &tuning, &mut next);
+            return;
+        }
+        attract.showing_scores = false;
+        main_menu.active = true;
+        **panels.p0() = Visibility::Inherited;
+        **panels.p1() = Visibility::Hidden;
         return;
     }
 

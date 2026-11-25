@@ -3,6 +3,7 @@
 
 mod audio;
 mod cabinets;
+mod demo;
 mod display;
 mod flow;
 mod font;
@@ -49,6 +50,7 @@ fn main() {
         sprites::SpritesPlugin,
         input::InputPlugin,
         flow::FlowPlugin,
+        demo::DemoPlugin,
         kit::KitPlugin,
         cabinets::CabinetsPlugin,
         screens::ScreensPlugin,
