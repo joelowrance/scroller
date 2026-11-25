@@ -489,6 +489,7 @@ pub(super) fn run(
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
+    demo: Option<Res<crate::demo::Demo>>,
     power: Res<PowerUps>,
     stage: Res<StageRun>,
     standoff: Option<Res<Standoff>>,
@@ -516,7 +517,7 @@ pub(super) fn run(
     if c.fell {
         return;
     }
-    let auto = tuning.debug_keys && t.debug_autopilot;
+    let auto = demo.is_some() || (tuning.debug_keys && t.debug_autopilot);
     let wants = if auto {
         autopilot(c, &tower, camera)
     } else {
@@ -691,6 +692,7 @@ pub(super) fn fire(
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
+    demo: Option<Res<crate::demo::Demo>>,
     power: Res<PowerUps>,
     stage: Res<StageRun>,
     mut hero: Single<&mut Climber>,
@@ -701,7 +703,7 @@ pub(super) fn fire(
     let dt = time.delta_secs();
     let c = &mut **hero;
     c.gun_cooldown -= dt;
-    let auto = tuning.debug_keys && t.debug_autopilot;
+    let auto = demo.is_some() || (tuning.debug_keys && t.debug_autopilot);
     if c.entering || c.fell || !(auto || controls.held(Button::B)) {
         c.gun_cooldown = c.gun_cooldown.max(0.0);
         return;

@@ -19,7 +19,7 @@ use crate::run::{Mode, Session};
 use crate::screens::ShowScoresFirst;
 use crate::tuning::Tuning;
 
-use Button::{A, B, Down, Left, Right, Up};
+use Button::{A, Down, Left, Right, Up};
 
 /// One beat of a script: hold these buttons for this many seconds.
 type Step = (f32, &'static [Button]);
@@ -45,27 +45,11 @@ const VERTICAL_SHOOTER: &[Step] = &[
     (0.5, &[A, Down]),
 ];
 
-/// Cabinet 3: run right, firing (B), hopping (A) now and then.
-const RUN_AND_GUN: &[Step] = &[
-    (0.9, &[Right, B]),
-    (0.4, &[Right, A, B]),
-    (0.7, &[Right, B]),
-    (0.4, &[Right, A, B]),
-    (0.5, &[B]),
-    (0.4, &[Right, A, B]),
-];
-
-/// Cabinet 4: climb by hopping (A) side to side, firing (B).
-const CLIMBER: &[Step] = &[
-    (0.5, &[Right, B]),
-    (0.35, &[Right, A, B]),
-    (0.5, &[Right, B]),
-    (0.35, &[Left, A, B]),
-    (0.5, &[Left, B]),
-    (0.35, &[Right, A, B]),
-];
-
-const SCRIPTS: [&[Step]; CABINET_COUNT] = [SIDE_SHOOTER, VERTICAL_SHOOTER, RUN_AND_GUN, CLIMBER];
+/// Cabinets 3 and 4 have no script: while a [`Demo`] is on, their Heroes use
+/// the Cabinet's own autopilot (the route their Stage tests clear unattended),
+/// because a Hero on foot needs the terrain to be read.
+const SCRIPTS: [Option<&[Step]>; CABINET_COUNT] =
+    [Some(SIDE_SHOOTER), Some(VERTICAL_SHOOTER), None, None];
 
 /// The Cabinet the next demo shows; each Attract Mode round takes the next.
 #[derive(Resource, Default)]
@@ -134,7 +118,9 @@ fn drive(
         finish(&mut commands, &mut next, true);
         return;
     }
-    controls.script(buttons_at(SCRIPTS[session.cabinet], demo.elapsed));
+    if let Some(script) = SCRIPTS[session.cabinet] {
+        controls.script(buttons_at(script, demo.elapsed));
+    }
 }
 
 fn label(mut commands: Commands) {
@@ -190,10 +176,10 @@ mod tests {
     }
 
     #[test]
-    fn every_cabinet_has_a_script_that_moves_and_acts() {
-        for script in SCRIPTS {
+    fn the_scripted_cabinets_act() {
+        for script in SCRIPTS.into_iter().flatten() {
             assert!(script.iter().all(|(len, _)| *len > 0.0));
-            assert!(script.iter().any(|(_, b)| b.contains(&A) || b.contains(&B)));
+            assert!(script.iter().any(|(_, b)| b.contains(&A)));
         }
     }
 

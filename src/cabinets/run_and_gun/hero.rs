@@ -273,6 +273,7 @@ pub(super) fn run(
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
+    demo: Option<Res<crate::demo::Demo>>,
     power: Res<PowerUps>,
     stage: Res<StageRun>,
     standoff: Option<Res<Standoff>>,
@@ -296,7 +297,7 @@ pub(super) fn run(
     if runner.fell {
         return;
     }
-    let auto = tuning.debug_keys && t.debug_autopilot;
+    let auto = demo.is_some() || (tuning.debug_keys && t.debug_autopilot);
     let walking_off = stage.cursor.is_cleared();
     let (dir, jump_pressed, jump_held) = if walking_off {
         // The Stage is clear: no control, the Hero walks off to the right.
@@ -458,6 +459,7 @@ pub(super) fn fire(
     time: Res<Time>,
     tuning: Res<Tuning>,
     controls: Res<Controls>,
+    demo: Option<Res<crate::demo::Demo>>,
     power: Res<PowerUps>,
     mut hero: Single<&mut Runner>,
     stage: Res<StageRun>,
@@ -470,7 +472,7 @@ pub(super) fn fire(
     let runner = &mut **hero;
     runner.gun_cooldown -= dt;
     runner.flare_cooldown -= dt;
-    let auto = tuning.debug_keys && t.debug_autopilot;
+    let auto = demo.is_some() || (tuning.debug_keys && t.debug_autopilot);
     if runner.entering
         || runner.fell
         || stage.cursor.is_cleared()
