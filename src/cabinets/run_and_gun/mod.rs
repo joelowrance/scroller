@@ -111,28 +111,12 @@ fn spawn_requested(
     }
 }
 
-/// Seconds the Stage's Standoffs hold the scroll when each runs its full
-/// length.
-fn standoff_seconds(timeline: &crate::kit::StageTimeline) -> f32 {
-    timeline
-        .spawns
-        .iter()
-        .filter(|s| s.kind == standoff::KIND)
-        .filter_map(|s| {
-            ron::Value::Map(s.params.clone())
-                .into_rust::<StandoffParams>()
-                .ok()
-        })
-        .map(|p| p.max_seconds.max(0.0))
-        .sum()
-}
-
 /// The Stage's designed length is its pace time: the scroll plus each
 /// Standoff at its full length, as the doc's tables count it. Runs in
 /// `PostUpdate`, after the kit has started the clock for the new Stage.
 fn clock_counts_standoffs(stage: Res<StageRun>, mut clock: ResMut<crate::kit::StageClock>) {
     if stage.is_added() {
-        clock.designed += standoff_seconds(&stage.timeline);
+        clock.designed += crate::cabinets::on_foot::standoff::standoff_seconds(&stage.timeline);
     }
 }
 

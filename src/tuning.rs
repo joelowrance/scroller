@@ -7,6 +7,7 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
+use crate::cabinets::climber::tuning::ClimberTuning;
 use crate::cabinets::run_and_gun::tuning::RunAndGunTuning;
 use crate::cabinets::side_shooter::tuning::SideShooterTuning;
 use crate::cabinets::vertical_shooter::tuning::VerticalShooterTuning;
@@ -34,6 +35,7 @@ pub struct Tuning {
     pub side_shooter: SideShooterTuning,
     pub vertical_shooter: VerticalShooterTuning,
     pub run_and_gun: RunAndGunTuning,
+    pub climber: ClimberTuning,
 }
 
 /// Values for the shared gameplay kit used by every Cabinet.
@@ -87,6 +89,7 @@ impl Default for Tuning {
             side_shooter: SideShooterTuning::default(),
             vertical_shooter: VerticalShooterTuning::default(),
             run_and_gun: RunAndGunTuning::default(),
+            climber: ClimberTuning::default(),
         }
     }
 }
@@ -140,9 +143,12 @@ impl Tuning {
                     self.side_shooter.enemy_gallery = on;
                     self.vertical_shooter.enemy_gallery = on;
                     self.run_and_gun.enemy_gallery = on;
+                    self.climber.enemy_gallery = on;
                 }
                 "autopilot" => {
-                    self.run_and_gun.debug_autopilot = value != "0" && value != "false";
+                    let on = value != "0" && value != "false";
+                    self.run_and_gun.debug_autopilot = on;
+                    self.climber.debug_autopilot = on;
                 }
                 "time_scale" => {
                     if let Ok(scale) = value.parse() {

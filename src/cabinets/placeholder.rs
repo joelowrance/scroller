@@ -297,6 +297,7 @@ fn uses_placeholder(session: Option<Res<Session>>) -> bool {
         s.cabinet != super::side_shooter::CABINET
             && s.cabinet != super::vertical_shooter::CABINET
             && s.cabinet != super::run_and_gun::CABINET
+            && s.cabinet != super::climber::CABINET
     })
 }
 

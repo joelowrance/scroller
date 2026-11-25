@@ -5,6 +5,10 @@
 //!
 //! Positions are a body's *feet*: `x` is its centre, `feet` the bottom of its
 //! box. Up is +y.
+//!
+//! Cabinet 4 adds solid ledges (stood on, never dropped through, and
+//! blocking a head from below) and ladders ([`climb`]). Both come from
+//! [`TileQuery`] methods that default to none, so Cabinet 3 is unchanged.
 
 /// What a body stands on and runs into.
 pub trait TileQuery {
@@ -13,6 +17,39 @@ pub trait TileQuery {
     fn ground_top(&self, x0: f32, x1: f32) -> Option<f32>;
     /// The tops of the one-way ledges under the span that are solid now.
     fn ledge_tops(&self, x0: f32, x1: f32) -> Vec<f32>;
+    /// The tops of solid ledges under the span: stood on like ledges, but
+    /// never dropped through.
+    fn solid_tops(&self, _x0: f32, _x1: f32) -> Vec<f32> {
+        Vec::new()
+    }
+    /// The lowest underside of a solid piece over the span that a head
+    /// rising from `from` to `to` would cross, if any.
+    fn ceiling(&self, _x0: f32, _x1: f32, _from: f32, _to: f32) -> Option<f32> {
+        None
+    }
+    /// The ladder whose centre is within `window` of `x` and which reaches
+    /// height `y` (bottom <= y <= top), if any.
+    fn ladder_near(&self, _x: f32, _y: f32, _window: f32) -> Option<Ladder> {
+        None
+    }
+}
+
+/// A ladder: one tile wide, centred on `x`, from a ledge at `bottom` to one
+/// at `top`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Ladder {
+    pub x: f32,
+    pub bottom: f32,
+    pub top: f32,
+}
+
+/// The ladder keys (`climber.ladder` in Cabinet 4).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LadderParams {
+    pub climb_speed: f32,
+    pub grab_window: f32,
+    /// A jump off a ladder, as a fraction of the take-off speed.
+    pub jump_speed_fraction: f32,
 }
 
 /// The jump keys (`run_and_gun.jump` in Cabinet 3).
@@ -40,6 +77,8 @@ pub struct Control {
     pub drop_through: bool,
     /// A mid-air jump at this speed is allowed (the Jet), if any.
     pub air_jump: Option<f32>,
+    /// Up (+1) or Down (-1) held, for ladders.
+    pub climb: f32,
 }
 
 /// What happened during one [`step`].
@@ -47,6 +86,10 @@ pub struct Control {
 pub struct Moved {
     pub jumped: bool,
     pub air_jumped: bool,
+    /// Caught a ladder this frame.
+    pub grabbed: bool,
+    /// Bumped a head on a solid ledge.
+    pub bumped: bool,
     pub landed: bool,
     pub blocked: bool,
 }
@@ -58,7 +101,11 @@ pub struct Body {
     pub feet: f32,
     pub vy: f32,
     pub half_width: f32,
+    /// Its height, for ceilings (0: no head, as in Cabinet 3).
+    pub height: f32,
     pub grounded: bool,
+    /// The ladder it is on, if any.
+    pub ladder: Option<Ladder>,
     /// Seconds left to jump after running off an edge.
     coyote: f32,
     /// Seconds left in which an early jump press still counts.
@@ -97,13 +144,16 @@ impl Body {
         let ground = world
             .ground_top(x0, x1)
             .filter(|t| (*t - self.feet).abs() <= SNAP);
+        let near = |t: &f32| *t <= self.feet + SNAP && *t >= self.feet - SNAP;
+        let solid = world.solid_tops(x0, x1).into_iter().filter(near);
         let ledges = if self.dropping > 0.0 {
-            None
+            solid.reduce(f32::max)
         } else {
             world
                 .ledge_tops(x0, x1)
                 .into_iter()
-                .filter(|t| *t <= self.feet + SNAP && *t >= self.feet - SNAP)
+                .filter(near)
+                .chain(solid)
                 .reduce(f32::max)
         };
         match (ground, ledges) {
@@ -119,6 +169,10 @@ impl Body {
             && world
                 .ground_top(x0, x1)
                 .is_none_or(|t| t < self.feet - SNAP)
+            && !world
+                .solid_tops(x0, x1)
+                .iter()
+                .any(|t| (*t - self.feet).abs() <= SNAP)
     }
 }
 
@@ -214,17 +268,29 @@ pub fn step(
         p.gravity_down
     };
     body.vy = (body.vy - gravity * dt).max(-p.max_fall);
-    let next = body.feet + body.vy * dt;
+    let mut next = body.feet + body.vy * dt;
+    if body.vy > 0.0 && body.height > 0.0 {
+        let (x0, x1) = body.span(body.x);
+        let head = body.feet + body.height;
+        if let Some(under) = world.ceiling(x0, x1, head, next + body.height) {
+            next = (under - body.height).max(body.feet);
+            body.vy = 0.0;
+            body.cut_done = true;
+            moved.bumped = true;
+        }
+    }
     if body.vy <= 0.0 {
         let (x0, x1) = body.span(body.x);
         let mut floor = world
             .ground_top(x0, x1)
             .filter(|t| *t <= body.feet + SNAP && *t >= next);
+        let mut tops = world.solid_tops(x0, x1);
         if body.dropping <= 0.0 {
-            for t in world.ledge_tops(x0, x1) {
-                if t <= body.feet + SNAP && t >= next {
-                    floor = Some(floor.map_or(t, |f| f.max(t)));
-                }
+            tops.extend(world.ledge_tops(x0, x1));
+        }
+        for t in tops {
+            if t <= body.feet + SNAP && t >= next {
+                floor = Some(floor.map_or(t, |f| f.max(t)));
             }
         }
         if let Some(top) = floor {
@@ -237,6 +303,80 @@ pub fn step(
     }
     body.feet = next;
     moved
+}
+
+/// Ladders: catching one, climbing it, and leaving it. Call before [`step`]
+/// each frame; while it returns `Some`, the body is on a ladder and `step`
+/// is skipped.
+///
+/// - Up or Down with the body's centre within the grab window of a ladder
+///   catches it, on a ledge or in the air (Down from the ledge at its top).
+/// - On it, the body climbs at the climb speed, snapped to its centre.
+///   Past the top it stands on the ledge there; at the bottom, on the ledge
+///   below.
+/// - The jump button with left or right jumps off at a fraction of the
+///   take-off speed; with no direction it lets go and falls.
+pub fn climb(
+    body: &mut Body,
+    input: Control,
+    lp: &LadderParams,
+    p: &JumpParams,
+    world: &impl TileQuery,
+    dt: f32,
+) -> Option<Moved> {
+    let mut moved = Moved::default();
+    if body.ladder.is_none() {
+        if input.climb == 0.0 || input.jump_pressed {
+            return None;
+        }
+        // Look a pixel the way it wants to go, so where one ladder ends and
+        // the next begins, Up takes the one above and Down the one below.
+        let ladder = world.ladder_near(body.x, body.feet + input.climb.signum(), lp.grab_window)?;
+        let at_top = (body.feet - ladder.top).abs() <= SNAP;
+        let at_bottom = (body.feet - ladder.bottom).abs() <= SNAP;
+        // Up climbs from below its top; Down climbs from above its bottom.
+        let wants = if input.climb > 0.0 {
+            !at_top || !body.grounded
+        } else {
+            !at_bottom || !body.grounded
+        };
+        if !wants || (body.grounded && input.climb > 0.0 && at_top) {
+            return None;
+        }
+        body.ladder = Some(ladder);
+        body.grounded = false;
+        body.vy = 0.0;
+        body.coyote = 0.0;
+        body.buffer = 0.0;
+        moved.grabbed = true;
+    }
+    let ladder = body.ladder.expect("on a ladder");
+    body.x = ladder.x;
+    if input.jump_pressed {
+        body.ladder = None;
+        if input.run != 0.0 {
+            body.vy = p.speed * lp.jump_speed_fraction;
+            body.cut_done = false;
+            body.x += input.run * dt;
+            moved.jumped = true;
+        } else {
+            body.vy = 0.0;
+        }
+        return Some(moved);
+    }
+    body.feet += input.climb.signum() * (input.climb != 0.0) as u8 as f32 * lp.climb_speed * dt;
+    if body.feet >= ladder.top {
+        body.feet = ladder.top;
+        body.ladder = None;
+        body.grounded = true;
+        moved.landed = true;
+    } else if body.feet <= ladder.bottom {
+        body.feet = ladder.bottom;
+        body.ladder = None;
+        body.grounded = true;
+        moved.landed = true;
+    }
+    Some(moved)
 }
 
 #[cfg(test)]

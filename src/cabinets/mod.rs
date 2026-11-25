@@ -13,6 +13,7 @@ use crate::run::Session;
 use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
 pub mod climber;
+pub mod on_foot;
 mod placeholder;
 pub mod run_and_gun;
 pub mod shooter;
@@ -96,6 +97,7 @@ impl Plugin for CabinetsPlugin {
                 side_shooter::SideShooterPlugin,
                 vertical_shooter::VerticalShooterPlugin,
                 run_and_gun::RunAndGunPlugin,
+                climber::ClimberPlugin,
             ));
     }
 }
