@@ -248,10 +248,12 @@ pub enum Song {
     Crown,
     /// Cabinet 4, Stage 2's run-out: builds to a held chord (plays once).
     CrownRise,
+    /// The Ending, under the summit and the score tally.
+    Daybreak,
 }
 
 impl Song {
-    pub const ALL: [Song; 17] = [
+    pub const ALL: [Song; 18] = [
         Song::Title,
         Song::LowTide,
         Song::Foundry,
@@ -269,6 +271,7 @@ impl Song {
         Song::Footings,
         Song::Crown,
         Song::CrownRise,
+        Song::Daybreak,
     ];
 }
 
@@ -300,6 +303,7 @@ pub fn song_for_screen(screen: Screen, card: Option<CardReason>) -> Option<Song>
         // A Cabinet's last Stage goes straight to the Transition; the sting
         // opens it until each Transition has its own music.
         Screen::CabinetTransition => Some(Song::StageClear),
+        Screen::Ending => Some(Song::Daybreak),
         _ => None,
     }
 }
@@ -615,6 +619,8 @@ mod tests {
         assert_eq!(defs[&Song::Footings].bpm, 112.0);
         assert_eq!(defs[&Song::Crown].bpm, 144.0);
         assert_eq!(defs[&Song::CrownRise].bpm, 144.0);
+        // The Ending (#28): slower, after CrownRise's held chord.
+        assert_eq!(defs[&Song::Daybreak].bpm, 116.0);
     }
 
     /// Writes every sound to `target/audio-preview/*.wav` for listening:
@@ -696,6 +702,10 @@ mod tests {
         go(&mut app, Screen::StageCard);
         assert_eq!(wanted(&app), None);
         go(&mut app, Screen::Playing);
+        assert_eq!(wanted(&app), None);
+        go(&mut app, Screen::Ending);
+        assert_eq!(wanted(&app), Some(Song::Daybreak));
+        go(&mut app, Screen::NameEntry);
         assert_eq!(wanted(&app), None);
     }
 

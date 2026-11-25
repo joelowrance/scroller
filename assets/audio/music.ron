@@ -1539,4 +1539,99 @@
         },
         order: ["reach", "climb", "top"],
     ),
+
+    // "Daybreak": original. The Ending, over the sun rising on the cloud sea
+    // and the score tally. 116 BPM, C major, picking up CrownRise's held C
+    // chord: a slow fanfare, then a warm, singing tune over a rolling
+    // arpeggio. 16 bars; loops while the tally waits for the player.
+    Daybreak: (
+        bpm: 116,
+        rows_per_beat: 4,
+        channels: [
+            // Lead
+            (instrument: (wave: Square(duty: 0.25), volume: 0.20,
+                          env: (attack: 0.01, decay: 0.2, sustain: 0.65, release: 0.12),
+                          vibrato: (depth: 0.18, rate: 5.0))),
+            // Arpeggio
+            (instrument: (wave: Square(duty: 0.125), volume: 0.08,
+                          env: (decay: 0.08, sustain: 0.3, release: 0.04))),
+            // Bass
+            (instrument: (wave: Triangle, volume: 0.32,
+                          env: (decay: 0.1, sustain: 0.7, release: 0.04))),
+            // Drums
+            (kit: {
+                "k": (freq: 130, gate: 0.10, instrument: (wave: Triangle, volume: 0.32, slide: -26,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.01))),
+                "s": (freq: 5000, gate: 0.10, instrument: (wave: Noise, volume: 0.18,
+                      env: (decay: 0.10, sustain: 0.0, release: 0.02))),
+                "h": (freq: 13000, gate: 0.025, instrument: (wave: Noise, volume: 0.09,
+                      env: (decay: 0.025, sustain: 0.0, release: 0.01))),
+                "c": (freq: 7000, gate: 0.8, instrument: (wave: Noise, volume: 0.13,
+                      env: (decay: 0.8, sustain: 0.0, release: 0.1))),
+            }),
+        ],
+        patterns: {
+        "f1": [ // C, the fanfare
+            "G4 - - C5 - - E5 - - - - - G5 - - -",
+            "C4 - - E4 - - G4 - - - - - C5 - - -",
+            "C2 - - - - - - - C2 - - - G1 - - -",
+            "c . . k . . k . k . . . k . s s",
+        ],
+        "f2": [ // F to G
+            "A5 - - - G5 - F5 - G5 - - - - - - -",
+            "F4 - - A4 - - C5 - D5 - - B4 - - G4 -",
+            "F2 - - - - - - - G2 - - - - - G1 -",
+            "k . . k . . k . k . s . k s s s",
+        ],
+        "a1": [ // C
+            "E5 - - - - - D5 C5 D5 - E5 - G5 - - -",
+            "C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 E4",
+            "C2 - C3 - C2 - C3 - C2 - C3 - C2 - C3 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "a2": [ // Am
+            "A5 - - - G5 - E5 - - - D5 - C5 - - -",
+            "A3 C4 E4 A4 E4 C4 A3 C4 E4 A4 E4 C4 A3 C4 E4 C4",
+            "A1 - A2 - A1 - A2 - A1 - A2 - A1 - A2 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "a3": [ // F
+            "F5 - - - E5 - F5 - A5 - - - G5 - F5 -",
+            "F3 A3 C4 F4 C4 A3 F3 A3 C4 F4 C4 A3 F3 A3 C4 A3",
+            "F1 - F2 - F1 - F2 - F1 - F2 - F1 - F2 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "a4": [ // G
+            "G5 - - - - - - - D5 - E5 - F5 - D5 -",
+            "G3 B3 D4 G4 D4 B3 G3 B3 D4 G4 D4 B3 G3 B3 D4 B3",
+            "G1 - G2 - G1 - G2 - G1 - G2 - G1 - G2 -",
+            "k . h . s . h . k . s . s s s s",
+        ],
+        "b1": [ // C
+            "C6 - - - B5 - G5 - - - E5 - G5 - - -",
+            "C4 E4 G4 C5 G4 E4 C4 E4 G4 C5 G4 E4 C4 E4 G4 E4",
+            "C2 - C3 - C2 - C3 - C2 - C3 - C2 - C3 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "b2": [ // E, leaning to Am
+            "G#5 - - - B5 - - - E5 - - - - - - -",
+            "E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 E5 B4 G#4 E4 G#4 B4 G#4",
+            "E2 - E3 - E2 - E3 - E2 - E3 - E2 - E3 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "b3": [ // F to Fm, the sigh before home
+            "A5 - - - F5 - C6 - - - Ab5 - - - G5 -",
+            "F4 A4 C5 A4 F4 A4 C5 A4 F4 Ab4 C5 Ab4 F4 Ab4 C5 Ab4",
+            "F1 - F2 - F1 - F2 - F1 - F2 - F1 - F2 -",
+            "k . h . s . h . k . k h s . h h",
+        ],
+        "b4": [ // G to C, home
+            "G5 - - - A5 - B5 - C6 - - - - - - -",
+            "G3 B3 D4 G4 B4 D5 G5 D5 C5 G4 E4 C4 E4 G4 C5 G4",
+            "G1 - G2 - G1 - B1 - C2 - - - C2 - G1 -",
+            "k . h . s . s s c . . . k . s .",
+        ],
+        },
+        order: ["f1", "f2", "a1", "a2", "a3", "a4", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "b1", "b2"],
+    ),
 }

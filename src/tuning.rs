@@ -26,6 +26,8 @@ pub struct Tuning {
     /// Seconds of Cabinet gameplay Attract Mode shows between the title and
     /// the High Score Table.
     pub attract_demo_seconds: f32,
+    /// Points the Ending pays for each life left when the Run is finished.
+    pub ending_life_bonus: u64,
     /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage,
     /// F2: sprite sheet) and the other debug aids. Off in release builds;
     /// dev builds force it on (`enable_dev_debug`) and the web build turns it
@@ -87,6 +89,7 @@ impl Default for Tuning {
             extra_life_every: 50_000,
             attract_panel_seconds: 8.0,
             attract_demo_seconds: 10.0,
+            ending_life_bonus: 10_000,
             debug_keys: false,
             invincible_hero: false,
             time_scale: 1.0,

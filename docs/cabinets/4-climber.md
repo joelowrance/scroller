@@ -50,8 +50,9 @@ them are listed in [Revisit after the playtests](#revisit-after-the-playtests).
   the Underfield's floor just below.
 - **Stage 2 ends at the summit,** on the Crown's deck, as the sun rises over
   the cloud sea. The Ending (#28) starts from there. What the Hero does at
-  the Crown (for example, switch the beacon off so the Static falls still)
-  is #28's to decide. This doc only sets the stage for it.
+  the Crown is #28's to decide; it shoots the beacon's lamp out so the
+  Static falls still ([`docs/ending.md`](../ending.md)). This doc only sets
+  the stage for it.
 - Night turns to dawn across the Cabinet: Stage 1 is night, and Stage 2's
   sky brightens as the scroll rises (scenery only; the palette is the same).
 

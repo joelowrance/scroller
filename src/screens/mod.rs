@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+mod ending;
 mod hud;
 mod menu;
 mod pause;
@@ -25,6 +26,7 @@ impl Plugin for ScreensPlugin {
             pause::PausePlugin,
             transition::TransitionPlugin,
             results::ResultsPlugin,
+            ending::EndingPlugin,
         ));
     }
 }
