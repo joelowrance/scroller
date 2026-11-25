@@ -1,0 +1,11 @@
+# The Plumb's cable, 2x8: Girder, repeating up to the top edge.
+# Format: see README.md in this folder.
+
+3.
+3.
+.3
+.3
+3.
+3.
+.3
+.3

@@ -1,0 +1,7 @@
+# The Scrap warning, 7x4: a Rose chevron at the top edge, pointing down.
+# Format: see README.md in this folder.
+
+77...77
+.77.77.
+..777..
+...7...

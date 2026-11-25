@@ -1,0 +1,11 @@
+# The Pitcher's canister, 8x8: Foam outline, Girder drum, Rose band.
+# Format: see README.md in this folder.
+
+..5555..
+.533335.
+53333335
+57777775
+53333335
+53333335
+.533335.
+..5555..

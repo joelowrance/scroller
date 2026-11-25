@@ -1,0 +1,11 @@
+# The Winch's cable, 2x8: Girder and Foam, twisted, repeating.
+# Format: see README.md in this folder.
+
+53
+53
+35
+35
+53
+53
+35
+35

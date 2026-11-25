@@ -12,6 +12,7 @@ use bevy::prelude::*;
 use crate::run::Session;
 use crate::sprites::palette::{ACCENT, BACKDROP, PALETTES};
 
+pub mod climber;
 mod placeholder;
 pub mod run_and_gun;
 pub mod shooter;
