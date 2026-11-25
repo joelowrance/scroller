@@ -23,7 +23,9 @@ pub struct Tuning {
     /// Seconds of idle time before Attract Mode flips between panels.
     pub attract_panel_seconds: f32,
     /// Enables developer keys (K: lose a life, P: +1000 points, C: clear Stage,
-    /// F2: sprite sheet).
+    /// F2: sprite sheet) and the other debug aids. Off in release builds;
+    /// dev builds force it on (`enable_dev_debug`) and the web build turns it
+    /// on with `?debug` in the URL.
     pub debug_keys: bool,
     /// Debug aid (needs `debug_keys`): nothing can hit the Hero.
     pub invincible_hero: bool,
@@ -79,7 +81,7 @@ impl Default for Tuning {
             first_extra_life: 20_000,
             extra_life_every: 50_000,
             attract_panel_seconds: 8.0,
-            debug_keys: true,
+            debug_keys: false,
             invincible_hero: false,
             time_scale: 1.0,
             kit: KitTuning::default(),
@@ -126,14 +128,24 @@ impl Tuning {
         ron::from_str(text)
     }
 
-    /// Applies debug-aid overrides from a URL query such as
-    /// `?invincible&time_scale=8`, so the web smoke test can play a whole
-    /// Stage unattended. Like the aids themselves, they need `debug_keys`.
+    /// Dev builds (`debug_assertions`) always have the developer keys, even
+    /// when `tuning.ron` says off. Release builds leave the file's value alone.
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+    pub fn enable_dev_debug(&mut self) {
+        if cfg!(debug_assertions) {
+            self.debug_keys = true;
+        }
+    }
+
+    /// Applies debug overrides from a URL query such as
+    /// `?debug&invincible&time_scale=8`, so the web smoke test can play a whole
+    /// Stage unattended. `debug` turns on `debug_keys`; the aids need it.
     #[cfg_attr(not(any(target_arch = "wasm32", test)), allow(dead_code))]
     pub fn apply_query(&mut self, query: &str) {
         for pair in query.trim_start_matches('?').split('&') {
             let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
             match key {
+                "debug" => self.debug_keys = value != "0" && value != "false",
                 "invincible" => self.invincible_hero = value != "0" && value != "false",
                 "gallery" => {
                     let on = value != "0" && value != "false";
@@ -165,6 +177,7 @@ impl Plugin for TuningPlugin {
         if let Some(query) = web_sys::window().and_then(|w| w.location().search().ok()) {
             tuning.apply_query(&query);
         }
+        tuning.enable_dev_debug();
         app.insert_resource(tuning);
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -239,6 +252,7 @@ mod live {
                     info!("Reloaded {}", watch.path.display());
                 }
                 *tuning = new;
+                tuning.enable_dev_debug();
             }
             Err(err) => warn!("Ignoring invalid {}: {err}", watch.path.display()),
         }
@@ -264,7 +278,9 @@ mod tests {
     #[test]
     fn url_query_sets_debug_aids() {
         let mut t = Tuning::default();
-        t.apply_query("?invincible&time_scale=8&other=1");
+        assert!(!t.debug_keys, "debug keys are off unless asked for");
+        t.apply_query("?debug&invincible&time_scale=8&other=1");
+        assert!(t.debug_keys);
         assert!(t.invincible_hero);
         assert_eq!(t.time_scale, 8.0);
         t.apply_query("invincible=0&time_scale=oops");

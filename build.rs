@@ -10,6 +10,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 fn main() {
+    embed_git_hash();
     let manifest = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let dir = Path::new(&manifest).join("assets").join("sprites");
     println!("cargo:rerun-if-changed={}", dir.display());
@@ -53,4 +54,25 @@ fn main() {
 
     let dest = Path::new(&std::env::var("OUT_DIR").unwrap()).join("sprite_sources.rs");
     std::fs::write(dest, out).unwrap();
+}
+
+/// Sets `GIT_HASH` (short commit, `unknown` outside a checkout) for the
+/// version line on the title screen.
+fn embed_git_hash() {
+    let git = |args: &[&str]| {
+        std::process::Command::new("git")
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned())
+    };
+    let hash = git(&["rev-parse", "--short=7", "HEAD"]).unwrap_or_else(|| "unknown".into());
+    // Rebuild when the checked-out commit changes (works in worktrees too).
+    for path in ["HEAD", "refs"] {
+        if let Some(p) = git(&["rev-parse", "--git-path", path]) {
+            println!("cargo:rerun-if-changed={p}");
+        }
+    }
+    println!("cargo:rustc-env=GIT_HASH={hash}");
 }

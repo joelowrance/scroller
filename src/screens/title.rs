@@ -23,6 +23,9 @@ const MENU_COLOR: Color = Color::srgb(0.3, 0.9, 1.0);
 #[derive(Component)]
 struct TitlePanel;
 
+/// Version and short git hash, shown small on the title screen.
+const VERSION_LINE: &str = concat!("V", env!("CARGO_PKG_VERSION"), " ", env!("GIT_HASH"));
+
 #[derive(Component)]
 struct ScoresPanel;
 
@@ -100,6 +103,12 @@ fn spawn(
                 PixelText::new("AN 80S ARCADE MASHUP", Color::WHITE),
                 0.0,
                 38.0,
+                1,
+            ));
+            p.spawn(text_at(
+                PixelText::new(VERSION_LINE, Color::srgb(0.5, 0.5, 0.5)),
+                0.0,
+                -112.0,
                 1,
             ));
             p.spawn((

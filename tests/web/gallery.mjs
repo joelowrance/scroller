@@ -14,7 +14,7 @@ await mkdir(out, { recursive: true });
 
 // Game seconds run twice as fast as real ones.
 const SCALE = 2;
-const url = `${base}?gallery&invincible&time_scale=${SCALE}`;
+const url = `${base}?debug&gallery&invincible&time_scale=${SCALE}`;
 
 // When to look, in game seconds after the Stage starts (see
 // assets/stages/1-gallery.ron, which scrolls 30 px per second).
