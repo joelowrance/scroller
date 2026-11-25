@@ -1,0 +1,21 @@
+# Flit, 10x8: a winged sliver. Foam outline, Girder hull, Rose eye.
+# Frames: wings up, wings level.
+# Format: see README.md in this folder.
+
+5........5
+55......55
+.535..535.
+..533335..
+..537735..
+..533335..
+...5555...
+..........
+
+..........
+..........
+5555..5555
+5333553335
+..537735..
+..533335..
+...5555...
+..........

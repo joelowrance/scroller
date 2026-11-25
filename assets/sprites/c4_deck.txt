@@ -1,0 +1,12 @@
+#! background
+# Stage 2's landing, 8x8: the Crown's deck plate, its top edge lit Peach.
+# Format: see README.md in this folder.
+
+88888888
+33333333
+31333313
+22222222
+22322232
+22222222
+12221222
+11111111

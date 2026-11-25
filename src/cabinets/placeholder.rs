@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 
-use super::{CABINETS, Scroll};
+use super::{CABINETS, Scroll, climber};
 use crate::display::{HALF_H, HALF_W};
 use crate::flow::Screen;
 use crate::input::{Button, Controls};
@@ -53,7 +53,24 @@ fn ahead(scroll: Scroll) -> Vec2 {
 }
 
 fn stage_for(session: &Session) -> StageTimeline {
+    if session.cabinet == climber::CABINET {
+        return climber_stage(session.stage);
+    }
     stage_timeline(CABINETS[session.cabinet].scroll)
+}
+
+/// Cabinet 4's real Stages (#25), played on the placeholder until its
+/// gameplay (#24) replaces it: the scenery, terrain and length are real, and
+/// the enemy kinds are skipped. The terrain is drawn as scenery.
+fn climber_stage(stage: usize) -> StageTimeline {
+    let text = climber::STAGES[stage.min(1)];
+    let mut timeline = StageTimeline::parse(text).expect("Cabinet 4 Stage files must be valid");
+    let terrain =
+        climber::terrain::StageTerrain::parse(text).expect("Cabinet 4 terrain must be valid");
+    timeline.spawns.extend(terrain.scenery());
+    // The timeline plays its spawns in order.
+    timeline.spawns.sort_by(|a, b| a.at.total_cmp(&b.at));
+    timeline
 }
 
 fn stage_timeline(scroll: Scroll) -> StageTimeline {
@@ -70,7 +87,13 @@ fn spawn_stage(mut commands: Commands, session: Res<Session>, sprites: Res<Sprit
     let start = stage.start_point().hero_pos();
 
     // Parallax stripes: three depths, scrolling in the Cabinet's direction.
-    for i in 0..STRIPE_COUNT {
+    // (Cabinet 4 brings its own scenery and terrain.)
+    let stripes = if session.cabinet == climber::CABINET {
+        0
+    } else {
+        STRIPE_COUNT
+    };
+    for i in 0..stripes {
         let depth = (i % 3) as f32 + 1.0;
         let along = (i as f32 * 37.0) % (HALF_W * 2.0) - HALF_W;
         let across = (i as f32 * 53.0) % (HALF_H * 2.0) - HALF_H;

@@ -1,0 +1,14 @@
+# Scrap, 10x10: loose plating falling from above. Foam outline, Girder
+# plate, a Rose rivet.
+# Format: see README.md in this folder.
+
+..5555....
+.533335...
+5333333555
+5337333335
+5333333335
+.533333335
+.53333335.
+..5333335.
+...53335..
+....555...

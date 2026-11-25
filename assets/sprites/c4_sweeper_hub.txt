@@ -1,0 +1,14 @@
+# Sweeper hub, 10x10: a hazard, not an enemy, so Girder with no Foam
+# outline, and a Rose light in its centre.
+# Format: see README.md in this folder.
+
+...3333...
+..322223..
+.32222223.
+3222772223
+3227777223
+3227777223
+3222772223
+.32222223.
+..322223..
+...3333...

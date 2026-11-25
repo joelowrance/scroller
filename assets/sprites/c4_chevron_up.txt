@@ -1,0 +1,7 @@
+# The Flit warning, 7x4: a Rose chevron at the bottom edge, pointing up.
+# Format: see README.md in this folder.
+
+...7...
+..777..
+.77.77.
+77...77

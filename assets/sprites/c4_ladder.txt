@@ -1,0 +1,12 @@
+#! background
+# A service ladder, 8x8: Girder rails and rungs, repeating upward.
+# Format: see README.md in this folder.
+
+.3....3.
+.333333.
+.3....3.
+.3....3.
+.3....3.
+.333333.
+.3....3.
+.3....3.

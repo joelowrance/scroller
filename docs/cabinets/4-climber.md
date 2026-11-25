@@ -592,33 +592,33 @@ into a forced fall.
 - **Scroll:** 14 px/s throughout (Stage file).
 - **Length:** 1,974 px of climb. That is 141 s of rising plus two Standoffs
   of 12 s each: **2:45**.
-- **Restart Points:** 0:00 (height 0), 0:42 (588), 1:25 (1,022, just after
-  the first Standoff), 2:06 (1,596).
+- **Restart Points:** 0:00 (height 0), 0:42 (588), 1:25 (1,016, just after
+  the first Standoff), 2:06 (1,592).
 - **Power-ups, in order:** G C G J W G.
 
 | Time | Height | Beat | What happens |
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. The first landing. The music starts. |
 | 0:04 | 56 | teach | A Flit trio crosses from the right → **G** (gun 2). |
-| 0:12 | 168 | teach | The first ladder and thin ledges, with a Limpet pair crawling a ledge above. |
-| 0:20 | 280 | test | Limpets on two ledges and a Flit trio from the left → Formation bonus. |
+| 0:13 | 176 | teach | The first ladder and thin ledges, with a Limpet pair crawling a ledge above. |
+| 0:19 | 272 | test | Limpets on two ledges and a Flit trio from the left → Formation bonus. |
 | 0:28 | 392 | teach | The first Scrap, one piece, then a Flit trio → **C**. |
 | 0:38 | 532 | breathe | A short ladder run with nothing on it. |
 | 0:42 | 588 | calm | **Restart Point.** A landing. |
-| 0:46 | 644 | teach | One Picket on a catwalk. The crouch lesson, again. |
-| 0:54 | 756 | test | Pickets on two levels, with a ladder between them that neither covers → **G** (gun 3). |
-| 1:04 | 896 | teach | One Vent in the face above the route. Aim up. |
+| 0:43 | 600 | teach | One Picket on a catwalk. The crouch lesson, again. |
+| 0:46 | 648 | test | Pickets on two levels, with a ladder between them that neither covers → **G** (gun 3). |
+| 1:03 | 880 | teach | One Vent in the face above the route. Aim up. |
 | 1:12 | 1,008 | Standoff | **The First Landing** (12 s): Flit trios from both sides, a Plumb from above, then a Limpet pair. Clear: Formation bonus and the time bonus. |
 | 1:24 | 1,008 | — | The scroll resumes. |
-| 1:25 | 1,022 | calm | **Restart Point.** |
-| 1:28 | 1,064 | teach | One Plumb, then a scrapfall around a second → **J**. |
-| 1:40 | 1,232 | teach | One Pitcher on a ledge above, with Limpets below it → **W**. |
-| 1:52 | 1,400 | twist | Vents in a column over a ladder run, with Flits rising from below (chevrons) → Formation bonus. |
+| 1:25 | 1,016 | calm | **Restart Point.** |
+| 1:27 | 1,048 | teach | One Plumb, then a scrapfall around a second → **J**. |
+| 1:37 | 1,184 | teach | One Pitcher on a ledge above, with Limpets below it → **W**. |
+| 1:47 | 1,336 | twist | Vents in a column over a ladder run, with Flits rising from below (chevrons) → Formation bonus. |
 | 2:02 | 1,540 | breathe | A landing. |
-| 2:06 | 1,596 | calm | **Restart Point.** |
-| 2:10 | 1,652 | test | A Pitcher pair and a Picket on the ledge between them. |
+| 2:06 | 1,592 | calm | **Restart Point.** |
+| 2:06 | 1,600 | test | A Pitcher pair and a Picket on the ledge between them. |
 | 2:22 | 1,820 | Standoff | **The Lamp Deck** (12 s): Flits, Plumbs and a scrapfall around a wide landing under the tower's warning lamps → **G** (gun 4). |
-| 2:34 | 1,820 | run-out | The scroll resumes. A clear ladder run, no enemies. The first grey of dawn shows at the horizon. |
+| 2:35 | 1,832 | run-out | The scroll resumes. A clear ladder run, no enemies. The first grey of dawn shows at the horizon. |
 | 2:45 | 1,974 | end | The scroll ends at a landing: Stage clear (bonuses paid). |
 
 A perfect player leaves Stage 1 with gun 4, Canopy, Jet and the Ward. A
@@ -646,22 +646,22 @@ typical player finishes at gun 3 with one or two of the others.
 |---|---|---|---|
 | 0:00 | 0 | calm | Restart Point. A landing above the night's last cloud layer. |
 | 0:04 | 64 | teach | A Flit trio → **M**. |
-| 0:10 | 160 | teach | The first gust zone, nothing else. |
-| 0:18 | 288 | test | Crumbling ledges (wide ones, no gusts) with a Limpet pair → **G**. |
-| 0:28 | 448 | teach | A Mote cloud over a landing → **W**. |
+| 0:06 | 96 | teach | The first gust zone, nothing else. |
+| 0:20 | 328 | test | Crumbling ledges (wide ones, no gusts) with a Limpet pair → **G**. |
+| 0:31 | 496 | teach | A Mote cloud over a landing → **W**. |
 | 0:38 | 608 | breathe | Short. |
 | 0:42 | 672 | calm | **Restart Point.** |
-| 0:46 | 736 | teach | One Sweeper, alone, beside a ladder. |
-| 0:54 | 864 | test | A Sweeper with Pickets on the ledges either side → Formation bonus. |
-| 1:04 | 1,024 | Standoff | **The Wind Deck** (12 s): gusts on the landing, Flit trios from both sides, then two Plumbs. Clear: Formation bonus and the time bonus. |
+| 0:43 | 688 | teach | One Sweeper, alone, beside a ladder. |
+| 0:48 | 776 | test | A Sweeper with Pickets on the ledges either side → Formation bonus. |
+| 1:04 | 1,024 | Standoff | **The Wind Deck** (12 s): gusts over the landing (from 64 px above it, so they catch a jump), Flit trios from both sides, then two Plumbs. Clear: Formation bonus and the time bonus. |
 | 1:16 | 1,024 | — | The scroll resumes. |
 | 1:17 | 1,040 | calm | **Restart Point.** |
 | 1:20 | 1,088 | test | Pitchers over a run of crumbling ledges → **C**. |
-| 1:32 | 1,280 | twist | A gust zone during a scrapfall, with Vents in the face → **J**. |
-| 1:44 | 1,472 | test | A Mote cloud with Plumbs dropping. |
+| 1:32 | 1,272 | twist | A gust zone during a scrapfall, with Vents in the face → **J**. |
+| 1:42 | 1,440 | test | A Mote cloud with Plumbs dropping. |
 | 1:54 | 1,632 | breathe | A landing. The Crown's beacon comes into view. |
 | 1:58 | 1,696 | calm | **Restart Point.** |
-| 2:02 | 1,760 | test | The gauntlet: a Sweeper, a Picket pair, a Pitcher and a gust zone → **W**. |
+| 1:58 | 1,704 | test | The gauntlet: a Sweeper, a Picket pair, a Pitcher and a gust zone → **W**. |
 | 2:09 | 1,872 | breathe | Short, on a ladder run. |
 | 2:13 | 1,936 | Standoff | **The Winch** (22 s, at exactly 20 s of scroll left): the Winch on the Crown's lower deck, with a Flit trio from each side at 7 s and 14 s → **G**. |
 | 2:35 | 1,936 | run-out | The scroll resumes. A last ladder up (20 s, 320 px), no enemies. The sun clears the cloud sea. |
@@ -685,6 +685,12 @@ Stage 1 and 28–36k for Stage 2, smaller than the other Cabinets' because the
 Stages are shorter. The Run's final score then lands around 230–280k for a
 strong player, which #28's score breakdown and the High Score
 Table's seeded entries should be checked against.
+
+**Measured from the Stage files (#25),** counting every enemy, the
+Formation bonuses, the Stage clear and the no-miss bonus, but no Standoff
+time bonus: about **22.3k** for a perfect Stage 1 and **30.4k** for Stage 2
+(6,000 of it maxed medals, and the Winch's 5,000). Killing the Winch at
+gun 4 adds about 800 more in time bonus. Both are inside the targets.
 
 ## Sound and music (for #25)
 
@@ -782,6 +788,55 @@ new code only where Cabinet 4 differs.
   its cable as a repeating tile; the Winch's carriage, hook and cable;
   crumbling ledges with a shaking frame; gust arrows. Face tiles, ledges,
   landings and ladders carry the `#! background` mark.
+
+### Stage file decisions (#25)
+
+- **Heights.** A ledge at `h` has its standing surface on the screen's top
+  edge when the camera reaches `h` (screen y = 120 − (camera − h)), so
+  everything a beat brings enters from the top at the beat's height. The
+  first landing is at h = −184, low on the screen at the start.
+- **Landings sit 48–64 px above the bottom edge** wherever the Hero
+  stands on them with the scroll running: Restart Points at y = −64 to −68,
+  Standoff decks at y = −56 or higher. The Restart Point after a Standoff
+  moved a few pixels (1,022 → 1,016 in Stage 1, 1,596 → 1,592) to keep the
+  Hero's feet 48 px clear of the edge when it respawns.
+- **A Restart Point's `hero`** is where the Hero stands on its landing (feet
+  on the surface, centre 10 px up), and it is a foothold of the route.
+  The checks time the route from there as if the scroll runs once the
+  Hero has landed, so #24 should hold the scroll during the canopy drop.
+- **Ladders end at a landing through a hatch.** Landings are solid and
+  full width, so a ladder is the only way through one. No jump on the route
+  goes under a landing close enough to hit its head (apex 68 px).
+- **Rule 7 is strict:** no part of a ladder is within 16 px of a Picket's
+  ledge, including a ladder that starts there.
+- **Ledge enemies** stand on the highest ledge under their `pos.x` at or
+  below their `at` and still on screen; outside Standoffs each is spawned
+  at its own ledge's height, so it enters with it.
+- **Things fixed in the face** (Vents, Sweepers) are placed like scenery:
+  at `pos` when the camera is at `at`.
+- **The Wind Deck's gusts** start 64 px above its deck, not on it, because
+  the Restart Point just after the Standoff stands on that deck and no gust
+  may reach the first 64 px above a Restart Point.
+- **The Winch's deck** is at h = 1,816, so it is at y = 0 while the scroll
+  holds at 1,936 (exactly 20 s left, for the run-out music). That puts it
+  80 px under the rail. It can't go lower: the gauntlet's last jump, from the
+  Picket ledge at 1,736, needs 76 px of headroom under a solid landing, and
+  Rule 7 rules out a ladder through that ledge. If the hook crowds the Hero,
+  #24 can raise `winch.rail_y` to about 100.
+- **Beats moved a few seconds** where the geometry needed it. Content may
+  not enter before a Restart Point that the Hero meets after it, or it
+  wouldn't replay on a rewind, and a Picket's ledge must clear the ladders.
+  The tables above give the times the Stage files have.
+- **Art.** The night face is Indigo plating with Abyss seams and Girder
+  rivets, so that the Girder catwalks, ladders and enemy hulls read against
+  it. The Crown's deck and Stage 2's girders have Peach dawn edges. The
+  canopy reuses the parachute sprite from the 2 → 3 Transition rather than a
+  new one. The Hero's climb (two frames, seen from behind) and hang frames
+  are frames 10–12 of `c3_hero`.
+- **The far layer in Stage 2** is fixed (depth 0) and fades by `at`/`until`
+  windows: thinner stars, then the Peach dawn band in three rising rows,
+  then the sun. The face above Stage 2's last landing is open sky, with the
+  Crown and its beacon on top.
 
 ## Revisit after the playtests
 

@@ -1,0 +1,22 @@
+#! background
+# Stage 2's crumbling ledge, 8x8: a cracked lit girder. Frame 1 is its
+# shake, one pixel over.
+# Format: see README.md in this folder.
+
+88828888
+32.23232
+3333.333
+22.22222
+.2....2.
+........
+........
+........
+
+88882888
+232.2323
+33333.33
+222.2222
+..2....2
+........
+........
+........
