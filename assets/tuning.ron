@@ -10,9 +10,6 @@
     // Seconds before Attract Mode flips between the title and High Score Table.
     attract_panel_seconds: 8.0,
 
-    // Length of each Cabinet Transition (placeholder until the real ones exist).
-    transition_seconds: 3.0,
-
     // Developer keys: K loses a life, P adds 1000 points, C clears the Stage,
     // F2 shows the sprite sheet.
     debug_keys: true,
