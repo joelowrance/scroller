@@ -2,10 +2,10 @@
 //! a slight vignette. Off by default; V turns it on or off anywhere in the
 //! game, and the choice is remembered (the `display` stored setting).
 //!
-//! Both overlays are drawn at window resolution over the scaled-up canvas, so
-//! the game itself is untouched. The scanline texture is one texel wide and
-//! exactly as tall as the canvas on screen, rebuilt only when the scale
-//! changes, so each screen row is either a scanline or not.
+//! One overlay holds both, drawn at window resolution over the scaled-up
+//! canvas, so the game itself is untouched. Its texture has one texel per
+//! window pixel of the canvas and is rebuilt only when the scale changes, so
+//! each screen row is either a scanline or not.
 
 use bevy::asset::RenderAssetUsages;
 use bevy::image::ImageSampler;
@@ -28,22 +28,20 @@ pub struct DisplaySettings {
     pub crt: bool,
 }
 
+/// The one sprite holding scanlines and vignette (one full-screen blend,
+/// which matters with software rendering).
 #[derive(Component)]
-struct Scanlines;
-
-#[derive(Component)]
-struct Vignette;
+struct Overlay;
 
 /// "CRT ON" / "CRT OFF" shown briefly after toggling.
 #[derive(Component)]
 struct Toast(Timer);
 
-/// Handles and the scale the scanline texture was last built for.
+/// The overlay's image, and the scale and strengths it was last built for.
 #[derive(Resource)]
-struct CrtImages {
-    scanlines: Handle<Image>,
-    vignette: Handle<Image>,
-    built_for: Option<(u32, u32)>,
+struct CrtImage {
+    overlay: Handle<Image>,
+    built_for: Option<(u32, u32, u32)>,
 }
 
 fn image(width: u32, height: u32, pixels: Vec<u8>) -> Image {
@@ -78,75 +76,53 @@ pub fn vignette_alpha(x: f32, y: f32, strength: f32) -> f32 {
     strength * k * k
 }
 
-const VIGNETTE_W: u32 = 64;
-const VIGNETTE_H: u32 = 48;
+/// Largest scale the overlay is built at; past it (a canvas over 2560×1920)
+/// scanlines are slightly uneven rather than the texture growing huge.
+const MAX_SCALE: u32 = 8;
 
-fn vignette_image(strength: f32) -> Image {
-    let mut pixels = Vec::with_capacity((VIGNETTE_W * VIGNETTE_H * 4) as usize);
-    for y in 0..VIGNETTE_H {
-        for x in 0..VIGNETTE_W {
-            let fx = (x as f32 + 0.5) / VIGNETTE_W as f32 * 2.0 - 1.0;
-            let fy = (y as f32 + 0.5) / VIGNETTE_H as f32 * 2.0 - 1.0;
-            let a = (vignette_alpha(fx, fy, strength) * 255.0).round() as u8;
-            pixels.extend_from_slice(&[0, 0, 0, a]);
+/// RGBA8 pixels of the whole overlay at a whole-number `scale`: scanlines and
+/// vignette combined, one texel per window pixel of the canvas.
+pub fn overlay_pixels(scale: u32, scanline_alpha: f32, vignette_strength: f32) -> Vec<u8> {
+    let (w, h) = (WIDTH * scale, HEIGHT * scale);
+    let rows = scanline_rows(scale, scanline_alpha);
+    let mut pixels = Vec::with_capacity((w * h * 4) as usize);
+    for (y, row) in rows.iter().enumerate() {
+        let scan = *row as f32 / 255.0;
+        let fy = (y as f32 + 0.5) / h as f32 * 2.0 - 1.0;
+        for x in 0..w {
+            let fx = (x as f32 + 0.5) / w as f32 * 2.0 - 1.0;
+            let vignette = vignette_alpha(fx, fy, vignette_strength);
+            let a = 1.0 - (1.0 - scan) * (1.0 - vignette);
+            pixels.extend_from_slice(&[0, 0, 0, (a * 255.0).round() as u8]);
         }
     }
-    let mut image = image(VIGNETTE_W, VIGNETTE_H, pixels);
-    // Smooth, not pixelated: it is a soft darkening, not part of the art.
-    image.sampler = ImageSampler::linear();
-    image
+    pixels
 }
 
-fn scanline_image(scale: u32, alpha: f32) -> Image {
-    let pixels = scanline_rows(scale, alpha)
-        .into_iter()
-        .flat_map(|a| [0, 0, 0, a])
-        .collect();
-    let mut image = image(1, HEIGHT * scale, pixels);
+fn overlay_image(scale: u32, p: &PresentationTuning) -> Image {
+    let scale = scale.clamp(1, MAX_SCALE);
+    let pixels = overlay_pixels(scale, p.crt_scanline_alpha, p.crt_vignette_alpha);
+    let mut image = image(WIDTH * scale, HEIGHT * scale, pixels);
     image.sampler = ImageSampler::nearest();
     image
 }
 
-fn setup(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-    tuning: Res<Tuning>,
-    settings: Res<DisplaySettings>,
-) {
-    let p = &tuning.presentation;
-    let scanlines = images.add(scanline_image(1, p.crt_scanline_alpha));
-    let vignette = images.add(vignette_image(p.crt_vignette_alpha));
-    let visibility = if settings.crt {
-        Visibility::Inherited
-    } else {
-        Visibility::Hidden
-    };
-    let size = Vec2::new(WIDTH as f32, HEIGHT as f32);
+fn setup(mut commands: Commands) {
+    // No image until `apply` builds one for the window's scale.
+    let overlay = Handle::default();
     commands.spawn((
-        Scanlines,
+        Overlay,
         Sprite {
-            image: scanlines.clone(),
-            custom_size: Some(size),
+            image: overlay.clone(),
+            custom_size: Some(Vec2::new(WIDTH as f32, HEIGHT as f32)),
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 1.0),
-        visibility,
+        Visibility::Hidden,
         WINDOW_LAYER,
     ));
-    commands.spawn((
-        Vignette,
-        Sprite {
-            image: vignette.clone(),
-            custom_size: Some(size),
-            ..default()
-        },
-        Transform::from_xyz(0.0, 0.0, 2.0),
-        visibility,
-        WINDOW_LAYER,
-    ));
-    commands.insert_resource(CrtImages {
-        scanlines,
-        vignette,
+    commands.insert_resource(CrtImage {
+        overlay,
         built_for: None,
     });
 }
@@ -188,24 +164,23 @@ fn expire_toasts(
     }
 }
 
-/// Shows or hides the overlays, and rebuilds them for a new window scale or
-/// new tuning values.
+/// Shows or hides the overlay, and rebuilds it for a new window scale or new
+/// tuning values.
 fn apply(
     window: Single<&Window>,
     settings: Res<DisplaySettings>,
     tuning: Res<Tuning>,
-    mut crt: ResMut<CrtImages>,
+    mut crt: ResMut<CrtImage>,
     mut images: ResMut<Assets<Image>>,
-    mut overlays: Query<&mut Visibility, Or<(With<Scanlines>, With<Vignette>)>>,
+    mut overlay: Single<(&mut Visibility, &mut Sprite), With<Overlay>>,
 ) {
+    let (visibility, sprite) = &mut *overlay;
     let wanted = if settings.crt {
         Visibility::Inherited
     } else {
         Visibility::Hidden
     };
-    for mut visibility in &mut overlays {
-        visibility.set_if_neq(wanted);
-    }
+    visibility.set_if_neq(wanted);
     if !settings.crt {
         return;
     }
@@ -213,18 +188,22 @@ fn apply(
     let scale = canvas_scale(&window).max(1.0) as u32;
     let key = (
         scale,
-        p.crt_scanline_alpha.to_bits() ^ p.crt_vignette_alpha.to_bits(),
+        p.crt_scanline_alpha.to_bits(),
+        p.crt_vignette_alpha.to_bits(),
     );
     if crt.built_for == Some(key) {
         return;
     }
+    // Before the first build the handle is the default (shared) image, which
+    // must never be removed.
+    if crt.built_for.is_some() {
+        images.remove(&crt.overlay);
+    }
     crt.built_for = Some(key);
-    if let Some(mut image) = images.get_mut(&crt.scanlines) {
-        *image = scanline_image(scale, p.crt_scanline_alpha);
-    }
-    if let Some(mut image) = images.get_mut(&crt.vignette) {
-        *image = vignette_image(p.crt_vignette_alpha);
-    }
+    // A new asset rather than editing the old one: a render-world-only image
+    // keeps no pixels in the main world to edit once it has been uploaded.
+    crt.overlay = images.add(overlay_image(scale, p));
+    sprite.image = crt.overlay.clone();
 }
 
 pub(super) fn plugin(app: &mut App) {
@@ -258,6 +237,19 @@ mod tests {
         assert_eq!(vignette_alpha(0.5, 0.0, 0.4), 0.0);
         let corner = vignette_alpha(1.0, 1.0, 0.4);
         assert!(corner > 0.2 && corner <= 0.4, "{corner}");
+    }
+
+    #[test]
+    fn the_overlay_combines_scanlines_and_vignette() {
+        let px = overlay_pixels(2, 1.0, 0.5);
+        let w = (WIDTH * 2) as usize;
+        let alpha = |x: usize, y: usize| px[(y * w + x) * 4 + 3];
+        assert_eq!(px.len(), w * (HEIGHT * 2) as usize * 4);
+        // The middle: clear on a pixel row, fully dark on its scanline.
+        assert_eq!(alpha(w / 2, HEIGHT as usize), 0);
+        assert_eq!(alpha(w / 2, HEIGHT as usize + 1), 255);
+        // A corner on a pixel row is darkened by the vignette alone.
+        assert!(alpha(0, 0) > 64 && alpha(0, 0) < 255);
     }
 
     #[test]
