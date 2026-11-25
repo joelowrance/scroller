@@ -42,6 +42,6 @@ echo "Smoke testing $url"
 node tests/web/smoke.mjs "$url" "$out"
 # Each Cabinet with Stage files must clear both unattended (invincible Hero,
 # sped up). Add a Cabinet here when its Stages land.
-for cabinet in 1 2; do
+for cabinet in 1 2 3 4; do
   node tests/web/stages.mjs "$url" "$out" "$cabinet"
 done

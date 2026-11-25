@@ -89,6 +89,7 @@ fn spawn_stage(
     commands.insert_resource(tower);
     commands.insert_resource(power);
     commands.insert_resource(DrivenScroll(f32::INFINITY));
+    commands.insert_resource(crate::flow::WalkOffSeconds(t.hero.exit_seconds));
     commands.insert_resource(hero::Rescues::default());
     commands.insert_resource(Misses::default());
 }
